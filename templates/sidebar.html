@@ -1,33 +1,72 @@
-<!-- sidebar.html -->
-<div class="d-flex flex-column flex-shrink-0 p-3 bg-dark text-white" style="width: 250px; height: 100vh; position: fixed;">
+<div class="d-flex flex-column flex-shrink-0 p-3 bg-dark text-white"
+     style="width: 250px; height: 100vh; position: fixed;">
   <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
     <span class="fs-4">📂 SQL Sync</span>
   </a>
   <hr>
+
   <ul class="nav nav-pills flex-column mb-auto">
+    {% if session.get("role") in ["admin", "operator", "viewer"] %}
     <li class="nav-item">
-      <a href="{{ url_for('index') }}" class="nav-link text-white {% if request.endpoint == 'index' %}active bg-primary{% endif %}">
+      <a href="{{ url_for('index') }}" 
+         class="nav-link text-white {% if request.endpoint == 'index' %}active bg-primary{% endif %}">
         🏠 Home
       </a>
     </li>
+    {% endif %}
+
+    {% if session.get("role") in ["admin", "operator"] %}
     <li>
-      <a href="{{ url_for('add_server') }}" class="nav-link text-white {% if request.endpoint == 'add_server' %}active bg-primary{% endif %}">
+      <a href="{{ url_for('add_server') }}" 
+         class="nav-link text-white {% if request.endpoint == 'add_server' %}active bg-primary{% endif %}">
         ➕ Add Server
       </a>
     </li>
     <li>
-      <a href="{{ url_for('schedule_page') }}" class="nav-link text-white {% if request.endpoint == 'schedule_page' %}active bg-primary{% endif %}">
+      <a href="{{ url_for('schedule_page') }}" 
+         class="nav-link text-white {% if request.endpoint == 'schedule_page' %}active bg-primary{% endif %}">
         ⏰ Schedule
       </a>
     </li>
+    {% endif %}
+
+    {% if session.get("role") in ["admin", "operator", "viewer"] %}
     <li>
-      <a href="{{ url_for('dashboard') }}" class="nav-link text-white {% if request.endpoint == 'dashboard' %}active bg-primary{% endif %}">
+      <a href="{{ url_for('dashboard') }}" 
+         class="nav-link text-white {% if request.endpoint == 'dashboard' %}active bg-primary{% endif %}">
         📊 Dashboard
       </a>
     </li>
+    <li>
+      <a href="{{ url_for('view_schedules') }}" 
+         class="nav-link text-white {% if request.endpoint == 'view_schedules' %}active bg-primary{% endif %}">
+        📅 View Schedules
+      </a>
+    </li>
+    {% endif %}
+
+    {% if session.get("role") == "admin" %}
+    <li>
+      <a href="{{ url_for('create_user_route') }}" 
+         class="nav-link text-white {% if request.endpoint == 'create_user_route' %}active bg-primary{% endif %}">
+        👤 Create User
+      </a>
+    </li>
+    {% endif %}
   </ul>
+
   <hr>
+
   <div class="text-white small">
+    {% if session.get("username") %}
+      👋 Logged in as <strong> ({{ session["role"] }})</strong><br>
+      <a href="{{ url_for('logout') }}" class="text-decoration-none text-danger">🚪 Logout</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="text-decoration-none text-success">🔑 Login</a>
+    {% endif %}
+  </div>
+
+  <div class="text-white small mt-2">
     ⚡ Hybrid Sync Tool
   </div>
 </div>

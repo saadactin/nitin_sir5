@@ -37,7 +37,7 @@
         </div>
 
         <!-- Last 10 Sync History -->
-        <div class="card shadow-sm">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-dark text-white">
                 Last 10 Syncs
             </div>
@@ -74,6 +74,7 @@
                 {% endif %}
             </div>
         </div>
+
     </div>
 </div>
 
@@ -118,11 +119,9 @@ async function refreshDashboard() {
                     <tr>
                         <td>${entry.server}</td>
                         <td>${entry.time}</td>
-                        <td>
-                            ${entry.status === "success"
-                                ? '<span class="badge bg-success">Success</span>'
-                                : '<span class="badge bg-danger">Failed</span>'}
-                        </td>
+                        <td>${entry.status === "success"
+                            ? '<span class="badge bg-success">Success</span>'
+                            : '<span class="badge bg-danger">Failed</span>'}</td>
                         <td>${entry.details}</td>
                     </tr>`;
             });
@@ -140,7 +139,8 @@ async function refreshDashboard() {
 }
 
 // Auto-refresh every 5 seconds
-setInterval(refreshDashboard, 3000);
+setInterval(refreshDashboard, 5000);
 </script>
+
 </body>
 </html>

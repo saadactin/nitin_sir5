@@ -7,11 +7,13 @@ CONFIG_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "config/db_connections.yaml")
 )
 
+
 def load_pg_config():
     """Load PostgreSQL config from YAML"""
     with open(CONFIG_PATH, "r") as f:
         config = yaml.safe_load(f)
     return config["postgresql"]
+
 
 def get_pg_connection():
     """Return a live PostgreSQL connection"""
@@ -24,15 +26,14 @@ def get_pg_connection():
         port=conf["port"],
     )
 
+
 def init_pg_schema():
-    """Create schema + tables if not exists"""
+    """Create schema + all required tables if not exists"""
     conn = get_pg_connection()
     cur = conn.cursor()
 
     # Create schema
-    cur.execute("""
-        CREATE SCHEMA IF NOT EXISTS metrics_sync_tables;
-    """)
+    cur.execute("CREATE SCHEMA IF NOT EXISTS metrics_sync_tables;")
 
     # Create schedules table
     cur.execute("""
@@ -55,6 +56,17 @@ def init_pg_schema():
             sync_time TIMESTAMP DEFAULT NOW(),
             status TEXT NOT NULL,
             details TEXT
+        );
+    """)
+
+    # Create users table
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS metrics_sync_tables.users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL CHECK (role IN ('admin', 'operator', 'viewer')),
+            created_at TIMESTAMP DEFAULT NOW()
         );
     """)
 

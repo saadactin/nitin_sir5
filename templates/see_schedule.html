@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Schedules - SQL Sync</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <h2 class="mb-4">⏰ Scheduled Jobs</h2>
+
+        {% if jobs and jobs|length > 0 %}
+            <table class="table table-bordered table-hover">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Server</th>
+                        <th>Type</th>
+                        <th>Last Run</th>
+                        <th>Status</th>
+                        <th>Error</th>
+                        {% if role in ['admin', 'operator'] %}
+                        <th>Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td>{{ job.server }}</td>
+                        <td>{{ job.type }}</td>
+                        <td>{{ job.last_run or '-' }}</td>
+                        <td>
+                            {% if job.status == 'success' %}
+                                <span class="badge bg-success">Success</span>
+                            {% elif job.status == 'failed' %}
+                                <span class="badge bg-danger">Failed</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ job.status or '-' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ job.error or '-' }}</td>
+                        {% if role in ['admin', 'operator'] %}
+                        <td>
+                            <a href="#" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="#" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info">No schedules found.</div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

@@ -35,15 +35,27 @@ def add_server(name, host, username, password, port=1433):
         'sync_mode': 'hybrid'
     }
     save_config(config)
-    print(f"Server {name} added!")
+    print(f"✅ Server {name} added!")
+
+def delete_server(name):
+    config = load_config()
+    if name in config.get('sqlservers', {}):
+        del config['sqlservers'][name]
+        save_config(config)
+        print(f"✅ Server {name} deleted!")
+    else:
+        print(f"❌ Server {name} not found!")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--list', action='store_true', help='List SQL servers')
     parser.add_argument('--add', nargs=4, metavar=('NAME','HOST','USER','PASSWORD'), help='Add SQL server')
+    parser.add_argument('--delete', metavar='NAME', help='Delete SQL server')
     args = parser.parse_args()
 
     if args.list:
         list_servers()
     elif args.add:
         add_server(*args.add)
+    elif args.delete:
+        delete_server(args.delete)
