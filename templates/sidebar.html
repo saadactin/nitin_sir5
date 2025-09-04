@@ -1,0 +1,33 @@
+<!-- sidebar.html -->
+<div class="d-flex flex-column flex-shrink-0 p-3 bg-dark text-white" style="width: 250px; height: 100vh; position: fixed;">
+  <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+    <span class="fs-4">📂 SQL Sync</span>
+  </a>
+  <hr>
+  <ul class="nav nav-pills flex-column mb-auto">
+    <li class="nav-item">
+      <a href="{{ url_for('index') }}" class="nav-link text-white {% if request.endpoint == 'index' %}active bg-primary{% endif %}">
+        🏠 Home
+      </a>
+    </li>
+    <li>
+      <a href="{{ url_for('add_server') }}" class="nav-link text-white {% if request.endpoint == 'add_server' %}active bg-primary{% endif %}">
+        ➕ Add Server
+      </a>
+    </li>
+    <li>
+      <a href="{{ url_for('schedule_page') }}" class="nav-link text-white {% if request.endpoint == 'schedule_page' %}active bg-primary{% endif %}">
+        ⏰ Schedule
+      </a>
+    </li>
+    <li>
+      <a href="{{ url_for('dashboard') }}" class="nav-link text-white {% if request.endpoint == 'dashboard' %}active bg-primary{% endif %}">
+        📊 Dashboard
+      </a>
+    </li>
+  </ul>
+  <hr>
+  <div class="text-white small">
+    ⚡ Hybrid Sync Tool
+  </div>
+</div>

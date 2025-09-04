@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schedule Sync</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+<div class="d-flex">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <div class="card shadow-lg border-0 rounded-3 mb-4">
+            <div class="card-header bg-dark text-white">
+                <h4 class="mb-0">⚙️ Schedule Sync</h4>
+            </div>
+            <div class="card-body">
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                <!-- Scheduling Form -->
+                <form method="POST" class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Select SQL Server</label>
+                        <select class="form-select" name="server_name" required>
+                            {% for server in servers %}
+                                <option value="{{ server }}">{{ server }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Schedule Type</label>
+                        <select class="form-select" name="schedule_type" id="scheduleType" required>
+                            <option value="interval">Every X minutes</option>
+                            <option value="daily">At specific time</option>
+                        </select>
+                    </div>
+
+                    <div id="intervalFields" class="col-md-6">
+                        <label class="form-label">Minutes</label>
+                        <input type="number" class="form-control" name="minutes" min="1" placeholder="e.g. 2">
+                    </div>
+
+                    <div id="dailyFields" class="row g-3" style="display:none;">
+                        <div class="col-md-6">
+                            <label class="form-label">Hour (0–23)</label>
+                            <input type="number" class="form-control" name="hour" min="0" max="23" placeholder="e.g. 14">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Minute (0–59)</label>
+                            <input type="number" class="form-control" name="minute" min="0" max="59" placeholder="e.g. 30">
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-3">
+                        <button type="submit" class="btn btn-primary">✅ Set Schedule</button>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">⬅ Back</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Scheduled Jobs Table -->
+        <div class="card shadow-lg border-0 rounded-3">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0">📋 Scheduled Jobs</h4>
+            </div>
+            <div class="card-body">
+                {% if jobs and jobs|length > 0 %}
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Server</th>
+                                <th>Type</th>
+                                <th>Last Run</th>
+                                <th>Status</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in jobs %}
+                            <tr>
+                                <td>{{ job.server }}</td>
+                                <td>{{ job.type }}</td>
+                                <td>{{ job.last_run or "-" }}</td>
+                                <td>
+                                    {% if job.status == "success" %}
+                                        <span class="badge bg-success">Success</span>
+                                    {% elif job.status == "failed" %}
+                                        <span class="badge bg-danger">Failed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ job.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if job.error %}
+                                        <span class="text-danger">{{ job.error }}</span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="alert alert-info">No schedules found.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle fields based on schedule type
+    const scheduleType = document.getElementById('scheduleType');
+    const intervalFields = document.getElementById('intervalFields');
+    const dailyFields = document.getElementById('dailyFields');
+
+    scheduleType.addEventListener('change', function() {
+        if (this.value === 'interval') {
+            intervalFields.style.display = 'block';
+            dailyFields.style.display = 'none';
+        } else {
+            intervalFields.style.display = 'none';
+            dailyFields.style.display = 'flex';
+        }
+    });
+
+    // Auto-refresh jobs table every 10 seconds
+    setInterval(() => {
+        location.reload();
+    }, 10000);
+</script>
+</body>
+</html>

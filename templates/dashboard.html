@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sync Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <h2 class="mb-4">📊 Sync Dashboard</h2>
+
+        <!-- Last Sync Details -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                Last Sync Details
+            </div>
+            <div class="card-body" id="last-sync">
+                {% if last_detail %}
+                    <p><strong>Server:</strong> {{ last_detail.server }}</p>
+                    <p><strong>Time:</strong> {{ last_detail.time }}</p>
+                    <p>
+                        <strong>Status:</strong>
+                        {% if last_detail.status == "success" %}
+                            <span class="badge bg-success">Success</span>
+                        {% else %}
+                            <span class="badge bg-danger">Failed</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Details:</strong> {{ last_detail.details }}</p>
+                {% else %}
+                    <div class="alert alert-info">No syncs recorded yet.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Last 10 Sync History -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                Last 10 Syncs
+            </div>
+            <div class="card-body" id="sync-history">
+                {% if last_10 and last_10|length > 0 %}
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Server</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in last_10 %}
+                            <tr>
+                                <td>{{ entry.server }}</td>
+                                <td>{{ entry.time }}</td>
+                                <td>
+                                    {% if entry.status == "success" %}
+                                        <span class="badge bg-success">Success</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ entry.details }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="alert alert-info">No sync history found.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function refreshDashboard() {
+    try {
+        const res = await fetch("/dashboard/data");
+        const data = await res.json();
+
+        // Update last sync details
+        const last = data.last_detail;
+        if (last) {
+            document.getElementById("last-sync").innerHTML = `
+                <p><strong>Server:</strong> ${last.server}</p>
+                <p><strong>Time:</strong> ${last.time}</p>
+                <p><strong>Status:</strong>
+                    ${last.status === "success"
+                        ? '<span class="badge bg-success">Success</span>'
+                        : '<span class="badge bg-danger">Failed</span>'}
+                </p>
+                <p><strong>Details:</strong> ${last.details}</p>`;
+        } else {
+            document.getElementById("last-sync").innerHTML =
+                '<div class="alert alert-info">No syncs recorded yet.</div>';
+        }
+
+        // Update sync history
+        if (data.last_10.length > 0) {
+            let table = `<table class="table table-bordered table-hover">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Server</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            data.last_10.forEach(entry => {
+                table += `
+                    <tr>
+                        <td>${entry.server}</td>
+                        <td>${entry.time}</td>
+                        <td>
+                            ${entry.status === "success"
+                                ? '<span class="badge bg-success">Success</span>'
+                                : '<span class="badge bg-danger">Failed</span>'}
+                        </td>
+                        <td>${entry.details}</td>
+                    </tr>`;
+            });
+
+            table += "</tbody></table>";
+            document.getElementById("sync-history").innerHTML = table;
+        } else {
+            document.getElementById("sync-history").innerHTML =
+                '<div class="alert alert-info">No sync history found.</div>';
+        }
+
+    } catch (err) {
+        console.error("Failed to refresh dashboard:", err);
+    }
+}
+
+// Auto-refresh every 5 seconds
+setInterval(refreshDashboard, 3000);
+</script>
+</body>
+</html>
