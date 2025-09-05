@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Schedule Sync</title>
+    <title>Schedule Sync - SQL Sync</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -13,13 +13,13 @@
 
     <!-- Main Content -->
     <div class="container-fluid" style="margin-left:260px; padding:20px;">
+
+        <!-- Scheduling Form -->
         <div class="card shadow-lg border-0 rounded-3 mb-4">
             <div class="card-header bg-dark text-white">
                 <h4 class="mb-0">⚙️ Schedule Sync</h4>
             </div>
             <div class="card-body">
-
-                <!-- Scheduling Form -->
                 <form method="POST" class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Select SQL Server</label>
@@ -77,6 +77,9 @@
                                 <th>Last Run</th>
                                 <th>Status</th>
                                 <th>Error</th>
+                                {% if role in ['admin', 'operator'] %}
+                                <th>Actions</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -91,16 +94,23 @@
                                     {% elif job.status == "failed" %}
                                         <span class="badge bg-danger">Failed</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">{{ job.status }}</span>
+                                        <span class="badge bg-secondary">{{ job.status or "-" }}</span>
                                     {% endif %}
                                 </td>
+                                <td>{{ job.error or "-" }}</td>
+                                {% if role in ['admin', 'operator'] %}
                                 <td>
-                                    {% if job.error %}
-                                        <span class="text-danger">{{ job.error }}</span>
-                                    {% else %}
-                                        -
-                                    {% endif %}
+                                    <!-- Optional Edit button -->
+                                    <a href="#" class="btn btn-sm btn-warning">Edit</a>
+
+                                    <!-- Delete Schedule Form -->
+                                    <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}" 
+                                          method="POST" style="display:inline;" 
+                                          onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
                                 </td>
+                                {% endif %}
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -110,11 +120,12 @@
                 {% endif %}
             </div>
         </div>
+
     </div>
 </div>
 
 <script>
-    // Toggle fields based on schedule type
+    // Toggle interval/daily fields
     const scheduleType = document.getElementById('scheduleType');
     const intervalFields = document.getElementById('intervalFields');
     const dailyFields = document.getElementById('dailyFields');
@@ -129,10 +140,10 @@
         }
     });
 
-    // Auto-refresh jobs table every 10 seconds
+    // Auto-refresh table every 5 seconds
     setInterval(() => {
         location.reload();
-    }, 10000);
+    }, 5000);
 </script>
 </body>
 </html>

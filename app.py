@@ -4,7 +4,7 @@ from hybrid_sync import process_sql_server_hybrid
 from scheduler import schedule_interval_sync, schedule_daily_sync, get_schedules
 from manage_server import load_config, save_config
 from dashboard import get_last_10_syncs, get_last_sync_details, log_sync
-from seeschedule import see_schedule_page
+from seeschedule import see_schedule_page , delete_schedule 
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # required for flash + sessions
@@ -41,7 +41,7 @@ def create_user_route():
         password = request.form["password"]
         role = request.form["role"]
         create_user(username, password, role)
-        flash(f"✅ User {username} created with role {role}", "success")
+        flash(f"✅ User {username} created with role {role}", "user")
         return redirect(url_for("index"))
     return render_template("create_user.html")
 
@@ -178,6 +178,16 @@ def view_schedules():
     return see_schedule_page()
 
 
+@app.route("/delete-schedule/<server_name>/<job_type>", methods=["POST"])
+@require_role(["admin", "operator"])
+def delete_schedule_route(server_name, job_type):
+    """Delete a schedule from DB, memory, and scheduler."""
+    try:
+        delete_schedule(server_name, job_type)
+        flash(f"✅ Schedule '{job_type}' for {server_name} deleted!", "success")
+    except Exception as e:
+        flash(f"❌ Failed to delete schedule: {e}", "danger")
+    return redirect(url_for("schedule_page"))
 # ------------------ MAIN ------------------
 if __name__ == "__main__":
     app.run(debug=True)

@@ -13,7 +13,7 @@
         <h2 class="mb-4">⏰ Scheduled Jobs</h2>
 
         {% if jobs and jobs|length > 0 %}
-            <table class="table table-bordered table-hover">
+            <table class="table table-bordered table-hover align-middle">
                 <thead class="table-secondary">
                     <tr>
                         <th>Server</th>
@@ -44,8 +44,15 @@
                         <td>{{ job.error or '-' }}</td>
                         {% if role in ['admin', 'operator'] %}
                         <td>
+                            <!-- Edit placeholder -->
                             <a href="#" class="btn btn-sm btn-warning">Edit</a>
-                            <a href="#" class="btn btn-sm btn-danger">Delete</a>
+
+                            <!-- Delete Schedule Form -->
+                            <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}"
+                                  method="POST" style="display:inline;"
+                                  onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
                         </td>
                         {% endif %}
                     </tr>

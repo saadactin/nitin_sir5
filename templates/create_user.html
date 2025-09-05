@@ -8,7 +8,6 @@
 <body class="bg-light">
 
 <div class="d-flex">
-  <!-- Include Sidebar -->
   {% include 'sidebar.html' %}
 
   <div class="container mt-5" style="margin-left: 260px;">
@@ -18,14 +17,16 @@
           <div class="card-body">
             <h4 class="text-center mb-4">👤 Create User</h4>
 
-            <!-- Flash messages only related to user creation -->
+            <!-- Flash messages only for user creation -->
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 {% for category, message in messages %}
+                  {% if category == 'user' %}
                   <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                   </div>
+                  {% endif %}
                 {% endfor %}
               {% endif %}
             {% endwith %}

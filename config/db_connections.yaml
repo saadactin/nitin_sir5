@@ -6,12 +6,11 @@ postgresql:
   schema: CompanyDB
   username: migration_user
 sqlservers:
-  server1:
+  server2:
     check_new_databases: true
     password: root
     port: 1433
-    server: localhost
-    skip_databases:
-    - Emc_migrationTest2
+    server: 192.168.18.124
+    skip_databases: []
     sync_mode: hybrid
-    username: SA
+    username: sa

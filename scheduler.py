@@ -197,6 +197,25 @@ def load_schedules_from_db():
             hour, minute = map(int, time_str.split(":"))
             schedule_daily_sync(server_name, hour, minute)
 
+def delete_schedule(server_name, job_type):
+    """Delete a schedule from DB and memory"""
+    global scheduled_jobs
+    # Remove from memory
+    scheduled_jobs = [job for job in scheduled_jobs if not (job["server"] == server_name and job["type"] == job_type)]
+    
+    # Remove from DB
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM metrics_sync_tables.schedules
+        WHERE server_name = %s AND job_type = %s
+    """, (server_name, job_type))
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    # Also clear from `schedule` lib jobs
+    schedule.clear(server_name)  # clear jobs tagged with server_name
 
 # ✅ Auto-load existing schedules on startup
 load_schedules_from_db()
