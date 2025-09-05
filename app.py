@@ -1,14 +1,33 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
 from hybrid_sync import process_sql_server_hybrid
-from scheduler import schedule_interval_sync, schedule_daily_sync, get_schedules
 from manage_server import load_config, save_config
 from dashboard import get_last_10_syncs, get_last_sync_details, log_sync
 from seeschedule import see_schedule_page , delete_schedule 
-
+from scheduler_utils import (
+    schedule_interval_sync,
+    schedule_daily_sync,
+    delete_schedule,
+    update_schedule,
+    get_schedules
+)
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # required for flash + sessions
 init_admin_user()
+
+def require_role(allowed_roles):
+    def decorator(f):
+        def wrapper(*args, **kwargs):
+            role = session.get("role")
+            if role not in allowed_roles:
+                flash("❌ Access denied", "danger")
+                return redirect(url_for("view_schedules"))
+            return f(*args, **kwargs)
+        wrapper.__name__ = f.__name__
+        return wrapper
+    return decorator
+
+
 
 # ------------------ AUTH ROUTES ------------------
 @app.route("/login", methods=["GET", "POST"])
@@ -118,32 +137,6 @@ def delete_server_route(server_name):
 
 
 
-@app.route("/schedule", methods=["GET", "POST"])
-@require_role(["admin", "operator"])
-def schedule_page():
-    """Schedule sync jobs + view jobs"""
-    config = load_config()
-    servers = list(config.get("sqlservers", {}).keys())
-
-    if request.method == "POST":
-        schedule_type = request.form.get("schedule_type")
-        server_name = request.form.get("server_name")
-        try:
-            if schedule_type == "interval":
-                minutes = int(request.form.get("minutes"))
-                schedule_interval_sync(server_name, minutes)
-            elif schedule_type == "daily":
-                hour = int(request.form.get("hour"))
-                minute = int(request.form.get("minute"))
-                schedule_daily_sync(server_name, hour, minute)
-            flash(f"✅ Schedule set successfully for {server_name}", "success")
-        except Exception as e:
-            flash(f"❌ Failed to set schedule: {e}", "danger")
-
-        return redirect(url_for("schedule_page"))
-
-    jobs = get_schedules()
-    return render_template("schedule.html", servers=servers, jobs=jobs)
 
 
 @app.route("/dashboard")
@@ -169,25 +162,77 @@ def dashboard_data():
         "last_detail": get_last_sync_details(),
         "last_10": get_last_10_syncs(),
     }
+# ------------------ Schedule Routes ------------------
 
+@app.route("/schedule", methods=["GET", "POST"])
+@require_role(["admin", "operator"])
+def schedule_page():
+    """Create a new schedule"""
+    config = load_config()
+    servers = list(config.get("sqlservers", {}).keys())
+
+    if request.method == "POST":
+        schedule_type = request.form.get("schedule_type")
+        server_name = request.form.get("server_name")
+        try:
+            if schedule_type == "interval":
+                minutes = int(request.form.get("minutes"))
+                schedule_interval_sync(server_name, minutes)
+            elif schedule_type == "daily":
+                hour = int(request.form.get("hour"))
+                minute = int(request.form.get("minute"))
+                schedule_daily_sync(server_name, hour, minute)
+            flash(f"✅ Schedule set for {server_name}", "success")
+        except Exception as e:
+            flash(f"❌ Failed to set schedule: {e}", "danger")
+        return redirect(url_for("schedule_page"))
+
+    jobs = get_schedules()
+    return render_template("schedule.html", servers=servers, jobs=jobs, role=session.get("role"))
 
 @app.route("/view-schedules")
 @require_role(["admin", "operator", "viewer"])
 def view_schedules():
-    """Dedicated page for all users to see schedules"""
-    return see_schedule_page()
+    """View all schedules"""
+    jobs = get_schedules()
+    return render_template("see_schedule.html", jobs=jobs, role=session.get("role"))
 
+@app.route("/edit-schedule/<server_name>/<job_type>", methods=["GET", "POST"])
+@require_role(["admin", "operator"])
+def edit_schedule_page(server_name, job_type):
+    """Edit an existing schedule"""
+    jobs = get_schedules()
+    job = next((j for j in jobs if j["server"] == server_name and j["type"] == job_type), None)
+    if not job:
+        flash(f"❌ Schedule not found", "danger")
+        return redirect(url_for("view_schedules"))
+
+    if request.method == "POST":
+        try:
+            if job_type.startswith("interval"):
+                minutes = int(request.form.get("minutes"))
+                update_schedule(server_name, job_type, minutes=minutes)
+            elif job_type.startswith("daily"):
+                hour = int(request.form.get("hour"))
+                minute = int(request.form.get("minute"))
+                update_schedule(server_name, job_type, hour=hour, minute=minute)
+            flash(f"✅ Schedule updated for {server_name}", "success")
+            return redirect(url_for("view_schedules"))
+        except Exception as e:
+            flash(f"❌ Failed to update schedule: {e}", "danger")
+
+    return render_template("edit_schedule.html", job=job)
 
 @app.route("/delete-schedule/<server_name>/<job_type>", methods=["POST"])
 @require_role(["admin", "operator"])
 def delete_schedule_route(server_name, job_type):
-    """Delete a schedule from DB, memory, and scheduler."""
+    """Delete a schedule"""
     try:
         delete_schedule(server_name, job_type)
-        flash(f"✅ Schedule '{job_type}' for {server_name} deleted!", "success")
+        flash(f"✅ Schedule deleted for {server_name}", "success")
     except Exception as e:
         flash(f"❌ Failed to delete schedule: {e}", "danger")
-    return redirect(url_for("schedule_page"))
+    return redirect(url_for("view_schedules"))
 # ------------------ MAIN ------------------
 if __name__ == "__main__":
     app.run(debug=True)

@@ -2,67 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>View Schedules - SQL Sync</title>
+    <title>Scheduled Jobs - SQL Sync</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .badge-status {
+            font-size: 0.9rem;
+            padding: 0.5em 0.75em;
+        }
+        .action-btns a, .action-btns button {
+            margin-right: 4px;
+        }
+    </style>
 </head>
 <body>
 <div class="d-flex">
     {% include 'sidebar.html' %}
 
     <div class="container-fluid" style="margin-left:260px; padding:20px;">
-        <h2 class="mb-4">⏰ Scheduled Jobs</h2>
+        <h2 class="mb-4"><i class="bi bi-clock-history"></i> Scheduled Jobs</h2>
 
         {% if jobs and jobs|length > 0 %}
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-secondary">
-                    <tr>
-                        <th>Server</th>
-                        <th>Type</th>
-                        <th>Last Run</th>
-                        <th>Status</th>
-                        <th>Error</th>
-                        {% if role in ['admin', 'operator'] %}
-                        <th>Actions</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for job in jobs %}
-                    <tr>
-                        <td>{{ job.server }}</td>
-                        <td>{{ job.type }}</td>
-                        <td>{{ job.last_run or '-' }}</td>
-                        <td>
-                            {% if job.status == 'success' %}
-                                <span class="badge bg-success">Success</span>
-                            {% elif job.status == 'failed' %}
-                                <span class="badge bg-danger">Failed</span>
-                            {% else %}
-                                <span class="badge bg-secondary">{{ job.status or '-' }}</span>
+        <div class="card p-3 mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Server</th>
+                            <th>Type</th>
+                            <th>Last Run</th>
+                            <th>Status</th>
+                            <th>Error</th>
+                            {% if role in ['admin', 'operator'] %}
+                            <th>Actions</th>
                             {% endif %}
-                        </td>
-                        <td>{{ job.error or '-' }}</td>
-                        {% if role in ['admin', 'operator'] %}
-                        <td>
-                            <!-- Edit placeholder -->
-                            <a href="#" class="btn btn-sm btn-warning">Edit</a>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in jobs %}
+                        <tr>
+                            <td>{{ job.server }}</td>
+                            <td>{{ job.type }}</td>
+                            <td>{{ job.last_run or '-' }}</td>
+                            <td>
+                                {% if job.status == 'success' %}
+                                    <span class="badge bg-success badge-status">Success</span>
+                                {% elif job.status == 'failed' %}
+                                    <span class="badge bg-danger badge-status">Failed</span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-status">{{ job.status or '-' }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ job.error or '-' }}</td>
+                            {% if role in ['admin', 'operator'] %}
+                            <td class="action-btns">
+                                <a href="{{ url_for('edit_schedule_page', server_name=job.server, job_type=job.type) }}" 
+                                   class="btn btn-sm btn-warning" title="Edit">
+                                   <i class="bi bi-pencil-square"></i>
+                                </a>
 
-                            <!-- Delete Schedule Form -->
-                            <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}"
-                                  method="POST" style="display:inline;"
-                                  onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
-                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                            </form>
-                        </td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                                <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}" 
+                                      method="POST" style="display:inline;"
+                                      onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         {% else %}
-            <div class="alert alert-info">No schedules found.</div>
+            <div class="alert alert-info text-center"><i class="bi bi-info-circle"></i> No schedules found.</div>
         {% endif %}
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

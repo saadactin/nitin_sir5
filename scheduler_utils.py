@@ -1,61 +1,51 @@
-import schedule
-import time
+# scheduler_utils.py
+import schedule as sched
 import threading
+import time
 import datetime
+from db_utils import get_pg_connection, init_pg_schema
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config
 from dashboard import log_sync
-from db_utils import get_pg_connection, init_pg_schema
 
-# Ensure schema + table exist at startup
+# Initialize DB schema
 init_pg_schema()
 
-# In-memory active jobs (needed for schedule lib)
+# In-memory scheduled jobs
 scheduled_jobs = []
-
-# Background thread (singleton)
 _scheduler_thread = None
 
-
+# ---------------- Scheduler Loop ----------------
 def run_scheduler():
-    """Background scheduler loop"""
     while True:
-        schedule.run_pending()
+        sched.run_pending()
         time.sleep(1)
 
-
 def _start_scheduler_thread():
-    """Ensure scheduler thread is running only once"""
     global _scheduler_thread
     if _scheduler_thread is None or not _scheduler_thread.is_alive():
         _scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
         _scheduler_thread.start()
 
-
+# ---------------- DB Utilities ----------------
 def _save_schedule_to_db(server_name, job_type, last_run, status, error):
-    """Upsert a schedule row in Postgres"""
     conn = get_pg_connection()
     cur = conn.cursor()
-
-    # Delete old entry then insert fresh (simple upsert)
     cur.execute("""
         DELETE FROM metrics_sync_tables.schedules
         WHERE server_name = %s AND job_type = %s
     """, (server_name, job_type))
-
     cur.execute("""
         INSERT INTO metrics_sync_tables.schedules
             (server_name, job_type, last_run, status, error)
         VALUES (%s, %s, %s, %s, %s)
     """, (server_name, job_type, last_run, status, error))
-
     conn.commit()
     cur.close()
     conn.close()
 
-
+# ---------------- Job Wrapper ----------------
 def _job_wrapper(server_name, server_conf, job_type):
-    """Wrapper to run sync and log results"""
     status = "success"
     error_message = None
     timestamp = datetime.datetime.now()
@@ -76,87 +66,81 @@ def _job_wrapper(server_name, server_conf, job_type):
             })
             break
 
-    # ✅ Log to dashboard history
     log_sync(server_name, status, error_message)
-
-    # ✅ Persist to DB
     _save_schedule_to_db(server_name, job_type, timestamp, status, error_message)
 
-
 def _add_job_metadata(server_name, job_type):
-    """Add a job entry in memory + DB when scheduled"""
     for job in scheduled_jobs:
         if job["server"] == server_name and job["type"] == job_type:
-            return  # already exists
-
-    job_entry = {
+            return
+    scheduled_jobs.append({
         "server": server_name,
         "type": job_type,
         "last_run": None,
         "status": "pending",
         "error": None
-    }
-    scheduled_jobs.append(job_entry)
-
-    # Insert into DB (pending status)
+    })
     _save_schedule_to_db(server_name, job_type, None, "pending", None)
 
-
+# ---------------- Scheduling ----------------
 def schedule_interval_sync(server_name, minutes):
-    """Schedule job every N minutes"""
     config = load_config()
     server_conf = config['sqlservers'].get(server_name)
     if not server_conf:
         raise ValueError(f"Server {server_name} not found in config")
-
     job_type = f"interval_{minutes}m"
 
-    schedule.every(minutes).minutes.do(
+    sched.every(minutes).minutes.do(
         _job_wrapper, server_name, server_conf, job_type
     ).tag(server_name)
 
     _add_job_metadata(server_name, job_type)
     _start_scheduler_thread()
 
-
 def schedule_daily_sync(server_name, hour, minute):
-    """Schedule job daily at HH:MM"""
     config = load_config()
     server_conf = config['sqlservers'].get(server_name)
     if not server_conf:
         raise ValueError(f"Server {server_name} not found in config")
-
     time_str = f"{hour:02d}:{minute:02d}"
     job_type = f"daily_{time_str}"
 
-    schedule.every().day.at(time_str).do(
+    sched.every().day.at(time_str).do(
         _job_wrapper, server_name, server_conf, job_type
     ).tag(server_name)
 
     _add_job_metadata(server_name, job_type)
     _start_scheduler_thread()
 
-
-def clear_schedules():
-    """Clear all scheduled jobs (memory + DB)"""
-    schedule.clear()
-    scheduled_jobs.clear()
-
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("TRUNCATE metrics_sync_tables.schedules;")
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
-def get_schedules():
-    """Return list of schedules directly from DB (authoritative source)"""
+def delete_schedule(server_name, job_type):
+    global scheduled_jobs
+    scheduled_jobs = [job for job in scheduled_jobs if not (job["server"] == server_name and job["type"] == job_type)]
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT server_name,
-               job_type,
+        DELETE FROM metrics_sync_tables.schedules
+        WHERE server_name = %s AND job_type = %s
+    """, (server_name, job_type))
+    conn.commit()
+    cur.close()
+    conn.close()
+    sched.clear(server_name)
+
+def update_schedule(server_name, job_type, **kwargs):
+    delete_schedule(server_name, job_type)
+    if job_type.startswith("interval"):
+        minutes = kwargs.get("minutes")
+        schedule_interval_sync(server_name, minutes)
+    elif job_type.startswith("daily"):
+        hour = kwargs.get("hour")
+        minute = kwargs.get("minute")
+        schedule_daily_sync(server_name, hour, minute)
+
+def get_schedules():
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT server_name, job_type,
                COALESCE(last_run::text, '-') AS last_run,
                status,
                COALESCE(error, '-') AS error
@@ -166,21 +150,9 @@ def get_schedules():
     rows = cur.fetchall()
     cur.close()
     conn.close()
-
-    return [
-        {
-            "server": r[0],
-            "type": r[1],
-            "last_run": r[2],
-            "status": r[3],
-            "error": r[4]
-        }
-        for r in rows
-    ]
-
+    return [{"server": r[0], "type": r[1], "last_run": r[2], "status": r[3], "error": r[4]} for r in rows]
 
 def load_schedules_from_db():
-    """Reload schedules from DB after restart"""
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute("SELECT server_name, job_type FROM metrics_sync_tables.schedules;")
@@ -197,25 +169,5 @@ def load_schedules_from_db():
             hour, minute = map(int, time_str.split(":"))
             schedule_daily_sync(server_name, hour, minute)
 
-def delete_schedule(server_name, job_type):
-    """Delete a schedule from DB and memory"""
-    global scheduled_jobs
-    # Remove from memory
-    scheduled_jobs = [job for job in scheduled_jobs if not (job["server"] == server_name and job["type"] == job_type)]
-    
-    # Remove from DB
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        DELETE FROM metrics_sync_tables.schedules
-        WHERE server_name = %s AND job_type = %s
-    """, (server_name, job_type))
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    # Also clear from `schedule` lib jobs
-    schedule.clear(server_name)  # clear jobs tagged with server_name
-
-# ✅ Auto-load existing schedules on startup
+# Auto-load schedules
 load_schedules_from_db()
