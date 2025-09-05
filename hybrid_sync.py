@@ -21,8 +21,6 @@ logging.basicConfig(
 )
 
 # Load DB connection info from YAML
-import os
-
 CONFIG_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), 'config/db_connections.yaml')
 )
@@ -39,8 +37,10 @@ pg_conf = config['postgresql']
 BATCH_SIZE = int(os.environ.get('HYBRID_SYNC_BATCH_SIZE', '10000'))
 
 
+# ------------------------- Connections -------------------------
+
 def get_sql_connection(conf, database=None):
-    """Get connection to SQL Server"""
+    """Get connection to SQL Server using pyodbc (used for discovery/metadata)."""
     conn_str = (
         f"DRIVER={{ODBC Driver 17 for SQL Server}};"
         f"SERVER={conf['server']};"
@@ -52,6 +52,20 @@ def get_sql_connection(conf, database=None):
     return pyodbc.connect(conn_str)
 
 
+def get_sqlalchemy_engine(conf, database=None):
+    """Get SQLAlchemy engine for SQL Server (used for Pandas read_sql)."""
+    username = conf['username']
+    password = conf['password']
+    server = conf['server']
+    port = conf.get('port', 1433)
+    db = database if database else "master"
+    conn_url = (
+        f"mssql+pyodbc://{username}:{password}@{server},{port}/{db}"
+        "?driver=ODBC+Driver+17+for+SQL+Server"
+    )
+    return create_engine(conn_url, fast_executemany=True)
+
+
 def get_pg_engine():
     """Get PostgreSQL engine"""
     conn_str = (
@@ -60,30 +74,25 @@ def get_pg_engine():
     return create_engine(conn_str)
 
 
-# ------------------------- Param coercion for pyodbc -------------------------
+# ------------------------- Param coercion -------------------------
 
 def _coerce_param(value):
     """Coerce numpy/pandas types to native Python types for pyodbc parameters."""
     if value is None:
         return None
-    # Pandas Timestamp
     if isinstance(value, pd.Timestamp):
         return value.to_pydatetime()
-    # Numpy scalars or pandas dtypes expose .item()
     try:
         if hasattr(value, 'item'):
             return value.item()
     except Exception:
         pass
-    # Attempt numeric coercion from string
     if isinstance(value, str):
         try:
             if value.isdigit() or (value.startswith('-') and value[1:].isdigit()):
                 return int(value)
-            # float
             return float(value)
         except Exception:
-            # datetime ISO
             try:
                 return pd.to_datetime(value).to_pydatetime()
             except Exception:
@@ -134,13 +143,11 @@ def create_table_sync_tracking(engine):
 
 def get_sync_status(engine, server_name, database_name):
     """Get sync status for a database"""
-    query = (
-        """
+    query = """
     SELECT last_full_sync, last_incremental_sync, sync_status
     FROM sync_database_status
     WHERE server_name = :server_name AND database_name = :database_name
     """
-    )
     with engine.connect() as conn:
         result = conn.execute(
             text(query), {"server_name": server_name, "database_name": database_name}
@@ -153,8 +160,7 @@ def update_sync_status(engine, server_name, database_name, sync_type, sync_statu
     """Update sync status for a database"""
     now = datetime.now()
     if sync_type == 'full':
-        query = (
-            """
+        query = """
         INSERT INTO sync_database_status (server_name, database_name, last_full_sync, sync_status, updated_at)
         VALUES (:server_name, :database_name, :now, :sync_status, :now)
         ON CONFLICT (server_name, database_name) 
@@ -163,10 +169,8 @@ def update_sync_status(engine, server_name, database_name, sync_type, sync_statu
             sync_status = EXCLUDED.sync_status,
             updated_at = EXCLUDED.updated_at
         """
-        )
-    else:  # incremental
-        query = (
-            """
+    else:
+        query = """
         INSERT INTO sync_database_status (server_name, database_name, last_incremental_sync, sync_status, updated_at)
         VALUES (:server_name, :database_name, :now, :sync_status, :now)
         ON CONFLICT (server_name, database_name) 
@@ -175,7 +179,6 @@ def update_sync_status(engine, server_name, database_name, sync_type, sync_statu
             sync_status = EXCLUDED.sync_status,
             updated_at = EXCLUDED.updated_at
         """
-        )
     with engine.connect() as conn:
         conn.execute(
             text(query),
@@ -191,13 +194,11 @@ def update_sync_status(engine, server_name, database_name, sync_type, sync_statu
 
 def get_last_synced_pk(engine, server_name, database_name, schema, table):
     """Get last synced primary key/timestamp value as string"""
-    query = (
-        """
+    query = """
     SELECT last_pk_value
     FROM sync_table_status
     WHERE server_name = :server_name AND database_name = :database_name AND schema_name = :schema AND table_name = :table
     """
-    )
     with engine.connect() as conn:
         result = conn.execute(
             text(query),
@@ -216,8 +217,7 @@ def update_last_synced_pk(engine, server_name, database_name, schema, table, pk_
     """Update last synced value; store as string for portability"""
     if hasattr(pk_value, 'item'):
         pk_value = pk_value.item()
-    query = (
-        """
+    query = """
     INSERT INTO sync_table_status (server_name, database_name, schema_name, table_name, last_pk_value, updated_at)
     VALUES (:server_name, :database_name, :schema, :table, :pk_value, :now)
     ON CONFLICT (server_name, database_name, schema_name, table_name) 
@@ -225,7 +225,6 @@ def update_last_synced_pk(engine, server_name, database_name, schema, table, pk_
         last_pk_value = EXCLUDED.last_pk_value,
         updated_at = EXCLUDED.updated_at
     """
-    )
     with engine.connect() as conn:
         conn.execute(
             text(query),
@@ -241,7 +240,7 @@ def update_last_synced_pk(engine, server_name, database_name, schema, table, pk_
         conn.commit()
 
 
-# ------------------------- Helpers: discovery and guards -------------------------
+# ------------------------- Helpers: discovery -------------------------
 
 def get_all_databases(conn):
     """Get list of all user databases on the server"""
@@ -250,7 +249,7 @@ def get_all_databases(conn):
     query = """
     SELECT name 
     FROM sys.databases 
-    WHERE state = 0  -- Only online databases
+    WHERE state = 0  
     AND name NOT IN ('master', 'tempdb', 'model', 'msdb', 'distribution', 'ReportServer', 'ReportServerTempDB')
     ORDER BY name
     """
@@ -261,7 +260,6 @@ def get_all_databases(conn):
 
 
 def should_skip_database(db_name, conf):
-    """Check if database should be skipped"""
     skip_databases = conf.get('skip_databases', [])
     if not skip_databases:
         return False
@@ -272,7 +270,6 @@ def should_skip_database(db_name, conf):
 
 
 def should_skip_table(schema, table):
-    """Skip SQL Server system tables/schemas"""
     if schema.lower() == 'sys':
         return True
     system_tables = {
@@ -282,7 +279,7 @@ def should_skip_table(schema, table):
     return f"{schema}.{table}" in system_tables
 
 
-# ------------------------- Schema evolution on PostgreSQL -------------------------
+# ------------------------- Schema evolution (Postgres) -------------------------
 
 def get_pg_columns(engine, schema, table_name):
     insp = inspect(engine)
@@ -306,13 +303,11 @@ def infer_pg_type_from_series(series: pd.Series) -> str:
 
 
 def ensure_table_and_columns(engine, schema, table_name, df: pd.DataFrame):
-    """Ensure schema/table exist and add any new columns (no destructive changes)."""
     create_schema_if_not_exists(engine, schema)
     existing_cols = get_pg_columns(engine, schema, table_name)
     if not existing_cols:
         create_table_with_proper_types(engine, schema, table_name, df)
         return
-    # Add missing columns
     missing = [c for c in df.columns if c not in existing_cols]
     if not missing:
         return
@@ -329,7 +324,7 @@ def ensure_table_and_columns(engine, schema, table_name, df: pd.DataFrame):
         logging.info(f"Added columns on {schema}.{table_name}: {missing}")
 
 
-# ------------------------- Source table helpers -------------------------
+# ------------------------- Source helpers (SQL Server) -------------------------
 
 def get_primary_key_info(conn, schema, table):
     try:
@@ -418,59 +413,53 @@ def write_audit_csv(server_clean, db_name, schema, table, df: pd.DataFrame):
     return filepath
 
 
-def batch_fetch_new_rows(conn, schema, table, sync_column, last_value, batch_size):
+def batch_fetch_new_rows(engine, schema, table, sync_column, last_value, batch_size):
     """Yield batches of new rows ordered by sync_column for resume capability."""
     next_marker = last_value
     while True:
-        # TOP cannot be parameterized; ensure batch_size is int
         query = f"SELECT TOP ({int(batch_size)}) * FROM [{schema}].[{table}]"
+        params = {}
         if next_marker is None:
             query += f" ORDER BY [{sync_column}] ASC"
-            df = pd.read_sql(query, conn)
+            df = pd.read_sql(query, engine)
         else:
-            query += f" WHERE [{sync_column}] > ? ORDER BY [{sync_column}] ASC"
-            df = pd.read_sql(query, conn, params=[_coerce_param(next_marker)])
+            query += f" WHERE [{sync_column}] > :marker ORDER BY [{sync_column}] ASC"
+            df = pd.read_sql(text(query), engine, params={"marker": _coerce_param(next_marker)})
         if df.empty:
             break
         next_marker = df[sync_column].max()
         yield df, next_marker
 
 
-def full_sync_table(engine, server_conf, db_name, server_clean, conn, schema, table):
+def full_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table):
     if should_skip_table(schema, table):
         return 0
-    # Pull all rows (non-destructive write)
     query = f"SELECT * FROM [{schema}].[{table}]"
-    df = pd.read_sql(query, conn)
+    df = pd.read_sql(query, sql_engine)
     if df.empty:
         return 0
     schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
     table_name = f"{schema}_{table}"
-    ensure_table_and_columns(engine, schema_name, table_name, df)
-    # Append only; do not replace
-    df.to_sql(table_name, engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE, method=None)
-    # Determine sync column and update checkpoint
+    ensure_table_and_columns(pg_engine, schema_name, table_name, df)
+    df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
     pk_columns = get_primary_key_info(conn, schema, table)
     ts_col = get_timestamp_column(conn, schema, table)
     uid_col = get_unique_identifier_column(conn, schema, table)
     sync_col = pk_columns[0] if pk_columns else (ts_col if ts_col else uid_col)
     if sync_col and sync_col in df.columns:
-        update_last_synced_pk(engine, server_conf['server'], db_name, schema, table, df[sync_col].max())
-    # Write audit file
-    write_audit_csv(server_clean, db_name, schema, table, df.head(0))  # header snapshot
+        update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, df[sync_col].max())
+    write_audit_csv(server_clean, db_name, schema, table, df.head(0))
     return len(df)
 
 
-def incremental_sync_table(engine, server_conf, db_name, server_clean, conn, schema, table):
+def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table):
     if should_skip_table(schema, table):
         return 0
-    # Detect truncate and skip: if previously synced and now empty
     current_count = get_table_row_count(conn, schema, table)
-    last_value = get_last_synced_pk(engine, server_conf['server'], db_name, schema, table)
+    last_value = get_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table)
     if last_value is not None and current_count == 0:
         logging.info(f"Detected empty source (possible TRUNCATE) for {schema}.{table}; skipping to preserve target")
         return 0
-    # Choose sync strategy
     pk_columns = get_primary_key_info(conn, schema, table)
     ts_col = get_timestamp_column(conn, schema, table)
     uid_col = get_unique_identifier_column(conn, schema, table)
@@ -479,21 +468,18 @@ def incremental_sync_table(engine, server_conf, db_name, server_clean, conn, sch
     table_name = f"{schema}_{table}"
     processed = 0
     if sync_col:
-        # Batched keyset pagination for resume and non-destructive insert-only
-        for df, next_marker in batch_fetch_new_rows(conn, schema, table, sync_col, last_value, BATCH_SIZE):
-            ensure_table_and_columns(engine, schema_name, table_name, df)
-            df.to_sql(table_name, engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE, method=None)
-            update_last_synced_pk(engine, server_conf['server'], db_name, schema, table, next_marker)
+        for df, next_marker in batch_fetch_new_rows(sql_engine, schema, table, sync_col, last_value, BATCH_SIZE):
+            ensure_table_and_columns(pg_engine, schema_name, table_name, df)
+            df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
+            update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, next_marker)
             processed += len(df)
     else:
-        # No suitable sync column -> smart append only new rows by hashing against existing
         query = f"SELECT * FROM [{schema}].[{table}]"
-        df = pd.read_sql(query, conn)
+        df = pd.read_sql(query, sql_engine)
         if df.empty:
             return 0
-        ensure_table_and_columns(engine, schema_name, table_name, df)
-        # Build row_hash for comparison
-        with engine.connect() as pg_conn:
+        ensure_table_and_columns(pg_engine, schema_name, table_name, df)
+        with pg_engine.connect() as pg_conn:
             try:
                 dst_df = pd.read_sql(f'SELECT * FROM "{schema_name}"."{table_name}"', pg_conn)
             except Exception:
@@ -503,7 +489,7 @@ def incremental_sync_table(engine, server_conf, db_name, server_clean, conn, sch
             return 0
         src = df[common].fillna('')
         if dst_df.empty:
-            df.to_sql(table_name, engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
+            df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
             processed = len(df)
         else:
             dst = dst_df[common].fillna('')
@@ -511,53 +497,77 @@ def incremental_sync_table(engine, server_conf, db_name, server_clean, conn, sch
             dst['row_hash'] = dst.apply(lambda x: hash(tuple(x)), axis=1)
             new_rows_idx = src[~src['row_hash'].isin(dst['row_hash'])].index
             if len(new_rows_idx) > 0:
-                df.iloc[new_rows_idx].to_sql(table_name, engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
+                df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
                 processed = len(new_rows_idx)
     return processed
 
-
-def full_sync_database(conn, db_name, server_conf, server_clean, output_dir, engine):
-    logging.info(f"Starting FULL sync for database: {db_name}")
-    cursor = conn.cursor()
+def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_dir, pg_engine):
+    logging.info(f"=== Starting FULL sync for database: {db_name} ===")
+    cursor = sql_engine.raw_connection().cursor()
     tables = []
     for row in cursor.tables(tableType='TABLE'):
         tables.append((row.table_schem, row.table_name))
+
     if not tables:
         logging.warning(f"No tables found in {db_name}.")
         return 0
+
     processed_count = 0
     for schema, table in tables:
         try:
-            processed = full_sync_table(engine, server_conf, db_name, server_clean, conn, schema, table)
+            logging.info(f"[FULL SYNC] Processing {schema}.{table}")
+            processed = full_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, cursor, schema, table)
             processed_count += 1 if processed > 0 else 0
         except Exception as e:
             logging.error(f"Failed to export/load {schema}.{table}: {e}")
+    logging.info(f"=== FULL sync completed for {db_name}, {processed_count}/{len(tables)} tables processed ===")
     return processed_count
 
 
-def incremental_sync_database(conn, db_name, server_conf, server_clean, output_dir, engine):
-    logging.info(f"Starting INCREMENTAL sync for database: {db_name}")
+def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_clean, output_dir, pg_engine):
+    logging.info(f"=== Starting INCREMENTAL sync for database: {db_name} ===")
     cursor = conn.cursor()
     tables = []
     for row in cursor.tables(tableType='TABLE'):
         tables.append((row.table_schem, row.table_name))
+
     if not tables:
         logging.warning(f"No tables found in {db_name}.")
         return 0
+
     processed_count = 0
     for schema, table in tables:
         try:
-            processed = incremental_sync_table(engine, server_conf, db_name, server_clean, conn, schema, table)
+            # Add debug info
+            row_count = get_table_row_count(conn, schema, table)
+            pk_columns = get_primary_key_info(conn, schema, table)
+            ts_col = get_timestamp_column(conn, schema, table)
+            uid_col = get_unique_identifier_column(conn, schema, table)
+            sync_col = pk_columns[0] if pk_columns else (ts_col if ts_col else uid_col)
+            last_value = get_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table)
+            logging.info(
+                f"[INCR SYNC] {schema}.{table}: row_count={row_count}, sync_col={sync_col}, last_value={last_value}"
+            )
+
+            processed = incremental_sync_table(
+                pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table
+            )
             processed_count += 1 if processed > 0 else 0
         except Exception as e:
             logging.error(f"Failed to sync/load {schema}.{table}: {e}")
+
+    logging.info(
+        f"=== INCREMENTAL sync completed for {db_name}, {processed_count}/{len(tables)} tables processed ==="
+    )
     return processed_count
 
 
-# ------------------------- Orchestration -------------------------
 
+
+
+
+# -----------------------------------------------------------------
 def cleanup_system_tables(engine, schema_name):
-    """Drop any accidental system-named tables in the target schema; log actions."""
     system_tables = [
         'sys_trace_xe_event_map',
         'sys_trace_xe_action_map',
@@ -573,44 +583,53 @@ def cleanup_system_tables(engine, schema_name):
 
 
 def process_sql_server_hybrid(server_name, server_conf):
-    """Process a single SQL Server with hybrid sync (enterprise-safe)."""
     try:
-        engine = get_pg_engine()
-        create_sync_tracking_table(engine)
-        create_table_sync_tracking(engine)
+        pg_engine = get_pg_engine()
+        create_sync_tracking_table(pg_engine)
+        create_table_sync_tracking(pg_engine)
+
         master_conn = get_sql_connection(server_conf)
         logging.info(f"Connected to SQL Server: {server_conf['server']}")
         databases = get_all_databases(master_conn)
         master_conn.close()
+
         if not databases:
             logging.warning(f"No user databases found on {server_conf['server']}.")
             return
+
         logging.info(f"Found {len(databases)} databases on {server_conf['server']}")
         server_clean = ''.join(c for c in server_conf['server'] if c.isalnum() or c in '_-')
+
         for db_name in databases:
             if should_skip_database(db_name, server_conf):
                 continue
+
             schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
-            cleanup_system_tables(engine, schema_name)
-            sync_status = get_sync_status(engine, server_conf['server'], db_name)
+            cleanup_system_tables(pg_engine, schema_name)
+
+            sync_status = get_sync_status(pg_engine, server_conf['server'], db_name)
             db_conn = get_sql_connection(server_conf, db_name)
+            sql_engine = get_sqlalchemy_engine(server_conf, db_name)
+
             try:
                 if sync_status is None:
-                    processed = full_sync_database(db_conn, db_name, server_conf, server_clean, OUTPUT_DIR, engine)
-                    update_sync_status(engine, server_conf['server'], db_name, 'full', 'COMPLETED')
+                    # First time → full sync
+                    processed = full_sync_database(sql_engine, db_name, server_conf, server_clean, OUTPUT_DIR, pg_engine)
+                    update_sync_status(pg_engine, server_conf['server'], db_name, 'full', 'COMPLETED')
                 else:
-                    processed = incremental_sync_database(db_conn, db_name, server_conf, server_clean, OUTPUT_DIR, engine)
-                    update_sync_status(engine, server_conf['server'], db_name, 'incremental', 'COMPLETED')
+                    # Later runs → incremental
+                    processed = incremental_sync_database(sql_engine, db_conn, db_name, server_conf, server_clean, OUTPUT_DIR, pg_engine)
+                    update_sync_status(pg_engine, server_conf['server'], db_name, 'incremental', 'COMPLETED')
+
                 logging.info(f"{server_name}/{db_name}: processed {processed} tables")
             finally:
                 db_conn.close()
+                sql_engine.dispose()
+
         logging.info(f"Completed {server_name}")
     except Exception as e:
         logging.error(f"Error processing {server_name}: {e}")
-
-
 def main():
-    """Process all SQL servers with hybrid sync"""
     sqlservers = config.get('sqlservers', {})
     if not sqlservers:
         logging.error("No SQL servers configured in db_connections.yaml")
@@ -623,4 +642,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

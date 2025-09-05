@@ -1,11 +1,19 @@
 postgresql:
-  database: CompanyDB
+  database: Vikas
   host: localhost
   password: StrongPassword123
   port: 5432
   schema: CompanyDB
   username: migration_user
 sqlservers:
+  server1:
+    check_new_databases: true
+    password: root
+    port: 1433
+    server: localhost
+    skip_databases: []
+    sync_mode: hybrid
+    username: sa
   server2:
     check_new_databases: true
     password: root
