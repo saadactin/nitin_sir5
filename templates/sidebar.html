@@ -49,6 +49,18 @@
         📈 Sync Summary
       </a>
     </li>
+    <li>
+      <a href="{{ url_for('alerts') }}" 
+         class="nav-link text-white {% if request.endpoint == 'alerts' %}active bg-primary{% endif %}">
+        🚨 Alerts
+      </a>
+    </li>
+    <li>
+      <a href="{{ url_for('explore') }}" 
+         class="nav-link text-white {% if request.endpoint == 'explore' %}active bg-primary{% endif %}">
+        🧭 Explore
+      </a>
+    </li>
     {% endif %}
 
     {% if session.get("role") == "admin" %}
@@ -76,3 +88,5 @@
     ⚡ Hybrid Sync Tool
   </div>
 </div>
+
+<script></script>

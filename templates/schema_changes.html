@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schema Changes - {{ server }}.{{ db }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .table-container { max-height: 480px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>🧬 Schema Changes - {{ server }} / {{ db }}</h2>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back</a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">Automatically Applied Changes</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Object</th>
+                            <th>Added Columns</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in events %}
+                        <tr>
+                            <td>{{ e.timestamp }}</td>
+                            <td>{{ e.object }}</td>
+                            <td>
+                                {% if e.added_columns %}
+                                    {% for c in e.added_columns %}
+                                        <span class="badge bg-info text-dark me-1">{{ c }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td><small class="text-muted">{{ e.message }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

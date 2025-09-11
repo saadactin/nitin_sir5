@@ -92,7 +92,7 @@ def schedule_interval_sync(server_name, minutes):
 
     sched.every(minutes).minutes.do(
         _job_wrapper, server_name, server_conf, job_type
-    ).tag(server_name)
+    ).tag(server_name, f"{server_name}:{job_type}")
 
     _add_job_metadata(server_name, job_type)
     _start_scheduler_thread()
@@ -107,7 +107,7 @@ def schedule_daily_sync(server_name, hour, minute):
 
     sched.every().day.at(time_str).do(
         _job_wrapper, server_name, server_conf, job_type
-    ).tag(server_name)
+    ).tag(server_name, f"{server_name}:{job_type}")
 
     _add_job_metadata(server_name, job_type)
     _start_scheduler_thread()
@@ -117,14 +117,28 @@ def delete_schedule(server_name, job_type):
     scheduled_jobs = [job for job in scheduled_jobs if not (job["server"] == server_name and job["type"] == job_type)]
     conn = get_pg_connection()
     cur = conn.cursor()
-    cur.execute("""
-        DELETE FROM metrics_sync_tables.schedules
-        WHERE server_name = %s AND job_type = %s
-    """, (server_name, job_type))
+    # Mark as deleted (soft delete) to prevent re-scheduling on reload
+    try:
+        cur.execute("""
+            UPDATE metrics_sync_tables.schedules
+            SET status = 'deleted'
+            WHERE server_name = %s AND job_type = %s
+        """, (server_name, job_type))
+        if cur.rowcount == 0:
+            cur.execute("""
+                DELETE FROM metrics_sync_tables.schedules
+                WHERE server_name = %s AND job_type = %s
+            """, (server_name, job_type))
+    except Exception:
+        cur.execute("""
+            DELETE FROM metrics_sync_tables.schedules
+            WHERE server_name = %s AND job_type = %s
+        """, (server_name, job_type))
     conn.commit()
     cur.close()
     conn.close()
-    sched.clear(server_name)
+    # Clear only this specific job's tag
+    sched.clear(f"{server_name}:{job_type}")
 
 def update_schedule(server_name, job_type, **kwargs):
     delete_schedule(server_name, job_type)
@@ -145,6 +159,7 @@ def get_schedules():
                status,
                COALESCE(error, '-') AS error
         FROM metrics_sync_tables.schedules
+        WHERE status IS DISTINCT FROM 'deleted'
         ORDER BY created_at DESC
     """)
     rows = cur.fetchall()
@@ -155,13 +170,15 @@ def get_schedules():
 def load_schedules_from_db():
     conn = get_pg_connection()
     cur = conn.cursor()
-    cur.execute("SELECT server_name, job_type FROM metrics_sync_tables.schedules;")
+    cur.execute("SELECT server_name, job_type FROM metrics_sync_tables.schedules WHERE status IS DISTINCT FROM 'deleted';")
     rows = cur.fetchall()
     cur.close()
     conn.close()
 
     for server_name, job_type in rows:
         try:
+            # Ensure no duplicate schedule remains
+            sched.clear(f"{server_name}:{job_type}")
             if job_type.startswith("interval_"):
                 minutes = int(job_type.replace("interval_", "").replace("m", ""))
                 schedule_interval_sync(server_name, minutes)

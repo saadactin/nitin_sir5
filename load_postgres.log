@@ -18597,3 +18597,994 @@ NameError: name 'server_conf' is not defined
 2025-09-11 15:06:15,282 - INFO - 127.0.0.1 - - [11/Sep/2025 15:06:15] "GET /dashboard HTTP/1.1" 200 -
 2025-09-11 15:06:16,329 - INFO - 127.0.0.1 - - [11/Sep/2025 15:06:16] "GET /view-schedules HTTP/1.1" 200 -
 2025-09-11 15:06:17,912 - INFO - 127.0.0.1 - - [11/Sep/2025 15:06:17] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:07:26,332 - INFO - Sync tracking table created/verified
+2025-09-11 15:07:26,353 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:07:26,406 - INFO - Found 4 databases on localhost
+2025-09-11 15:07:26,409 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:07:26,411 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:07:26,425 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:07:26,780 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:07:27,079 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:07:27,271 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:07:27,455 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:07:27,455 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:07:27,462 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:07:27,465 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:07:27,466 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:07:27,473 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:07:27,563 - INFO - Sync tracking table created/verified
+2025-09-11 15:07:27,586 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:07:27,589 - INFO - Found 4 databases on localhost
+2025-09-11 15:07:27,592 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:07:27,593 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:07:27,604 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:07:27,617 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:07:27,651 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:07:27,671 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:07:27,678 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:07:27,679 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:07:27,682 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:07:27,686 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:07:27,689 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:07:27,701 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:07:27,839 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:07:27,853 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:07:28,117 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:07:28,117 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:07:28,296 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:07:28,296 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:07:28,297 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:07:28,298 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:07:28,302 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:07:28,303 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:07:28,306 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:07:28,306 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:07:28,307 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:07:28,307 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:07:28,316 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:07:28,317 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:07:28,645 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:07:28,646 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:07:28,936 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:07:28,936 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:07:29,137 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:07:29,137 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:07:29,138 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:07:29,138 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:07:29,139 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:07:29,139 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:07:29,141 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:07:29,142 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:07:29,142 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:07:29,143 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:07:29,151 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:07:29,151 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:07:29,566 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:07:29,566 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:07:29,853 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:07:29,857 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:07:30,066 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:07:30,067 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:07:30,071 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:07:30,073 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:07:30,074 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:07:30,075 - INFO - Completed server1
+2025-09-11 15:07:30,079 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:07:30,082 - INFO - Completed server1
+2025-09-11 15:09:30,332 - INFO - Sync tracking table created/verified
+2025-09-11 15:09:30,352 - INFO - Sync tracking table created/verified
+2025-09-11 15:09:30,355 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:09:30,372 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:09:30,411 - INFO - Found 4 databases on localhost
+2025-09-11 15:09:30,412 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:09:30,414 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:09:30,418 - INFO - Found 4 databases on localhost
+2025-09-11 15:09:30,419 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:09:30,420 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:09:30,424 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:09:30,430 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:09:30,724 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:09:30,725 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:09:30,987 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:09:30,987 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:09:31,172 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:09:31,172 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:09:31,347 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:09:31,348 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:09:31,348 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:09:31,350 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:09:31,351 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:09:31,352 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:09:31,354 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:09:31,355 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:09:31,357 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:09:31,365 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:09:31,637 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:09:31,640 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:09:31,889 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:09:31,889 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:09:32,063 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:09:32,063 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:09:32,063 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:09:32,064 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:09:32,065 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:09:32,066 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:09:32,067 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:09:32,067 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:09:32,068 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:09:32,075 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:09:32,075 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:09:32,344 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:09:32,345 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:09:32,599 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:09:32,599 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:09:32,781 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:09:32,781 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:09:32,781 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:09:32,782 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:09:32,783 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:09:32,784 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:09:32,786 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:09:32,786 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:09:32,787 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:09:32,787 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:09:32,797 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:09:33,059 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:09:33,059 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:09:33,315 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:09:33,493 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:09:33,493 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:09:33,494 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:09:33,494 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:09:33,495 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:09:33,496 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:09:33,497 - INFO - Completed server1
+2025-09-11 15:11:33,730 - INFO - Sync tracking table created/verified
+2025-09-11 15:11:33,730 - INFO - Sync tracking table created/verified
+2025-09-11 15:11:33,742 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:11:33,744 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:11:33,802 - INFO - Found 4 databases on localhost
+2025-09-11 15:11:33,802 - INFO - Found 4 databases on localhost
+2025-09-11 15:11:33,803 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:11:33,804 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:11:33,804 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:11:33,805 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:11:33,813 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:11:33,814 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:11:34,132 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:11:34,133 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:11:34,408 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:11:34,408 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:11:34,619 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:11:34,620 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:11:34,799 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:11:34,800 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:11:34,800 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:11:34,800 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:11:34,802 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:11:34,803 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:11:34,804 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:11:34,804 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:11:34,804 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:11:34,805 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:11:34,809 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:11:34,809 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:11:35,101 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:11:35,101 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:11:35,398 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:11:35,398 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:11:35,588 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:11:35,588 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:11:35,589 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:11:35,589 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:11:35,592 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:11:35,593 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:11:35,595 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:11:35,595 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:11:35,597 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:11:35,598 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:11:35,603 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:11:35,603 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:11:35,916 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:11:36,189 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:11:36,189 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:11:36,379 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:11:36,380 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:11:36,381 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:11:36,381 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:11:36,381 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:11:36,382 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:11:36,382 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:11:36,383 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:11:36,384 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:11:36,384 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:11:36,388 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:11:36,388 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:11:36,708 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:11:36,710 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:11:37,006 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:11:37,008 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:11:37,194 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:11:37,194 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:11:37,194 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:11:37,195 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:11:37,196 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:11:37,196 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:11:37,197 - INFO - Completed server1
+2025-09-11 15:11:37,197 - INFO - Completed server1
+2025-09-11 15:13:37,396 - INFO - Sync tracking table created/verified
+2025-09-11 15:13:37,397 - INFO - Sync tracking table created/verified
+2025-09-11 15:13:37,413 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:13:37,413 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:13:37,464 - INFO - Found 4 databases on localhost
+2025-09-11 15:13:37,465 - INFO - Found 4 databases on localhost
+2025-09-11 15:13:37,466 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:13:37,466 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:13:37,467 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:13:37,467 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:13:37,474 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:13:37,474 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:13:37,801 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:13:37,802 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:13:38,093 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:13:38,094 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:13:38,282 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:13:38,282 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:13:38,472 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:13:38,473 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:13:38,477 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:13:38,479 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:13:38,480 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:13:38,480 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:13:38,480 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:13:38,482 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:13:38,485 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:13:38,486 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:13:38,486 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:13:38,489 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:13:38,783 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:13:38,783 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:13:39,055 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:13:39,056 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:13:39,241 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:13:39,242 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:13:39,242 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:13:39,242 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:13:39,243 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:13:39,244 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:13:39,246 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:13:39,246 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:13:39,246 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:13:39,247 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:13:39,252 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:13:39,253 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:13:39,554 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:13:39,554 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:13:39,817 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:13:39,817 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:13:39,999 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:13:40,000 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:13:40,000 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:13:40,000 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:13:40,003 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:13:40,004 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:13:40,006 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:13:40,007 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:13:40,008 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:13:40,008 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:13:40,015 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:13:40,015 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:13:40,335 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:13:40,335 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:13:40,591 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:13:40,591 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:13:40,782 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:13:40,782 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:13:40,783 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:13:40,783 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:13:40,788 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:13:40,789 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:13:40,790 - INFO - Completed server1
+2025-09-11 15:13:40,790 - INFO - Completed server1
+2025-09-11 15:25:32,981 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-09-11 15:25:32,981 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-11 15:25:32,984 - INFO -  * Restarting with stat
+2025-09-11 15:25:35,221 - WARNING -  * Debugger is active!
+2025-09-11 15:25:35,224 - INFO -  * Debugger PIN: 238-975-676
+2025-09-11 15:25:36,514 - INFO - 127.0.0.1 - - [11/Sep/2025 15:25:36] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:26:18,055 - INFO - 127.0.0.1 - - [11/Sep/2025 15:26:18] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:27:32,870 - INFO - Sync tracking table created/verified
+2025-09-11 15:27:32,933 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:27:32,982 - INFO - Found 4 databases on localhost
+2025-09-11 15:27:32,984 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:27:32,985 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:27:33,051 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:27:33,350 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:27:33,625 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:27:33,798 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:27:33,956 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:27:33,956 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:27:33,963 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:27:33,966 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:27:33,966 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:27:33,997 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:27:34,282 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:27:34,530 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:27:34,696 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:27:34,696 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:27:34,698 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:27:34,700 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:27:34,701 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:27:34,732 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:27:35,023 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:27:35,117 - INFO - Sync tracking table created/verified
+2025-09-11 15:27:35,131 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:27:35,133 - INFO - Found 4 databases on localhost
+2025-09-11 15:27:35,134 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:27:35,135 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:27:35,171 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:27:35,181 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:27:35,210 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:27:35,221 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:27:35,223 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:27:35,224 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:27:35,227 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:27:35,229 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:27:35,231 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:27:35,237 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:27:35,245 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:27:35,268 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:27:35,271 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:27:35,271 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:27:35,272 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:27:35,274 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:27:35,276 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:27:35,283 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:27:35,287 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:27:35,291 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:27:35,317 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:27:35,483 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:27:35,483 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:27:35,488 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:27:35,490 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:27:35,491 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:27:35,514 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:27:35,515 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:27:35,517 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:27:35,519 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:27:35,520 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:27:35,526 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:27:35,536 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:27:36,012 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:27:36,013 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:27:36,331 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:27:36,332 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:27:36,513 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:27:36,513 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:27:36,514 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:27:36,515 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:27:36,516 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:27:36,516 - INFO - Completed server1
+2025-09-11 15:27:36,517 - INFO - Completed server1
+2025-09-11 15:28:23,799 - INFO - 127.0.0.1 - - [11/Sep/2025 15:28:23] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:28:30,987 - INFO - 127.0.0.1 - - [11/Sep/2025 15:28:30] "GET /sync-history/server1/SampleDB HTTP/1.1" 200 -
+2025-09-11 15:28:37,082 - INFO - 127.0.0.1 - - [11/Sep/2025 15:28:37] "GET /schema-changes/server1/SampleDB HTTP/1.1" 200 -
+2025-09-11 15:28:45,289 - INFO - 127.0.0.1 - - [11/Sep/2025 15:28:45] "GET /resume-sync/server1/SampleDB/dbo.Employees HTTP/1.1" 200 -
+2025-09-11 15:28:50,298 - INFO - 127.0.0.1 - - [11/Sep/2025 15:28:50] "GET /create-user HTTP/1.1" 200 -
+2025-09-11 15:28:54,131 - INFO - 127.0.0.1 - - [11/Sep/2025 15:28:54] "GET /resume-sync/server1/SampleDB/dbo.Employees HTTP/1.1" 200 -
+2025-09-11 15:28:59,387 - INFO - 127.0.0.1 - - [11/Sep/2025 15:28:59] "GET /schema-changes/server1/SampleDB HTTP/1.1" 200 -
+2025-09-11 15:29:11,566 - INFO - 127.0.0.1 - - [11/Sep/2025 15:29:11] "GET /sync-history/server1/SampleDB HTTP/1.1" 200 -
+2025-09-11 15:29:19,276 - INFO - 127.0.0.1 - - [11/Sep/2025 15:29:19] "GET /alerts.json HTTP/1.1" 200 -
+2025-09-11 15:29:25,657 - INFO - 127.0.0.1 - - [11/Sep/2025 15:29:25] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:29:30,967 - INFO - 127.0.0.1 - - [11/Sep/2025 15:29:30] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:29:32,777 - INFO - 127.0.0.1 - - [11/Sep/2025 15:29:32] "GET /alerts.json HTTP/1.1" 200 -
+2025-09-11 15:29:36,786 - INFO - Sync tracking table created/verified
+2025-09-11 15:29:36,789 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:29:36,856 - INFO - Found 4 databases on localhost
+2025-09-11 15:29:36,858 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:29:36,860 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:29:36,866 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:29:36,998 - INFO - Sync tracking table created/verified
+2025-09-11 15:29:37,020 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:29:37,215 - INFO - Found 4 databases on localhost
+2025-09-11 15:29:37,217 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:29:37,219 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:29:37,230 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:29:37,288 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:29:37,771 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:29:38,172 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:29:38,958 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:29:38,993 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:29:39,420 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:29:39,420 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:29:39,424 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:29:39,427 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:29:39,429 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:29:39,440 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:29:39,782 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:29:40,215 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:29:40,248 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:29:40,248 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:29:40,255 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:29:40,260 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:29:40,262 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:29:40,271 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:29:40,848 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:29:41,688 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:29:41,773 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:29:42,231 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:29:42,231 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:29:42,234 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:29:42,236 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:29:42,238 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:29:42,242 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:29:42,267 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:29:42,268 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:29:42,270 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:29:42,274 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:29:42,276 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:29:42,286 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:29:42,814 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:29:42,843 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:29:43,733 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:29:43,769 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:29:44,145 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:29:44,145 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:29:44,147 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:29:44,150 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:29:44,151 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:29:44,152 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:29:44,153 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:29:44,155 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:29:44,157 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:29:44,158 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:29:44,160 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:29:44,167 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:29:44,619 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:29:44,660 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:29:45,184 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:29:45,216 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:29:45,568 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:29:45,568 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:29:45,574 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:29:45,576 - INFO - Completed server1
+2025-09-11 15:29:45,610 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:29:45,611 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:29:45,613 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:29:45,616 - INFO - Completed server1
+2025-09-11 15:29:48,668 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir5\\app.py', reloading
+2025-09-11 15:29:48,998 - INFO -  * Restarting with stat
+2025-09-11 15:29:52,732 - WARNING -  * Debugger is active!
+2025-09-11 15:29:52,741 - INFO -  * Debugger PIN: 238-975-676
+2025-09-11 15:31:45,922 - INFO - Sync tracking table created/verified
+2025-09-11 15:31:45,937 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:31:45,983 - INFO - Found 4 databases on localhost
+2025-09-11 15:31:45,984 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:31:45,985 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:31:45,994 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:31:46,321 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:31:46,812 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:31:47,216 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:31:47,423 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:31:47,424 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:31:47,426 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:31:47,427 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:31:47,428 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:31:47,435 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:31:47,771 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:31:48,288 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:31:48,491 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:31:48,491 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:31:48,492 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:31:48,494 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:31:48,495 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:31:48,502 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:31:48,842 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:31:49,352 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:31:49,557 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:31:49,558 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:31:49,559 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:31:49,561 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:31:49,562 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:31:49,569 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:31:49,903 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:31:50,391 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:31:50,609 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:31:50,609 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:31:50,610 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:31:50,611 - INFO - Completed server1
+2025-09-11 15:31:52,499 - INFO - Sync tracking table created/verified
+2025-09-11 15:31:52,557 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:31:52,602 - INFO - Found 4 databases on localhost
+2025-09-11 15:31:52,603 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:31:52,604 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:31:52,659 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:31:52,964 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:31:53,480 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:31:53,882 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:31:54,074 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:31:54,075 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:31:54,077 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:31:54,079 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:31:54,080 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:31:54,117 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:31:54,439 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:31:54,963 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:31:55,165 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:31:55,165 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:31:55,167 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:31:55,169 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:31:55,170 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:31:55,203 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:31:55,519 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:31:56,043 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:31:56,250 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:31:56,250 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:31:56,252 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:31:56,253 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:31:56,254 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:31:56,292 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:31:56,618 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:31:57,175 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:31:57,366 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:31:57,366 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:31:57,367 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:31:57,368 - INFO - Completed server1
+2025-09-11 15:33:13,796 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir5\\app.py', reloading
+2025-09-11 15:33:14,117 - INFO -  * Restarting with stat
+2025-09-11 15:33:16,929 - WARNING -  * Debugger is active!
+2025-09-11 15:33:16,932 - INFO -  * Debugger PIN: 238-975-676
+2025-09-11 15:33:50,897 - INFO - Sync tracking table created/verified
+2025-09-11 15:33:50,917 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:33:51,002 - INFO - Found 4 databases on localhost
+2025-09-11 15:33:51,004 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:33:51,005 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:33:51,015 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:33:51,387 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:33:51,734 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:33:51,923 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:33:52,133 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:33:52,133 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:33:52,136 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:33:52,138 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:33:52,139 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:33:52,154 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:33:52,753 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:33:53,536 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:33:53,794 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:33:53,794 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:33:53,797 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:33:53,800 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:33:53,801 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:33:53,808 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:33:54,183 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:33:54,753 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:33:54,998 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:33:54,999 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:33:55,000 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:33:55,002 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:33:55,003 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:33:55,011 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:33:55,386 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:33:55,956 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:33:56,200 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:33:56,200 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:33:56,207 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:33:56,209 - INFO - Completed server1
+2025-09-11 15:34:00,156 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir5\\app.py', reloading
+2025-09-11 15:34:00,375 - INFO -  * Restarting with stat
+2025-09-11 15:34:02,918 - WARNING -  * Debugger is active!
+2025-09-11 15:34:02,922 - INFO -  * Debugger PIN: 238-975-676
+2025-09-11 15:34:14,147 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:14] "GET /alerts.json HTTP/1.1" 200 -
+2025-09-11 15:34:18,400 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:18] "GET /alerts.json HTTP/1.1" 200 -
+2025-09-11 15:34:21,800 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:21] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:34:26,560 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:26] "GET /explore HTTP/1.1" 200 -
+2025-09-11 15:34:28,281 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:28] "GET /create-user HTTP/1.1" 200 -
+2025-09-11 15:34:29,484 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:29] "GET /explore HTTP/1.1" 200 -
+2025-09-11 15:34:50,381 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:50] "[32mPOST /explore HTTP/1.1[0m" 302 -
+2025-09-11 15:34:50,655 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:50] "GET /sync-history/server1/SampleDB6 HTTP/1.1" 200 -
+2025-09-11 15:34:54,555 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:54] "[32mPOST /explore HTTP/1.1[0m" 302 -
+2025-09-11 15:34:54,568 - INFO - 127.0.0.1 - - [11/Sep/2025 15:34:54] "GET /schema-changes/server1/SampleDB6 HTTP/1.1" 200 -
+2025-09-11 15:35:12,763 - INFO - 127.0.0.1 - - [11/Sep/2025 15:35:12] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:35:19,549 - INFO - 127.0.0.1 - - [11/Sep/2025 15:35:19] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:35:26,328 - INFO - 127.0.0.1 - - [11/Sep/2025 15:35:26] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:35:56,446 - INFO - Sync tracking table created/verified
+2025-09-11 15:35:56,463 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:35:56,519 - INFO - Found 4 databases on localhost
+2025-09-11 15:35:56,520 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:35:56,522 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:35:56,532 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:35:56,874 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:35:57,462 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:35:57,954 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:35:58,171 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:35:58,172 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:35:58,178 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:35:58,181 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:35:58,182 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:35:58,190 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:35:58,564 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:35:59,104 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:35:59,371 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:35:59,372 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:35:59,375 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:35:59,378 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:35:59,379 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:35:59,389 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:35:59,757 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir5\\app.py', reloading
+2025-09-11 15:35:59,973 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:36:00,015 - INFO -  * Restarting with stat
+2025-09-11 15:36:00,679 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:36:00,946 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:36:00,946 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:36:00,948 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:36:00,950 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:36:00,952 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:36:00,961 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:36:01,407 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:36:02,221 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:36:02,503 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:36:02,504 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:36:02,505 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:36:02,507 - INFO - Completed server1
+2025-09-11 15:36:03,708 - WARNING -  * Debugger is active!
+2025-09-11 15:36:03,712 - INFO -  * Debugger PIN: 238-975-676
+2025-09-11 15:37:54,323 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir5\\scheduler_utils.py', reloading
+2025-09-11 15:37:54,493 - INFO -  * Restarting with stat
+2025-09-11 15:37:57,492 - WARNING -  * Debugger is active!
+2025-09-11 15:37:57,496 - INFO -  * Debugger PIN: 238-975-676
+2025-09-11 15:38:02,837 - INFO - Sync tracking table created/verified
+2025-09-11 15:38:02,856 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:38:02,903 - INFO - Found 4 databases on localhost
+2025-09-11 15:38:02,904 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:38:02,905 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:38:02,912 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:38:03,284 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:38:03,663 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:03] "GET /dashboard HTTP/1.1" 200 -
+2025-09-11 15:38:03,912 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:38:04,385 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:38:04,621 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:38:04,621 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:38:04,624 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:38:04,627 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:38:04,628 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:38:04,637 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:38:05,003 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:05] "GET /schedule HTTP/1.1" 200 -
+2025-09-11 15:38:05,061 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:38:05,617 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:38:05,834 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:38:05,834 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:38:05,837 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:38:05,839 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:38:05,841 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:38:05,847 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:38:06,194 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:38:06,766 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:38:06,975 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:38:06,976 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:38:06,978 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:38:06,980 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:38:06,982 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:38:06,989 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:38:07,317 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:38:07,844 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:38:08,065 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:38:08,066 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:38:08,067 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:38:08,069 - INFO - Completed server1
+2025-09-11 15:38:11,992 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:11] "[32mPOST /delete-schedule/server1/interval_2m HTTP/1.1[0m" 302 -
+2025-09-11 15:38:12,086 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:12] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:38:15,243 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:15] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:38:17,190 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:17] "GET /schedule HTTP/1.1" 200 -
+2025-09-11 15:38:19,027 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:19] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:38:20,259 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:20] "GET /dashboard HTTP/1.1" 200 -
+2025-09-11 15:38:21,536 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:21] "GET / HTTP/1.1" 200 -
+2025-09-11 15:38:22,623 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:22] "GET /add-server HTTP/1.1" 200 -
+2025-09-11 15:38:23,688 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:23] "GET /dashboard HTTP/1.1" 200 -
+2025-09-11 15:38:24,536 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:24] "GET /schedule HTTP/1.1" 200 -
+2025-09-11 15:38:25,459 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:25] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:38:27,396 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:27] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:38:28,325 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:28] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:38:29,507 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:29] "GET /explore HTTP/1.1" 200 -
+2025-09-11 15:38:30,638 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:30] "GET /create-user HTTP/1.1" 200 -
+2025-09-11 15:38:32,132 - INFO - 127.0.0.1 - - [11/Sep/2025 15:38:32] "GET / HTTP/1.1" 200 -
+2025-09-11 15:39:03,039 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir5\\scheduler_utils.py', reloading
+2025-09-11 15:39:03,358 - INFO -  * Restarting with stat
+2025-09-11 15:39:06,865 - WARNING -  * Debugger is active!
+2025-09-11 15:39:06,870 - INFO -  * Debugger PIN: 238-975-676
+2025-09-11 15:39:16,491 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:16] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:39:18,494 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:18] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:39:19,452 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:19] "GET /dashboard HTTP/1.1" 200 -
+2025-09-11 15:39:20,586 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:20] "GET /schedule HTTP/1.1" 200 -
+2025-09-11 15:39:22,666 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:22] "GET /schedule HTTP/1.1" 200 -
+2025-09-11 15:39:29,753 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:29] "[32mPOST /delete-schedule/server2/interval_2m HTTP/1.1[0m" 302 -
+2025-09-11 15:39:29,820 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:29] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:39:34,867 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:34] "GET /schedule HTTP/1.1" 200 -
+2025-09-11 15:39:40,167 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:40] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:39:41,833 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:41] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:39:43,394 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:43] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:39:44,460 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:44] "GET /explore HTTP/1.1" 200 -
+2025-09-11 15:39:45,682 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:45] "GET /create-user HTTP/1.1" 200 -
+2025-09-11 15:39:47,701 - INFO - 127.0.0.1 - - [11/Sep/2025 15:39:47] "GET /explore HTTP/1.1" 200 -
+2025-09-11 15:40:08,327 - INFO - Sync tracking table created/verified
+2025-09-11 15:40:08,350 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:40:08,407 - INFO - Found 4 databases on localhost
+2025-09-11 15:40:08,408 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:40:08,410 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:40:08,419 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:40:08,775 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:40:09,118 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:40:09,586 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:40:09,823 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:40:09,824 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:40:09,829 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:40:09,831 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:40:09,833 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:40:09,840 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:40:10,198 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:40:10,870 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:40:11,146 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:40:11,147 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:40:11,149 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:40:11,152 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:40:11,154 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:40:11,163 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:40:11,600 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:40:12,348 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:40:12,638 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:40:12,638 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:40:12,644 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:40:12,647 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:40:12,649 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:40:12,658 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:40:13,064 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:40:13,711 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:40:13,982 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:40:13,982 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:40:13,985 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:40:13,987 - INFO - Completed server1
+2025-09-11 15:42:14,354 - INFO - Sync tracking table created/verified
+2025-09-11 15:42:14,372 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:42:14,432 - INFO - Found 4 databases on localhost
+2025-09-11 15:42:14,434 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:42:14,435 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:42:14,445 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:42:15,014 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:42:15,619 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:42:16,098 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:42:16,323 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:42:16,324 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:42:16,327 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:42:16,329 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:42:16,331 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:42:16,338 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:42:16,723 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:42:17,355 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:42:17,605 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:42:17,605 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:42:17,607 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:42:17,610 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:42:17,611 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:42:17,618 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:42:18,021 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:42:18,589 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:42:18,872 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:42:18,873 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:42:18,875 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:42:18,878 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:42:18,879 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:42:18,887 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:42:19,268 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:42:19,823 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:42:20,045 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:42:20,046 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:42:20,048 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:42:20,049 - INFO - Completed server1
+2025-09-11 15:44:20,315 - INFO - Sync tracking table created/verified
+2025-09-11 15:44:20,326 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:44:20,373 - INFO - Found 4 databases on localhost
+2025-09-11 15:44:20,374 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:44:20,375 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:44:20,381 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:44:20,657 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:44:20,892 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:44:21,038 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:44:21,188 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:44:21,188 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:44:21,191 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:44:21,192 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:44:21,193 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:44:21,198 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:44:21,459 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:44:21,684 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:44:21,837 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:44:21,838 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:44:21,839 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:44:21,841 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:44:21,841 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:44:21,846 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:44:22,078 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:44:22,292 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:44:22,432 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:44:22,433 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:44:22,437 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:44:22,439 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:44:22,440 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:44:22,444 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:44:22,709 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:44:22,934 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:44:23,085 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:44:23,085 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:44:23,086 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:44:23,087 - INFO - Completed server1
+2025-09-11 15:46:23,297 - INFO - Sync tracking table created/verified
+2025-09-11 15:46:23,310 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:46:23,358 - INFO - Found 4 databases on localhost
+2025-09-11 15:46:23,360 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:46:23,361 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:46:23,370 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:46:23,705 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:46:23,995 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:46:24,165 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:46:24,336 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:46:24,336 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:46:24,338 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:46:24,339 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:46:24,339 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:46:24,343 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:46:24,645 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:46:24,929 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:46:25,099 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:46:25,100 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:46:25,101 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:46:25,103 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:46:25,104 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:46:25,109 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:46:25,389 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:46:25,641 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:46:25,809 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:46:25,809 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:46:25,810 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:46:25,811 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:46:25,812 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:46:25,816 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:46:26,111 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:46:26,382 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:46:26,531 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:46:26,531 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:46:26,532 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:46:26,533 - INFO - Completed server1
+2025-09-11 15:48:26,716 - INFO - Sync tracking table created/verified
+2025-09-11 15:48:26,728 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:48:26,777 - INFO - Found 4 databases on localhost
+2025-09-11 15:48:26,778 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:48:26,779 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:48:26,786 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:48:27,087 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:48:27,346 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:48:27,554 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:48:27,731 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:48:27,732 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:48:27,734 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:48:27,735 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:48:27,736 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:48:27,741 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:48:28,098 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:48:28,379 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:48:28,599 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:48:28,599 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:48:28,601 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:48:28,602 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:48:28,603 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:48:28,607 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:48:28,945 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:48:29,307 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:48:29,502 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:48:29,502 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:48:29,507 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:48:29,510 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:48:29,511 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:48:29,516 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:48:29,856 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:48:30,435 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:48:30,714 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:48:30,715 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:48:30,716 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:48:30,717 - INFO - Completed server1
+2025-09-11 15:50:30,913 - INFO - Sync tracking table created/verified
+2025-09-11 15:50:30,926 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:50:30,977 - INFO - Found 4 databases on localhost
+2025-09-11 15:50:30,979 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:50:30,980 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:50:30,986 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:50:31,307 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:50:31,543 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:50:31,701 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:50:31,847 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:50:31,848 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:50:31,850 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:50:31,852 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:50:31,852 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:50:31,856 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:50:32,091 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:50:32,307 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:50:32,450 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:50:32,450 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:50:32,455 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:50:32,457 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:50:32,458 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:50:32,462 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:50:32,736 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:50:32,993 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:50:33,140 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:50:33,140 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:50:33,141 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:50:33,143 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:50:33,143 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:50:33,147 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:50:33,418 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:50:33,632 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:50:33,795 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:50:33,795 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:50:33,799 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:50:33,800 - INFO - Completed server1
+2025-09-11 15:52:33,976 - INFO - Sync tracking table created/verified
+2025-09-11 15:52:33,988 - INFO - Connected to SQL Server: localhost
+2025-09-11 15:52:34,044 - INFO - Found 4 databases on localhost
+2025-09-11 15:52:34,045 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-11 15:52:34,045 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-11 15:52:34,052 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-11 15:52:34,417 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=4
+2025-09-11 15:52:34,681 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=4
+2025-09-11 15:52:34,809 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:52:34,930 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:52:34,931 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-11 15:52:34,933 - INFO - server1/MySampleDB4: processed 0 tables
+2025-09-11 15:52:34,935 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-11 15:52:34,935 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-11 15:52:34,939 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-11 15:52:35,189 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=10
+2025-09-11 15:52:35,391 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:52:35,510 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:52:35,511 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-11 15:52:35,512 - INFO - server1/SampleDB: processed 0 tables
+2025-09-11 15:52:35,513 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-11 15:52:35,514 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-11 15:52:35,518 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-11 15:52:35,754 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:52:35,948 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:52:36,107 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:52:36,107 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-11 15:52:36,109 - INFO - server1/SampleDB1: processed 0 tables
+2025-09-11 15:52:36,110 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-11 15:52:36,111 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-11 15:52:36,114 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-11 15:52:36,346 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=5
+2025-09-11 15:52:36,556 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-11 15:52:36,714 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-11 15:52:36,714 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-11 15:52:36,716 - INFO - server1/SampleDB6: processed 0 tables
+2025-09-11 15:52:36,716 - INFO - Completed server1
+2025-09-11 15:53:58,597 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-09-11 15:53:58,598 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-11 15:53:58,600 - INFO -  * Restarting with stat
+2025-09-11 15:54:01,519 - WARNING -  * Debugger is active!
+2025-09-11 15:54:01,526 - INFO -  * Debugger PIN: 238-975-676
+2025-09-11 15:54:07,441 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:07] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:54:08,274 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:08] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:54:08,858 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:08] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:54:10,085 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:10] "GET /explore HTTP/1.1" 200 -
+2025-09-11 15:54:11,318 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:11] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:54:12,752 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:12] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:54:13,340 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:13] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:54:14,878 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:14] "GET /dashboard HTTP/1.1" 200 -
+2025-09-11 15:54:15,732 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:15] "GET /view-schedules HTTP/1.1" 200 -
+2025-09-11 15:54:16,897 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:16] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-11 15:54:17,669 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:17] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:54:18,738 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:18] "GET /explore HTTP/1.1" 200 -
+2025-09-11 15:54:19,891 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:19] "GET /create-user HTTP/1.1" 200 -
+2025-09-11 15:54:21,309 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:21] "GET /explore HTTP/1.1" 200 -
+2025-09-11 15:54:22,369 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:22] "GET /alerts HTTP/1.1" 200 -
+2025-09-11 15:54:24,307 - INFO - 127.0.0.1 - - [11/Sep/2025 15:54:24] "GET /sync-summary HTTP/1.1" 200 -

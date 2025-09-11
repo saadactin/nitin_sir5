@@ -13,6 +13,18 @@ from scheduler_utils import (
 )
 from analytics import compare_table_rows, delta_tracking, top_changed_tables
 from metrics import get_server_metrics, get_database_metrics, get_sync_summary
+from analytics_advanced import (
+    fetch_database_history,
+    fetch_table_history,
+    detect_failed_syncs,
+    generate_sync_report,
+    resume_sync_table,
+    partial_sync_preview,
+    parse_schema_changes_from_log,
+    collect_alerts,
+)
+from hybrid_sync import get_sql_connection
+from hybrid_sync import get_all_databases as hs_get_all_databases
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # required for flash + sessions
 init_admin_user()
@@ -353,6 +365,142 @@ def sync_summary_json():
         return jsonify(summary)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ------------------ ADVANCED ANALYTICS ROUTES ------------------
+
+@app.route("/sync-history/<server>/<db>")
+@require_role(["admin", "operator", "viewer"])
+def sync_history(server, db):
+    try:
+        db_hist = fetch_database_history(server, db, limit=100)
+        tbl_hist = fetch_table_history(server, db, limit=500)
+        failed = detect_failed_syncs(server, db)
+
+        # CSV/XLSX download request via query param
+        export = request.args.get("export")
+        if export in ("csv", "xlsx"):
+            buf, mimetype, filename = generate_sync_report(db_hist + tbl_hist, fmt=export)
+            from flask import send_file
+            return send_file(buf, mimetype=mimetype, as_attachment=True, download_name=filename)
+
+        return render_template("sync_history.html", server=server, db=db, db_hist=db_hist, tbl_hist=tbl_hist, failed=failed, role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error loading sync history: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/sync-history/<server>/<db>.json")
+@require_role(["admin", "operator", "viewer"])
+def sync_history_json(server, db):
+    try:
+        db_hist = fetch_database_history(server, db, limit=100)
+        tbl_hist = fetch_table_history(server, db, limit=500)
+        failed = detect_failed_syncs(server, db)
+        return jsonify({"database": db_hist, "tables": tbl_hist, "failed": failed})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/resume-sync/<server>/<db>/<table>", methods=["GET", "POST"])
+@require_role(["admin", "operator", "viewer"])
+def resume_sync(server, db, table):
+    try:
+        info = None
+        preview = None
+        if request.method == "POST":
+            # Optional preview before resume
+            columns = request.form.get("columns") or ""
+            filter_sql = request.form.get("filter_sql") or ""
+            columns_list = [c.strip() for c in columns.split(',') if c.strip()] if columns else None
+            if request.form.get("action") == "preview":
+                preview = partial_sync_preview(server, db, table, columns_list, filter_sql)
+            else:
+                info = resume_sync_table(server, db, table)
+                flash("✅ Resume requested. The next incremental run will continue from last PK.", "success")
+
+        return render_template("resume_sync.html", server=server, db=db, table=table, info=info, preview=preview, role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error preparing resume: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/schema-changes/<server>/<db>")
+@require_role(["admin", "operator", "viewer"])
+def schema_changes(server, db):
+    try:
+        # Parse from log file; optionally filter client-side in template
+        events = parse_schema_changes_from_log()
+        return render_template("schema_changes.html", server=server, db=db, events=events, role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error loading schema changes: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/schema-changes/<server>/<db>.json")
+@require_role(["admin", "operator", "viewer"])
+def schema_changes_json(server, db):
+    try:
+        events = parse_schema_changes_from_log()
+        return jsonify({"events": events})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/alerts")
+@require_role(["admin", "operator", "viewer"])
+def alerts():
+    try:
+        data = collect_alerts()
+        return render_template("alerts.html", alerts=data, role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error loading alerts: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/alerts.json")
+@require_role(["admin", "operator", "viewer"])
+def alerts_json():
+    try:
+        data = collect_alerts()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ------------------ Explore (selector) ------------------
+@app.route("/explore", methods=["GET", "POST"])
+@require_role(["admin", "operator", "viewer"])
+def explore():
+    try:
+        config = load_config()
+        servers = list(config.get("sqlservers", {}).keys())
+        dbs = []
+        selected_server = request.values.get("server") or (servers[0] if servers else None)
+        if selected_server:
+            try:
+                server_conf = config["sqlservers"][selected_server]
+                conn = get_sql_connection(server_conf)
+                dbs = hs_get_all_databases(conn)
+                conn.close()
+            except Exception:
+                dbs = []
+
+        if request.method == "POST":
+            action = request.form.get("action")
+            server = request.form.get("server")
+            db = request.form.get("db")
+            table = request.form.get("table")
+            if action == "history" and server and db:
+                return redirect(url_for('sync_history', server=server, db=db))
+            if action == "schema" and server and db:
+                return redirect(url_for('schema_changes', server=server, db=db))
+            if action == "resume" and server and db and table:
+                return redirect(url_for('resume_sync', server=server, db=db, table=table))
+
+        return render_template("explore.html", servers=servers, dbs=dbs, selected_server=selected_server, role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error loading explorer: {e}", "danger")
+        return redirect(url_for("index"))
 
 # ------------------ MAIN ------------------
 if __name__ == "__main__":

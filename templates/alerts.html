@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alerts & Logs</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .table-container { max-height: 420px; overflow-y: auto; }
+        .card-stat { min-height: 100px; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>🚨 Alerts & Logs</h2>
+            <div>
+                <a href="{{ url_for('alerts') }}.json" class="btn btn-outline-info" target="_blank">Export JSON</a>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <h3 class="text-danger">{{ alerts.failures|length }}</h3>
+                        <div class="text-muted">Failures</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <h3 class="text-warning">{{ alerts.warnings|length }}</h3>
+                        <div class="text-muted">Warnings</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <h3 class="text-info">{{ alerts.inconsistencies|length }}</h3>
+                        <div class="text-muted">Inconsistencies</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Failures -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">❌ Failures</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Server</th>
+                            <th>Database</th>
+                            <th>Table</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in alerts.failures %}
+                        <tr class="table-danger">
+                            <td>{{ f.server_name or '-' }}</td>
+                            <td>{{ f.database_name or '-' }}</td>
+                            <td>{{ f.table or '-' }}</td>
+                            <td>{{ f.message or f.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Warnings -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning">⚠️ Warnings</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Table</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for w in alerts.warnings %}
+                        <tr class="table-warning">
+                            <td>{{ w.table or '-' }}</td>
+                            <td>{{ w.message }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Inconsistencies -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">🔎 Inconsistencies</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Type</th>
+                            <th>Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in alerts.inconsistencies %}
+                        <tr>
+                            <td>{{ i.type or '-' }}</td>
+                            <td>{{ i.detail or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
