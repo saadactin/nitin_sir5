@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response
+import json
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config, save_config
@@ -466,7 +467,10 @@ def sync_summary_json():
     """Return sync summary as JSON"""
     try:
         summary = get_sync_summary()
-        return jsonify(summary)
+        payload = json.dumps(summary, indent=2)
+        return Response(payload, mimetype='application/json', headers={
+            'Content-Disposition': 'attachment; filename=sync_summary.json'
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
