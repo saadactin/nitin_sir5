@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config, save_config
@@ -11,6 +11,8 @@ from scheduler_utils import (
     update_schedule,
     get_schedules
 )
+from analytics import compare_table_rows, delta_tracking, top_changed_tables
+from metrics import get_server_metrics, get_database_metrics, get_sync_summary
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # required for flash + sessions
 init_admin_user()
@@ -233,6 +235,125 @@ def delete_schedule_route(server_name, job_type):
     except Exception as e:
         flash(f"❌ Failed to delete schedule: {e}", "danger")
     return redirect(url_for("view_schedules"))
+
+# ------------------ ANALYTICS ROUTES ------------------
+
+@app.route("/compare/<server>/<db>/<table>")
+@require_role(["admin", "operator", "viewer"])
+def compare_table(server, db, table):
+    """Compare source vs destination rows for a table"""
+    try:
+        comparison = compare_table_rows(server, db, table)
+        delta_info = delta_tracking(server, db, table)
+        
+        return render_template("compare_table.html", 
+                             server=server, 
+                             db=db, 
+                             table=table,
+                             comparison=comparison,
+                             delta_info=delta_info,
+                             role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error comparing table {table}: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/top-changed/<server>/<db>")
+@require_role(["admin", "operator", "viewer"])
+def top_changed(server, db):
+    """Show top changed tables for a database"""
+    try:
+        changed_tables = top_changed_tables(server, db)
+        
+        return render_template("top_changed.html", 
+                             server=server, 
+                             db=db,
+                             changed_tables=changed_tables,
+                             role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error getting top changed tables: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+# ------------------ METRICS ROUTES ------------------
+
+@app.route("/metrics/<server>")
+@require_role(["admin", "operator", "viewer"])
+def server_metrics(server):
+    """Show metrics for all tables in a server"""
+    try:
+        metrics = get_server_metrics(server)
+        return render_template("server_metrics.html", 
+                             server=server,
+                             metrics=metrics,
+                             role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error getting server metrics: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/metrics/<server>.json")
+@require_role(["admin", "operator", "viewer"])
+def server_metrics_json(server):
+    """Return server metrics as JSON"""
+    try:
+        metrics = get_server_metrics(server)
+        return jsonify(metrics)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/metrics/<server>/<db>")
+@require_role(["admin", "operator", "viewer"])
+def database_metrics(server, db):
+    """Show metrics for tables in a single database"""
+    try:
+        metrics = get_database_metrics(server, db)
+        return render_template("database_metrics.html", 
+                             server=server,
+                             db=db,
+                             metrics=metrics,
+                             role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error getting database metrics: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/metrics/<server>/<db>.json")
+@require_role(["admin", "operator", "viewer"])
+def database_metrics_json(server, db):
+    """Return database metrics as JSON"""
+    try:
+        metrics = get_database_metrics(server, db)
+        return jsonify(metrics)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/sync-summary")
+@require_role(["admin", "operator", "viewer"])
+def sync_summary():
+    """Show overall sync summary across all servers"""
+    try:
+        summary = get_sync_summary()
+        return render_template("sync_summary.html", 
+                             summary=summary,
+                             role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error getting sync summary: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/sync-summary.json")
+@require_role(["admin", "operator", "viewer"])
+def sync_summary_json():
+    """Return sync summary as JSON"""
+    try:
+        summary = get_sync_summary()
+        return jsonify(summary)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ------------------ MAIN ------------------
 if __name__ == "__main__":
     app.run(debug=True)

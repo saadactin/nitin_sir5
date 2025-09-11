@@ -161,13 +161,17 @@ def load_schedules_from_db():
     conn.close()
 
     for server_name, job_type in rows:
-        if job_type.startswith("interval_"):
-            minutes = int(job_type.replace("interval_", "").replace("m", ""))
-            schedule_interval_sync(server_name, minutes)
-        elif job_type.startswith("daily_"):
-            time_str = job_type.replace("daily_", "")
-            hour, minute = map(int, time_str.split(":"))
-            schedule_daily_sync(server_name, hour, minute)
+        try:
+            if job_type.startswith("interval_"):
+                minutes = int(job_type.replace("interval_", "").replace("m", ""))
+                schedule_interval_sync(server_name, minutes)
+            elif job_type.startswith("daily_"):
+                time_str = job_type.replace("daily_", "")
+                hour, minute = map(int, time_str.split(":"))
+                schedule_daily_sync(server_name, hour, minute)
+        except ValueError as e:
+            print(f"⚠️ Skipping schedule for {server_name}: {e}")
+            continue
 
 # Auto-load schedules
 load_schedules_from_db()

@@ -43,6 +43,12 @@
         📅 View Schedules
       </a>
     </li>
+    <li>
+      <a href="{{ url_for('sync_summary') }}" 
+         class="nav-link text-white {% if request.endpoint == 'sync_summary' %}active bg-primary{% endif %}">
+        📈 Sync Summary
+      </a>
+    </li>
     {% endif %}
 
     {% if session.get("role") == "admin" %}

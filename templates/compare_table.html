@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Table Comparison - {{ server }}.{{ db }}.{{ table }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .missing-row { background-color: #f8d7da !important; }
+        .extra-row { background-color: #d1ecf1 !important; }
+        .table-container { max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>🔍 Table Comparison</h2>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
+        </div>
+
+        <!-- Table Info -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">📋 Table Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Server:</strong> {{ server }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Database:</strong> {{ db }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Table:</strong> {{ table }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Last Check:</strong> {{ delta_info.last_check }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ comparison.rows_source }}</h4>
+                        <p class="mb-0">Source Rows</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ comparison.rows_destination }}</h4>
+                        <p class="mb-0">Destination Rows</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ comparison.missing_rows|length }}</h4>
+                        <p class="mb-0">Missing Rows</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ comparison.extra_rows|length }}</h4>
+                        <p class="mb-0">Extra Rows</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delta Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">📊 Delta Tracking</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Delta Count:</strong> {{ delta_info.delta_count }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Total Source:</strong> {{ delta_info.total_source_rows }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Total Destination:</strong> {{ delta_info.total_destination_rows }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Missing Rows -->
+        {% if comparison.missing_rows|length > 0 %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">❌ Missing Rows ({{ comparison.missing_rows|length }})</h5>
+                <small>Rows present in source but not in destination</small>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                {% for col in comparison.missing_rows.columns %}
+                                <th>{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for _, row in comparison.missing_rows.iterrows() %}
+                            <tr class="missing-row">
+                                {% for col in comparison.missing_rows.columns %}
+                                <td>{{ row[col] }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Extra Rows -->
+        {% if comparison.extra_rows|length > 0 %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">➕ Extra Rows ({{ comparison.extra_rows|length }})</h5>
+                <small>Rows present in destination but not in source</small>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                {% for col in comparison.extra_rows.columns %}
+                                <th>{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for _, row in comparison.extra_rows.iterrows() %}
+                            <tr class="extra-row">
+                                {% for col in comparison.extra_rows.columns %}
+                                <td>{{ row[col] }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Source Data Sample -->
+        {% if comparison.source_data|length > 0 %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📥 Source Data Sample</h5>
+                <small>First 10 rows from source</small>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                {% for col in comparison.source_data.columns %}
+                                <th>{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for _, row in comparison.source_data.head(10).iterrows() %}
+                            <tr>
+                                {% for col in comparison.source_data.columns %}
+                                <td>{{ row[col] }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Destination Data Sample -->
+        {% if comparison.destination_data|length > 0 %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">📤 Destination Data Sample</h5>
+                <small>First 10 rows from destination</small>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                {% for col in comparison.destination_data.columns %}
+                                <th>{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for _, row in comparison.destination_data.head(10).iterrows() %}
+                            <tr>
+                                {% for col in comparison.destination_data.columns %}
+                                <td>{{ row[col] }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if comparison.missing_rows|length == 0 and comparison.extra_rows|length == 0 %}
+        <div class="alert alert-success">
+            <h4 class="alert-heading">✅ Tables are in sync!</h4>
+            <p>No missing or extra rows found. Source and destination tables have identical data.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

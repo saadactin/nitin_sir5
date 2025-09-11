@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Top Changed Tables - {{ server }}.{{ db }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .delta-badge { font-size: 0.9em; }
+        .table-row:hover { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📈 Top Changed Tables</h2>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
+        </div>
+
+        <!-- Database Info -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">📋 Database Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Server:</strong> {{ server }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Database:</strong> {{ db }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Total Tables:</strong> {{ changed_tables|length }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ changed_tables|sum(attribute='delta_count') }}</h4>
+                        <p class="mb-0">Total Delta Changes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ changed_tables|sum(attribute='total_source_rows') }}</h4>
+                        <p class="mb-0">Total Source Rows</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ changed_tables|sum(attribute='total_destination_rows') }}</h4>
+                        <p class="mb-0">Total Destination Rows</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Changed Tables -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">🏆 Tables Ranked by Changes</h5>
+                <small>Tables with most delta changes since last sync</small>
+            </div>
+            <div class="card-body p-0">
+                {% if changed_tables|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th width="5%">#</th>
+                                <th width="35%">Table Name</th>
+                                <th width="15%">Delta Count</th>
+                                <th width="15%">Source Rows</th>
+                                <th width="15%">Destination Rows</th>
+                                <th width="15%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for table in changed_tables %}
+                            <tr class="table-row">
+                                <td>
+                                    {% if loop.index <= 3 %}
+                                        {% if loop.index == 1 %}
+                                            <span class="badge bg-warning text-dark">🥇</span>
+                                        {% elif loop.index == 2 %}
+                                            <span class="badge bg-secondary">🥈</span>
+                                        {% elif loop.index == 3 %}
+                                            <span class="badge bg-warning text-dark">🥉</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ table.table }}</strong>
+                                </td>
+                                <td>
+                                    {% if table.delta_count > 0 %}
+                                        <span class="badge bg-danger delta-badge">{{ table.delta_count }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success delta-badge">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ "{:,}".format(table.total_source_rows) }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ "{:,}".format(table.total_destination_rows) }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('compare_table', server=server, db=db, table=table.table) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        🔍 Compare
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <div class="alert alert-info">
+                        <h4 class="alert-heading">No Tables Found</h4>
+                        <p>No tables were found in this database or there was an error retrieving the data.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">📖 Legend</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <span class="badge bg-danger">Delta Count</span>
+                        <small class="text-muted"> - Rows changed since last sync</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-primary">Source Rows</span>
+                        <small class="text-muted"> - Total rows in SQL Server</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-info">Destination Rows</span>
+                        <small class="text-muted"> - Total rows in PostgreSQL</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-warning">🥇🥈🥉</span>
+                        <small class="text-muted"> - Top 3 most changed tables</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

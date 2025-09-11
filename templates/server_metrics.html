@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Server Metrics - {{ server }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .metric-card { transition: transform 0.2s; }
+        .metric-card:hover { transform: translateY(-2px); }
+        .table-row:hover { background-color: #f8f9fa; }
+        .sync-status-synced { color: #28a745; }
+        .sync-status-never-synced { color: #dc3545; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📊 Server Metrics - {{ server }}</h2>
+            <div>
+                <a href="{{ url_for('sync_summary') }}" class="btn btn-outline-secondary me-2">📈 Sync Summary</a>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
+            </div>
+        </div>
+
+        <!-- Server Info -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🖥️ Server Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Server Name:</strong> {{ metrics.server_name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Host:</strong> {{ metrics.server_host }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Databases:</strong> {{ metrics.total_databases }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Last Updated:</strong> {{ metrics.last_updated[:19] }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white metric-card">
+                    <div class="card-body text-center">
+                        <h3>{{ metrics.total_databases }}</h3>
+                        <p class="mb-0">📁 Databases</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white metric-card">
+                    <div class="card-body text-center">
+                        <h3>{{ metrics.total_tables }}</h3>
+                        <p class="mb-0">📋 Tables</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white metric-card">
+                    <div class="card-body text-center">
+                        <h3>{{ "{:,}".format(metrics.total_source_rows) }}</h3>
+                        <p class="mb-0">📥 Source Rows</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white metric-card">
+                    <div class="card-body text-center">
+                        <h3>{{ "{:,}".format(metrics.total_destination_rows) }}</h3>
+                        <p class="mb-0">📤 Destination Rows</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Breakdown -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">📁 Database Breakdown</h5>
+                <small>Click on a database to view detailed metrics</small>
+            </div>
+            <div class="card-body p-0">
+                {% if metrics.databases|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th width="25%">Database</th>
+                                <th width="15%">Tables</th>
+                                <th width="20%">Source Rows</th>
+                                <th width="20%">Destination Rows</th>
+                                <th width="10%">Sync Status</th>
+                                <th width="10%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for db_name, db_data in metrics.databases.items() %}
+                            <tr class="table-row">
+                                <td>
+                                    <strong>{{ db_name }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ db_data.total_tables }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning">{{ "{:,}".format(db_data.total_source_rows) }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ "{:,}".format(db_data.total_destination_rows) }}</span>
+                                </td>
+                                <td>
+                                    {% if db_data.total_source_rows == db_data.total_destination_rows %}
+                                        <span class="badge bg-success">✅ Synced</span>
+                                    {% elif db_data.total_destination_rows == 0 %}
+                                        <span class="badge bg-danger">❌ Not Synced</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">⚠️ Partial</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if 'error' not in db_data %}
+                                    <a href="{{ url_for('database_metrics', server=server, db=db_name) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        📊 Details
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">Error</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <div class="alert alert-info">
+                        <h4 class="alert-heading">No Databases Found</h4>
+                        <p>No databases were found for this server or there was an error retrieving the data.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">⚡ Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <a href="{{ url_for('sync_server', server_name=server) }}" 
+                           class="btn btn-success w-100">
+                            🔄 Sync Server
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('server_metrics', server=server) }}.json" 
+                           class="btn btn-outline-info w-100" target="_blank">
+                            📄 Export JSON
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('sync_summary') }}" 
+                           class="btn btn-outline-secondary w-100">
+                            📈 All Servers
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">📖 Legend</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <span class="badge bg-success">✅ Synced</span>
+                        <small class="text-muted"> - Source and destination row counts match</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-warning">⚠️ Partial</span>
+                        <small class="text-muted"> - Some data synced but counts differ</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-danger">❌ Not Synced</span>
+                        <small class="text-muted"> - No data in destination</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-primary">📊 Details</span>
+                        <small class="text-muted"> - View table-level metrics</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
