@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug - {{ server }}.{{ db }}.{{ table }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .table-container { max-height: 480px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>🛠 Debug - {{ server }} / {{ db }} / {{ table }}</h2>
+            <span class="badge bg-secondary">Sample size: {{ result.rows|length }}</span>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">Rows present in source but missing in destination (sample)</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            {% if result.rows and result.rows|length > 0 %}
+                                {% for k in result.rows[0].keys() %}
+                                    <th>{{ k }}</th>
+                                {% endfor %}
+                            {% else %}
+                                <th>No rows found</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in result.rows %}
+                        <tr>
+                            {% for v in r.values() %}
+                            <td>{{ v }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

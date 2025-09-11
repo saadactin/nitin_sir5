@@ -66,8 +66,11 @@
                             <p class="mb-0"><i class="bi bi-circle-fill text-success"></i> Status: <span>Online</span></p>
                         </div>
                         <div class="d-flex flex-wrap gap-2">
+                            <a href="{{ url_for('view_server_databases', server_name=name) }}" class="btn btn-outline-primary btn-sm btn-icon">
+                                <i class="bi bi-collection"></i> Databases
+                            </a>
                             <a href="{{ url_for('sync_server', server_name=name) }}" class="btn btn-primary btn-sm btn-icon">
-                                <i class="bi bi-arrow-clockwise"></i> Sync
+                                <i class="bi bi-arrow-clockwise"></i> Sync Server
                             </a>
                             {% if role in ['admin', 'operator'] %}
                             <a href="{{ url_for('add_server') }}?edit={{ name }}" class="btn btn-warning btn-sm btn-icon">

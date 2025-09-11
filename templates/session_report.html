@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Session Report - {{ server }}.{{ db }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .table-container { max-height: 420px; overflow-y: auto; }
+        .card-stat { min-height: 100px; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <h2 class="mb-4">📑 Session Report - {{ server }} / {{ db }}</h2>
+
+        {% set s = report.session %}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted">Started</div>
+                        <h6>{{ s.started_at if s else '-' }}</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted">Finished</div>
+                        <h6>{{ s.finished_at if s else '-' }}</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted">Duration (ms)</div>
+                        <h6>{{ s.duration_ms if s else '-' }}</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted">Tables</div>
+                        <h6>{{ report.tables|length }}</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted">Alerts</div>
+                        <h6>{{ report.alerts.counts.total }}</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">📋 Tables</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Table</th>
+                            <th>Source Rows</th>
+                            <th>Destination Rows</th>
+                            <th>Last PK</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in report.tables %}
+                        <tr>
+                            <td>{{ t.schema }}.{{ t.table }}</td>
+                            <td><span class="badge bg-warning">{{ t.rows_source }}</span></td>
+                            <td><span class="badge bg-info">{{ t.rows_destination }}</span></td>
+                            <td><small class="text-muted">{{ t.last_pk or '-' }}</small></td>
+                            <td>{{ t.updated_at or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white">🚨 Alerts</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Severity</th>
+                            <th>Message</th>
+                            <th>Table</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in report.alerts.alerts %}
+                        <tr>
+                            <td>{{ a.severity }}</td>
+                            <td>{{ a.message }}</td>
+                            <td>{{ a.table or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

@@ -25,6 +25,18 @@ from analytics_advanced import (
 )
 from hybrid_sync import get_sql_connection
 from hybrid_sync import get_all_databases as hs_get_all_databases
+from hybrid_sync import (
+    get_sqlalchemy_engine,
+    get_pg_engine,
+    should_skip_database,
+    full_sync_database,
+    incremental_sync_database,
+    update_sync_status,
+    cleanup_system_tables,
+    get_sync_status,
+    create_sync_tracking_table,
+    create_table_sync_tracking,
+)
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # required for flash + sessions
 init_admin_user()
@@ -88,6 +100,98 @@ def index():
     sqlservers = config.get("sqlservers", {})
     role = session.get("role")  # make sure this is aligned with the above line
     return render_template("sync_servers.html", sqlservers=sqlservers, role=role)
+
+
+@app.route("/server/<server_name>")
+@require_role(["admin", "operator", "viewer"])
+def view_server_databases(server_name):
+    """Show databases for a server and allow selecting subset to sync."""
+    try:
+        config = load_config()
+        server_conf = config["sqlservers"].get(server_name)
+        if not server_conf:
+            flash("Server not found", "danger")
+            return redirect(url_for("index"))
+        conn = get_sql_connection(server_conf)
+        dbs = hs_get_all_databases(conn)
+        conn.close()
+        return render_template("server_databases.html", server_name=server_name, databases=dbs, role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Failed to load databases: {e}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/sync-selected/<server_name>", methods=["POST"])
+@require_role(["admin", "operator"])
+def sync_selected_databases(server_name):
+    """Sync only selected databases for a server (incremental)."""
+    try:
+        selected = [d.strip() for d in request.form.getlist("databases") if d.strip()]
+        if not selected:
+            flash("No databases selected.", "warning")
+            return redirect(url_for("view_server_databases", server_name=server_name))
+
+        config = load_config()
+        server_conf = config["sqlservers"].get(server_name)
+        if not server_conf:
+            flash("Server not found", "danger")
+            return redirect(url_for("index"))
+
+        # Validate requested databases actually exist on the server
+        try:
+            test_conn = get_sql_connection(server_conf)
+            existing_dbs = set(hs_get_all_databases(test_conn))
+            test_conn.close()
+        except Exception as e:
+            flash(f"❌ Could not read databases from server: {e}", "danger")
+            return redirect(url_for("view_server_databases", server_name=server_name))
+
+        selected = [d for d in selected if d in existing_dbs]
+        if not selected:
+            flash("No valid databases selected (not found on server).", "warning")
+            return redirect(url_for("view_server_databases", server_name=server_name))
+
+        # Prepare engines and ensure tracking tables exist
+        pg_engine = get_pg_engine()
+        create_sync_tracking_table(pg_engine)
+        create_table_sync_tracking(pg_engine)
+        server_clean = ''.join(c for c in server_conf['server'] if c.isalnum() or c in '_-')
+
+        processed_summary = []
+        for db_name in selected:
+            if should_skip_database(db_name, server_conf):
+                continue
+            sql_engine = get_sqlalchemy_engine(server_conf, db_name)
+            db_conn = get_sql_connection(server_conf, db_name)
+            try:
+                # Cleanup reserved system tables in target schema
+                schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
+                cleanup_system_tables(pg_engine, schema_name)
+                # Decide full vs incremental based on status
+                status = get_sync_status(pg_engine, server_conf['server'], db_name)
+                if status is None:
+                    try:
+                        count = full_sync_database(sql_engine, db_name, server_conf, server_clean, None, pg_engine)
+                        update_sync_status(pg_engine, server_conf['server'], db_name, 'full', 'COMPLETED')
+                        processed_summary.append(f"{db_name}: full({count})")
+                    except Exception as e:
+                        processed_summary.append(f"{db_name}: full(ERROR {e})")
+                else:
+                    try:
+                        count = incremental_sync_database(sql_engine, db_conn, db_name, server_conf, server_clean, None, pg_engine)
+                        update_sync_status(pg_engine, server_conf['server'], db_name, 'incremental', 'COMPLETED')
+                        processed_summary.append(f"{db_name}: incr({count})")
+                    except Exception as e:
+                        processed_summary.append(f"{db_name}: incr(ERROR {e})")
+            finally:
+                db_conn.close()
+                sql_engine.dispose()
+
+        flash(f"✅ Sync completed: {'; '.join(processed_summary)}", "success")
+        return redirect(url_for("view_server_databases", server_name=server_name))
+    except Exception as e:
+        flash(f"❌ Failed to sync selected: {e}", "danger")
+        return redirect(url_for("view_server_databases", server_name=server_name))
 
 
 @app.route("/sync/<server_name>")

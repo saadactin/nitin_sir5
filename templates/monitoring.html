@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitoring - {{ server }}.{{ db }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        .table-container { max-height: 420px; overflow-y: auto; }
+        .card-stat { min-height: 100px; }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    {% include 'sidebar.html' %}
+
+    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+        <h2 class="mb-4">📊 Monitoring - {{ server }} / {{ db }}</h2>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <h3>{{ data.sessions|length }}</h3>
+                        <div class="text-muted">Recent Sessions</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <h3>{{ data.tables|length }}</h3>
+                        <div class="text-muted">Tables</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-stat shadow-sm">
+                    <div class="card-body text-center">
+                        <h3>{{ data.alerts.counts.total }}</h3>
+                        <div class="text-muted">Alerts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">🕒 Recent Sessions</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Started</th>
+                            <th>Finished</th>
+                            <th>Duration (ms)</th>
+                            <th>Warnings</th>
+                            <th>Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in data.sessions %}
+                        <tr>
+                            <td>{{ s.started_at or '-' }}</td>
+                            <td>{{ s.finished_at or '-' }}</td>
+                            <td>{{ s.duration_ms or '-' }}</td>
+                            <td>{% if s.warnings %}<span class="badge bg-warning text-dark">{{ s.warnings|length }}</span>{% else %}-{% endif %}</td>
+                            <td>{% if s.errors %}<span class="badge bg-danger">{{ s.errors|length }}</span>{% else %}-{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tables -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">📋 Tables Snapshot</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Table</th>
+                            <th>Source Rows</th>
+                            <th>Destination Rows</th>
+                            <th>Last PK</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in data.tables %}
+                        <tr>
+                            <td>{{ t.schema }}.{{ t.table }}</td>
+                            <td><span class="badge bg-warning">{{ t.rows_source }}</span></td>
+                            <td><span class="badge bg-info">{{ t.rows_destination }}</span></td>
+                            <td><small class="text-muted">{{ t.last_pk or '-' }}</small></td>
+                            <td>{{ t.updated_at or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white">🚨 Alerts</div>
+            <div class="card-body p-0 table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Severity</th>
+                            <th>Message</th>
+                            <th>Server</th>
+                            <th>Database</th>
+                            <th>Table</th>
+                            <th>When</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in data.alerts.alerts %}
+                        <tr class="{% if a.severity == 'CRITICAL' %}table-danger{% elif a.severity == 'HIGH' %}table-warning{% endif %}">
+                            <td>
+                                {% if a.severity == 'CRITICAL' %}
+                                <span class="badge bg-danger">CRITICAL</span>
+                                {% elif a.severity == 'HIGH' %}
+                                <span class="badge bg-warning text-dark">HIGH</span>
+                                {% elif a.severity == 'WARNING' %}
+                                <span class="badge bg-warning text-dark">WARNING</span>
+                                {% else %}
+                                <span class="badge bg-secondary">INFO</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ a.message }}</td>
+                            <td>{{ a.server or '-' }}</td>
+                            <td>{{ a.database or '-' }}</td>
+                            <td>{{ a.table or '-' }}</td>
+                            <td>{{ a.when or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

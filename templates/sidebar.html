@@ -76,8 +76,8 @@
   <hr>
 
   <div class="text-white small">
-    {% if session.get("username") %}
-      👋 Logged in as <strong> ({{ session["role"] }})</strong><br>
+    {% if session.get("user") %}
+      👋 Logged in as <strong>{{ session["user"] }}</strong> ({{ session["role"] }})<br>
       <a href="{{ url_for('logout') }}" class="text-decoration-none text-danger">🚪 Logout</a>
     {% else %}
       <a href="{{ url_for('login') }}" class="text-decoration-none text-success">🔑 Login</a>
