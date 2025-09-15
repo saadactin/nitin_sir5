@@ -1,3 +1,4 @@
+import hashlib
 import os
 import yaml
 import pyodbc
@@ -468,11 +469,70 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
     table_name = f"{schema}_{table}"
     processed = 0
     if sync_col:
-        for df, next_marker in batch_fetch_new_rows(sql_engine, schema, table, sync_col, last_value, BATCH_SIZE):
+        if last_value is None:
+            # When last_value is None, use hash-based deduplication instead of skipping
+            logging.info(f"Last value is None for {schema}.{table}, using hash-based deduplication")
+            
+            # Fetch all data from source
+            query = f"SELECT * FROM [{schema}].[{table}]"
+            df = pd.read_sql(query, sql_engine)
+            if df.empty:
+                return 0
+            
             ensure_table_and_columns(pg_engine, schema_name, table_name, df)
-            df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
-            update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, next_marker)
-            processed += len(df)
+            
+            # Check if target table exists and has data
+            with pg_engine.connect() as pg_conn:
+                try:
+                    dst_df = pd.read_sql(f'SELECT * FROM "{schema_name}"."{table_name}"', pg_conn)
+                except Exception:
+                    dst_df = pd.DataFrame()
+            
+            if dst_df.empty:
+                # Target table is empty, insert all data
+                df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
+                # Update last synced value
+                if sync_col in df.columns:
+                    update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, df[sync_col].max())
+                return len(df)
+            else:
+                # Target table has data, use hash-based deduplication
+                common = list(set(df.columns) & set(dst_df.columns))
+                if not common:
+                    return 0
+                
+                src = df[common].fillna('')
+                dst = dst_df[common].fillna('')
+                
+                # Use the same hash logic as the fallback
+                def row_md5(row):
+                    row_tuple = tuple(str(x) for x in row)
+                    return hashlib.md5(str(row_tuple).encode('utf-8')).hexdigest()
+                
+                src['row_hash'] = src.apply(row_md5, axis=1)
+                dst['row_hash'] = dst.apply(row_md5, axis=1)
+                
+                new_rows_idx = src[~src['row_hash'].isin(dst['row_hash'])].index
+                if len(new_rows_idx) > 0:
+                    df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
+                    # Update last synced value
+                    if sync_col in df.columns:
+                        update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, df[sync_col].max())
+                    return len(new_rows_idx)
+                else:
+                    logging.info(f"No new rows found for {schema}.{table}")
+                    return 0
+        else:
+            # Normal incremental sync when last_value is not None
+            for df, _ in batch_fetch_new_rows(sql_engine, schema, table, sync_col, last_value, BATCH_SIZE):
+                if df.empty:
+                    continue
+                ensure_table_and_columns(pg_engine, schema_name, table_name, df)
+                df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
+                next_marker = df[sync_col].max()
+                update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, next_marker)
+                processed += len(df)
+
     else:
         query = f"SELECT * FROM [{schema}].[{table}]"
         df = pd.read_sql(query, sql_engine)
@@ -493,8 +553,18 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
             processed = len(df)
         else:
             dst = dst_df[common].fillna('')
-            src['row_hash'] = src.apply(lambda x: hash(tuple(x)), axis=1)
-            dst['row_hash'] = dst.apply(lambda x: hash(tuple(x)), axis=1)
+            #commented by vikas for the row duplication
+            #src['row_hash'] = src.apply(lambda x: hash(tuple(x)), axis=1)
+            #dst['row_hash'] = dst.apply(lambda x: hash(tuple(x)), axis=1)
+            def row_md5(row):
+    # Convert row to tuple of strings to handle NaNs consistently
+             row_tuple = tuple(str(x) for x in row)
+             return hashlib.md5(str(row_tuple).encode('utf-8')).hexdigest()
+ 
+            src['row_hash'] = src.apply(row_md5, axis=1)
+            dst['row_hash'] = dst.apply(row_md5, axis=1)
+            
+            
             new_rows_idx = src[~src['row_hash'].isin(dst['row_hash'])].index
             if len(new_rows_idx) > 0:
                 df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)

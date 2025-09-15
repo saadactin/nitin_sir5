@@ -1,12 +1,12 @@
 postgresql:
-  database: Vikas
+  database: Vikas1
   host: localhost
   password: StrongPassword123
   port: 5432
   schema: CompanyDB
   username: migration_user
 sqlservers:
-  server1:
+  anksk:
     check_new_databases: true
     password: root
     port: 1433
