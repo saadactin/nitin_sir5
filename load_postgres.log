@@ -34713,3 +34713,239 @@ processed 0 tables
 2025-09-17 11:43:45,904 - INFO - 127.0.0.1 - - [17/Sep/2025 11:43:45] "[32mGET /sync/anksk HTTP/1.1[0m" 302 -
 2025-09-17 11:43:45,912 - INFO - 127.0.0.1 - - [17/Sep/2025 11:43:45] "GET / HTTP/1.1" 200 -
 2025-09-17 11:43:51,273 - INFO - 127.0.0.1 - - [17/Sep/2025 11:43:51] "GET /sync-summary HTTP/1.1" 200 -
+2025-09-17 11:46:51,689 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-09-17 11:46:51,691 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-17 11:46:51,693 - INFO -  * Restarting with stat
+2025-09-17 11:46:53,215 - WARNING -  * Debugger is active!
+2025-09-17 11:46:53,219 - INFO -  * Debugger PIN: 614-186-425
+2025-09-17 11:46:57,022 - INFO - 127.0.0.1 - - [17/Sep/2025 11:46:57] "GET / HTTP/1.1" 200 -
+2025-09-17 11:47:01,213 - INFO - Sync tracking table created/verified
+2025-09-17 11:47:01,345 - INFO - Connected to SQL Server: localhost
+2025-09-17 11:47:01,445 - INFO - Found 17 databases on localhost
+2025-09-17 11:47:01,447 - INFO - Cleaned up system table: localhost_actmon_db.sys_trace_xe_event_map
+2025-09-17 11:47:01,450 - INFO - Cleaned up system table: localhost_actmon_db.sys_trace_xe_action_map
+2025-09-17 11:47:01,562 - INFO - === Starting INCREMENTAL sync for database: actmon_db ===
+2025-09-17 11:47:02,134 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:02,519 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:02,520 - INFO - === INCREMENTAL sync completed for actmon_db, 0/2 tables processed ===
+2025-09-17 11:47:02,548 - INFO - anksk/actmon_db: processed 0 tables
+2025-09-17 11:47:02,552 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_event_map
+2025-09-17 11:47:02,556 - INFO - Cleaned up system table: localhost_MySampleDB4.sys_trace_xe_action_map
+2025-09-17 11:47:02,614 - INFO - === Starting INCREMENTAL sync for database: MySampleDB4 ===
+2025-09-17 11:47:03,090 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=None
+2025-09-17 11:47:03,359 - INFO - Last value is None for dbo.Departments, using hash-based deduplication
+2025-09-17 11:47:03,638 - INFO - Schema 'localhost_MySampleDB4' created/verified successfully
+2025-09-17 11:47:03,695 - INFO - No new rows found for dbo.Departments
+2025-09-17 11:47:03,976 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=None
+2025-09-17 11:47:04,334 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-09-17 11:47:04,368 - INFO - Schema 'localhost_MySampleDB4' created/verified successfully
+2025-09-17 11:47:04,389 - INFO - No new rows found for dbo.Employees
+2025-09-17 11:47:04,679 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:04,989 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:04,990 - INFO - === INCREMENTAL sync completed for MySampleDB4, 0/4 tables processed ===
+2025-09-17 11:47:05,016 - INFO - anksk/MySampleDB4: processed 0 tables
+2025-09-17 11:47:05,026 - INFO - Cleaned up system table: localhost_MySampleDB999.sys_trace_xe_event_map
+2025-09-17 11:47:05,031 - INFO - Cleaned up system table: localhost_MySampleDB999.sys_trace_xe_action_map
+2025-09-17 11:47:05,100 - INFO - === Starting INCREMENTAL sync for database: MySampleDB999 ===
+2025-09-17 11:47:05,598 - INFO - [INCR SYNC] dbo.Departments: row_count=4, sync_col=DepartmentID, last_value=None
+2025-09-17 11:47:05,846 - INFO - Last value is None for dbo.Departments, using hash-based deduplication
+2025-09-17 11:47:06,085 - INFO - Schema 'localhost_MySampleDB999' created/verified successfully
+2025-09-17 11:47:06,106 - INFO - No new rows found for dbo.Departments
+2025-09-17 11:47:06,376 - INFO - [INCR SYNC] dbo.Employees: row_count=4, sync_col=EmployeeID, last_value=None
+2025-09-17 11:47:06,661 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-09-17 11:47:06,700 - INFO - Schema 'localhost_MySampleDB999' created/verified successfully
+2025-09-17 11:47:06,729 - INFO - No new rows found for dbo.Employees
+2025-09-17 11:47:07,081 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:07,386 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:07,387 - INFO - === INCREMENTAL sync completed for MySampleDB999, 0/4 tables processed ===
+2025-09-17 11:47:07,391 - INFO - anksk/MySampleDB999: processed 0 tables
+2025-09-17 11:47:07,395 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_event_map
+2025-09-17 11:47:07,397 - INFO - Cleaned up system table: localhost_SampleDB.sys_trace_xe_action_map
+2025-09-17 11:47:07,451 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-09-17 11:47:07,884 - INFO - [INCR SYNC] dbo.Employees: row_count=10, sync_col=EmployeeID, last_value=None
+2025-09-17 11:47:08,148 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-09-17 11:47:08,403 - INFO - Schema 'localhost_SampleDB' created/verified successfully
+2025-09-17 11:47:08,434 - INFO - No new rows found for dbo.Employees
+2025-09-17 11:47:08,678 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:08,908 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:08,910 - INFO - === INCREMENTAL sync completed for SampleDB, 0/3 tables processed ===
+2025-09-17 11:47:08,935 - INFO - anksk/SampleDB: processed 0 tables
+2025-09-17 11:47:08,940 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-09-17 11:47:08,942 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-09-17 11:47:09,004 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-09-17 11:47:09,400 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-09-17 11:47:09,643 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-09-17 11:47:09,861 - INFO - Schema 'localhost_SampleDB1' created/verified successfully
+2025-09-17 11:47:09,881 - INFO - No new rows found for dbo.Employees
+2025-09-17 11:47:10,131 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:10,362 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:10,364 - INFO - === INCREMENTAL sync completed for SampleDB1, 0/3 tables processed ===
+2025-09-17 11:47:10,379 - INFO - anksk/SampleDB1: processed 0 tables
+2025-09-17 11:47:10,383 - INFO - Cleaned up system table: localhost_sampledb10.sys_trace_xe_event_map
+2025-09-17 11:47:10,386 - INFO - Cleaned up system table: localhost_sampledb10.sys_trace_xe_action_map
+2025-09-17 11:47:10,445 - INFO - === Starting INCREMENTAL sync for database: sampledb10 ===
+2025-09-17 11:47:10,867 - INFO - [INCR SYNC] dbo.employees: row_count=20, sync_col=id, last_value=None
+2025-09-17 11:47:11,112 - INFO - Last value is None for dbo.employees, using hash-based deduplication
+2025-09-17 11:47:11,325 - INFO - Schema 'localhost_sampledb10' created/verified successfully
+2025-09-17 11:47:11,351 - INFO - No new rows found for dbo.employees
+2025-09-17 11:47:11,618 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:11,876 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:11,877 - INFO - === INCREMENTAL sync completed for sampledb10, 0/3 tables processed ===
+2025-09-17 11:47:11,878 - INFO - anksk/sampledb10: processed 0 tables
+2025-09-17 11:47:11,885 - INFO - Cleaned up system table: localhost_SampleDB11.sys_trace_xe_event_map
+2025-09-17 11:47:11,886 - INFO - Cleaned up system table: localhost_SampleDB11.sys_trace_xe_action_map
+2025-09-17 11:47:11,938 - INFO - === Starting INCREMENTAL sync for database: SampleDB11 ===
+2025-09-17 11:47:12,347 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-09-17 11:47:12,610 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-09-17 11:47:12,815 - INFO - Schema 'localhost_SampleDB11' created/verified successfully
+2025-09-17 11:47:12,829 - INFO - No new rows found for dbo.Employees
+2025-09-17 11:47:13,091 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:13,331 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:13,331 - INFO - === INCREMENTAL sync completed for SampleDB11, 0/3 tables processed ===
+2025-09-17 11:47:13,332 - INFO - anksk/SampleDB11: processed 0 tables
+2025-09-17 11:47:13,334 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_event_map
+2025-09-17 11:47:13,335 - INFO - Cleaned up system table: localhost_SampleDB6.sys_trace_xe_action_map
+2025-09-17 11:47:13,385 - INFO - === Starting INCREMENTAL sync for database: SampleDB6 ===
+2025-09-17 11:47:13,759 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-09-17 11:47:13,763 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-09-17 11:47:14,013 - INFO - Schema 'localhost_SampleDB6' created/verified successfully
+2025-09-17 11:47:14,029 - INFO - No new rows found for dbo.Employees
+2025-09-17 11:47:14,283 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:14,527 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:14,527 - INFO - === INCREMENTAL sync completed for SampleDB6, 0/3 tables processed ===
+2025-09-17 11:47:14,551 - INFO - anksk/SampleDB6: processed 0 tables
+2025-09-17 11:47:14,555 - INFO - Cleaned up system table: localhost_sampledb7.sys_trace_xe_event_map
+2025-09-17 11:47:14,556 - INFO - Cleaned up system table: localhost_sampledb7.sys_trace_xe_action_map
+2025-09-17 11:47:14,610 - INFO - === Starting INCREMENTAL sync for database: sampledb7 ===
+2025-09-17 11:47:14,995 - INFO - [INCR SYNC] dbo.employees: row_count=8, sync_col=id, last_value=8
+2025-09-17 11:47:15,656 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:15,905 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:15,905 - INFO - === INCREMENTAL sync completed for sampledb7, 0/3 tables processed ===
+2025-09-17 11:47:15,907 - INFO - anksk/sampledb7: processed 0 tables
+2025-09-17 11:47:15,911 - INFO - Cleaned up system table: localhost_sampleDB8.sys_trace_xe_event_map
+2025-09-17 11:47:15,912 - INFO - Cleaned up system table: localhost_sampleDB8.sys_trace_xe_action_map
+2025-09-17 11:47:16,274 - INFO - === Starting INCREMENTAL sync for database: sampleDB8 ===
+2025-09-17 11:47:16,778 - INFO - [INCR SYNC] dbo.employees: row_count=5, sync_col=id, last_value=None
+2025-09-17 11:47:16,992 - INFO - Last value is None for dbo.employees, using hash-based deduplication
+2025-09-17 11:47:17,203 - INFO - Schema 'localhost_sampleDB8' created/verified successfully
+2025-09-17 11:47:17,216 - INFO - No new rows found for dbo.employees
+2025-09-17 11:47:17,505 - INFO - [INCR SYNC] dbo.employees1: row_count=10, sync_col=id, last_value=10
+2025-09-17 11:47:17,975 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:18,225 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:18,226 - INFO - === INCREMENTAL sync completed for sampleDB8, 0/4 tables processed ===
+2025-09-17 11:47:18,229 - INFO - anksk/sampleDB8: processed 0 tables
+2025-09-17 11:47:18,234 - INFO - Cleaned up system table: localhost_sampledb9.sys_trace_xe_event_map
+2025-09-17 11:47:18,235 - INFO - Cleaned up system table: localhost_sampledb9.sys_trace_xe_action_map
+2025-09-17 11:47:18,316 - INFO - === Starting INCREMENTAL sync for database: sampledb9 ===
+2025-09-17 11:47:18,727 - INFO - [INCR SYNC] dbo.employees: row_count=6, sync_col=id, last_value=6
+2025-09-17 11:47:19,551 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:19,784 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:19,784 - INFO - === INCREMENTAL sync completed for sampledb9, 0/3 tables processed ===
+2025-09-17 11:47:19,786 - INFO - anksk/sampledb9: processed 0 tables
+2025-09-17 11:47:19,789 - INFO - Cleaned up system table: localhost_SchoolDB.sys_trace_xe_event_map
+2025-09-17 11:47:19,790 - INFO - Cleaned up system table: localhost_SchoolDB.sys_trace_xe_action_map
+2025-09-17 11:47:19,836 - INFO - === Starting INCREMENTAL sync for database: SchoolDB ===
+2025-09-17 11:47:20,238 - INFO - [INCR SYNC] dbo.Classes: row_count=4, sync_col=ClassID, last_value=None
+2025-09-17 11:47:20,456 - INFO - Last value is None for dbo.Classes, using hash-based deduplication
+2025-09-17 11:47:20,652 - INFO - Schema 'localhost_SchoolDB' created/verified successfully
+2025-09-17 11:47:20,671 - INFO - No new rows found for dbo.Classes
+2025-09-17 11:47:20,914 - INFO - [INCR SYNC] dbo.Enrollments: row_count=6, sync_col=EnrollmentID, last_value=None
+2025-09-17 11:47:20,921 - INFO - Last value is None for dbo.Enrollments, using hash-based deduplication
+2025-09-17 11:47:20,947 - INFO - Schema 'localhost_SchoolDB' created/verified successfully
+2025-09-17 11:47:20,959 - INFO - No new rows found for dbo.Enrollments
+2025-09-17 11:47:21,186 - INFO - [INCR SYNC] dbo.Students: row_count=4, sync_col=StudentID, last_value=None
+2025-09-17 11:47:21,413 - INFO - Last value is None for dbo.Students, using hash-based deduplication
+2025-09-17 11:47:21,463 - INFO - Schema 'localhost_SchoolDB' created/verified successfully
+2025-09-17 11:47:21,485 - INFO - No new rows found for dbo.Students
+2025-09-17 11:47:21,711 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:21,937 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:21,937 - INFO - === INCREMENTAL sync completed for SchoolDB, 0/5 tables processed ===
+2025-09-17 11:47:21,939 - INFO - anksk/SchoolDB: processed 0 tables
+2025-09-17 11:47:21,943 - INFO - Cleaned up system table: localhost_SchoolDB1.sys_trace_xe_event_map
+2025-09-17 11:47:21,945 - INFO - Cleaned up system table: localhost_SchoolDB1.sys_trace_xe_action_map
+2025-09-17 11:47:21,997 - INFO - === Starting INCREMENTAL sync for database: SchoolDB1 ===
+2025-09-17 11:47:22,415 - INFO - [INCR SYNC] dbo.Classes: row_count=8, sync_col=ClassID, last_value=None
+2025-09-17 11:47:22,648 - INFO - Last value is None for dbo.Classes, using hash-based deduplication
+2025-09-17 11:47:22,857 - INFO - Schema 'localhost_SchoolDB1' created/verified successfully
+2025-09-17 11:47:22,875 - INFO - No new rows found for dbo.Classes
+2025-09-17 11:47:23,189 - INFO - [INCR SYNC] dbo.Enrollments: row_count=12, sync_col=EnrollmentID, last_value=None
+2025-09-17 11:47:23,442 - INFO - Last value is None for dbo.Enrollments, using hash-based deduplication
+2025-09-17 11:47:23,469 - INFO - Schema 'localhost_SchoolDB1' created/verified successfully
+2025-09-17 11:47:23,479 - INFO - No new rows found for dbo.Enrollments
+2025-09-17 11:47:23,735 - INFO - [INCR SYNC] dbo.Students: row_count=4, sync_col=StudentID, last_value=None
+2025-09-17 11:47:23,958 - INFO - Last value is None for dbo.Students, using hash-based deduplication
+2025-09-17 11:47:23,982 - INFO - Schema 'localhost_SchoolDB1' created/verified successfully
+2025-09-17 11:47:24,000 - INFO - No new rows found for dbo.Students
+2025-09-17 11:47:24,241 - INFO - [INCR SYNC] dbo.Students11: row_count=4, sync_col=StudentID, last_value=None
+2025-09-17 11:47:24,461 - INFO - Last value is None for dbo.Students11, using hash-based deduplication
+2025-09-17 11:47:24,511 - INFO - Schema 'localhost_SchoolDB1' created/verified successfully
+2025-09-17 11:47:24,531 - INFO - No new rows found for dbo.Students11
+2025-09-17 11:47:24,748 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:24,965 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:24,966 - INFO - === INCREMENTAL sync completed for SchoolDB1, 0/6 tables processed ===
+2025-09-17 11:47:24,968 - INFO - anksk/SchoolDB1: processed 0 tables
+2025-09-17 11:47:24,971 - INFO - Cleaned up system table: localhost_SchoolDB3.sys_trace_xe_event_map
+2025-09-17 11:47:24,972 - INFO - Cleaned up system table: localhost_SchoolDB3.sys_trace_xe_action_map
+2025-09-17 11:47:25,025 - INFO - === Starting INCREMENTAL sync for database: SchoolDB3 ===
+2025-09-17 11:47:25,444 - INFO - [INCR SYNC] dbo.Courses: row_count=5, sync_col=CourseID, last_value=None
+2025-09-17 11:47:25,817 - INFO - Last value is None for dbo.Courses, using hash-based deduplication
+2025-09-17 11:47:26,208 - INFO - Schema 'localhost_SchoolDB3' created/verified successfully
+2025-09-17 11:47:26,230 - INFO - No new rows found for dbo.Courses
+2025-09-17 11:47:26,533 - INFO - [INCR SYNC] dbo.Students: row_count=5, sync_col=StudentID, last_value=None
+2025-09-17 11:47:26,866 - INFO - Last value is None for dbo.Students, using hash-based deduplication
+2025-09-17 11:47:26,916 - INFO - Schema 'localhost_SchoolDB3' created/verified successfully
+2025-09-17 11:47:26,936 - INFO - No new rows found for dbo.Students
+2025-09-17 11:47:27,246 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:27,483 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:27,483 - INFO - === INCREMENTAL sync completed for SchoolDB3, 0/4 tables processed ===
+2025-09-17 11:47:27,507 - INFO - anksk/SchoolDB3: processed 0 tables
+2025-09-17 11:47:27,509 - INFO - Cleaned up system table: localhost_SchoolDB4.sys_trace_xe_event_map
+2025-09-17 11:47:27,510 - INFO - Cleaned up system table: localhost_SchoolDB4.sys_trace_xe_action_map
+2025-09-17 11:47:27,562 - INFO - === Starting INCREMENTAL sync for database: SchoolDB4 ===
+2025-09-17 11:47:27,968 - INFO - [INCR SYNC] dbo.Courses: row_count=5, sync_col=CourseID, last_value=None
+2025-09-17 11:47:28,205 - INFO - Last value is None for dbo.Courses, using hash-based deduplication
+2025-09-17 11:47:28,410 - INFO - Schema 'localhost_SchoolDB4' created/verified successfully
+2025-09-17 11:47:28,427 - INFO - No new rows found for dbo.Courses
+2025-09-17 11:47:28,684 - INFO - [INCR SYNC] dbo.Students: row_count=5, sync_col=StudentID, last_value=None
+2025-09-17 11:47:28,948 - INFO - Last value is None for dbo.Students, using hash-based deduplication
+2025-09-17 11:47:28,987 - INFO - Schema 'localhost_SchoolDB4' created/verified successfully
+2025-09-17 11:47:29,002 - INFO - No new rows found for dbo.Students
+2025-09-17 11:47:29,246 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:29,493 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:29,494 - INFO - === INCREMENTAL sync completed for SchoolDB4, 0/4 tables processed ===
+2025-09-17 11:47:29,519 - INFO - anksk/SchoolDB4: processed 0 tables
+2025-09-17 11:47:29,523 - INFO - Cleaned up system table: localhost_SchoolDB5.sys_trace_xe_event_map
+2025-09-17 11:47:29,525 - INFO - Cleaned up system table: localhost_SchoolDB5.sys_trace_xe_action_map
+2025-09-17 11:47:29,570 - INFO - === Starting INCREMENTAL sync for database: SchoolDB5 ===
+2025-09-17 11:47:29,995 - INFO - [INCR SYNC] dbo.Courses: row_count=5, sync_col=CourseID, last_value=None
+2025-09-17 11:47:30,244 - INFO - Last value is None for dbo.Courses, using hash-based deduplication
+2025-09-17 11:47:30,456 - INFO - Schema 'localhost_SchoolDB5' created/verified successfully
+2025-09-17 11:47:30,473 - INFO - No new rows found for dbo.Courses
+2025-09-17 11:47:30,720 - INFO - [INCR SYNC] dbo.Students: row_count=6, sync_col=StudentID, last_value=None
+2025-09-17 11:47:30,987 - INFO - Last value is None for dbo.Students, using hash-based deduplication
+2025-09-17 11:47:31,025 - INFO - Schema 'localhost_SchoolDB5' created/verified successfully
+2025-09-17 11:47:31,047 - INFO - No new rows found for dbo.Students
+2025-09-17 11:47:31,349 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:31,607 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:31,608 - INFO - === INCREMENTAL sync completed for SchoolDB5, 0/4 tables processed ===
+2025-09-17 11:47:31,611 - INFO - anksk/SchoolDB5: processed 0 tables
+2025-09-17 11:47:31,615 - INFO - Cleaned up system table: localhost_SchoolDB6.sys_trace_xe_event_map
+2025-09-17 11:47:31,617 - INFO - Cleaned up system table: localhost_SchoolDB6.sys_trace_xe_action_map
+2025-09-17 11:47:31,680 - INFO - === Starting INCREMENTAL sync for database: SchoolDB6 ===
+2025-09-17 11:47:32,185 - INFO - [INCR SYNC] dbo.Courses: row_count=5, sync_col=CourseID, last_value=None
+2025-09-17 11:47:32,431 - INFO - Last value is None for dbo.Courses, using hash-based deduplication
+2025-09-17 11:47:32,831 - INFO - Schema 'localhost_SchoolDB6' created/verified successfully
+2025-09-17 11:47:32,852 - INFO - No new rows found for dbo.Courses
+2025-09-17 11:47:33,117 - INFO - [INCR SYNC] dbo.Students: row_count=7, sync_col=StudentID, last_value=None
+2025-09-17 11:47:33,368 - INFO - Last value is None for dbo.Students, using hash-based deduplication
+2025-09-17 11:47:33,402 - INFO - Schema 'localhost_SchoolDB6' created/verified successfully
+2025-09-17 11:47:33,419 - INFO - No new rows found for dbo.Students
+2025-09-17 11:47:33,671 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-09-17 11:47:33,929 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-09-17 11:47:33,930 - INFO - === INCREMENTAL sync completed for SchoolDB6, 0/4 tables processed ===
+2025-09-17 11:47:33,955 - INFO - anksk/SchoolDB6: processed 0 tables
+2025-09-17 11:47:33,958 - INFO - Completed anksk
+2025-09-17 11:47:34,084 - INFO - 127.0.0.1 - - [17/Sep/2025 11:47:34] "[32mGET /sync/anksk HTTP/1.1[0m" 302 -
+2025-09-17 11:47:34,100 - INFO - 127.0.0.1 - - [17/Sep/2025 11:47:34] "GET / HTTP/1.1" 200 -
+2025-09-17 11:47:44,962 - INFO - 127.0.0.1 - - [17/Sep/2025 11:47:44] "GET /sync-summary HTTP/1.1" 200 -
