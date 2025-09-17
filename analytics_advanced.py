@@ -181,32 +181,46 @@ def resume_sync_table(server_name: str, db_name: str, table_fq: str) -> Dict:
     }
     return info
 
-
 def partial_sync_preview(server_name: str, db_name: str, table_fq: str, columns: Optional[List[str]] = None, filter_sql: Optional[str] = None) -> Dict:
     """Preview partial sync by selecting columns/filter and computing delta vs destination using row hashes."""
+    
     config = load_config()
     server_conf = config["sqlservers"][server_name]
+    
+    # Split schema and table
     if "." in table_fq:
         schema, table = table_fq.split(".", 1)
     else:
         schema, table = "dbo", table_fq
 
+    # Source SQL Server query
     sql_engine = get_sqlalchemy_engine(server_conf, db_name)
     select_cols = "*" if not columns else ",".join(f"[{c}]" for c in columns)
     query = f"SELECT {select_cols} FROM [{schema}].[{table}]"
     if filter_sql:
         query += f" WHERE {filter_sql}"
+    
     src_df = pd.read_sql(query, sql_engine)
 
+    # Destination Postgres table
     pg_engine = get_pg_engine()
     server_clean = ''.join(c for c in server_conf['server'] if c.isalnum() or c in '_-')
     pg_schema = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
     pg_table = f"{schema}_{table}"
+
+    # Read destination table safely
     try:
-        dst_df = pd.read_sql(f'SELECT {"*" if not columns else ",".join("\""+c+"\"" for c in columns)} FROM "{pg_schema}"."{pg_table}"', pg_engine)
+        if not columns:
+            sql_query = f'SELECT * FROM "{pg_schema}"."{pg_table}"'
+        else:
+            cols = ','.join([f'"{c}"' for c in columns])
+            sql_query = f'SELECT {cols} FROM "{pg_schema}"."{pg_table}"'
+        
+        dst_df = pd.read_sql(sql_query, pg_engine)
     except Exception:
         dst_df = pd.DataFrame(columns=src_df.columns)
 
+    # Compute hashes to detect new vs already synced rows
     src_h = set(src_df.fillna('').apply(lambda r: hash(tuple(r)), axis=1).tolist()) if not src_df.empty else set()
     dst_h = set(dst_df.fillna('').apply(lambda r: hash(tuple(r)), axis=1).tolist()) if not dst_df.empty else set()
     to_insert = len(src_h - dst_h)
