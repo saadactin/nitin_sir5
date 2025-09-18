@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: sql-pg-sync-postgres
+    environment:
+      POSTGRES_DB: sync_db
+      POSTGRES_USER: migration_user
+      POSTGRES_PASSWORD: StrongPassword123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d/
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U migration_user -d sync_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sql-pg-sync-network
+    restart: unless-stopped
+
+  # SQL Server to PostgreSQL Sync Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sql-pg-sync-app
+    environment:
+      # PostgreSQL connection (connects to postgres service)
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: sync_db
+      POSTGRES_USER: migration_user
+      POSTGRES_PASSWORD: StrongPassword123
+      POSTGRES_PORT: 5432
+      POSTGRES_SCHEMA: CompanyDB
+      
+      # Application settings
+      FLASK_ENV: production
+      FLASK_DEBUG: 0
+      HYBRID_SYNC_BATCH_SIZE: 10000
+      
+      # Optional: Email notifications
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      
+      # Optional: Slack notifications
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      
+    volumes:
+      # Persist application data
+      - app_data:/app/data
+      - app_logs:/app/logs
+      # Mount config for SQL Server connections (optional override)
+      - ./config/db_connections.yaml:/app/config/db_connections.yaml:ro
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - sql-pg-sync-network
+    restart: unless-stopped
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sql-pg-sync-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - sql-pg-sync-network
+    restart: unless-stopped
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  app_data:
+    driver: local
+  app_logs:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  sql-pg-sync-network:
+    driver: bridge
+    name: sql-pg-sync-network

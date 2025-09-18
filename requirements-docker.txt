@@ -1,0 +1,20 @@
+# Base requirements from requirements.txt
+Flask==3.1.0
+pandas==2.2.2
+psycopg2-binary==2.9.10
+pyodbc==5.1.0
+bcrypt==4.2.0
+PyYAML==6.0.2
+schedule==1.2.2
+SQLAlchemy==2.0.30
+
+# Additional requirements for Docker deployment
+xlsxwriter==3.1.9
+openpyxl==3.1.2
+urllib3==2.0.7
+
+# Health check and monitoring
+requests==2.31.0
+
+# Environment variable templating
+envsubst==0.1.0
