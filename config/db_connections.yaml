@@ -6,27 +6,19 @@ postgresql:
   schema: CompanyDB
   username: migration_user
 sqlservers:
-  ACTIN-CS-85:
+  server1:
     check_new_databases: true
     password: root
-    port: 1433
-    server: ACTIN-CS-85
+    port: 14344
+    server: localhost\SQL2019_Second
     skip_databases: []
     sync_mode: hybrid
     username: sa
-  Vikas:
+  server2:
     check_new_databases: true
     password: root
     port: 1433
-    server: Vikas
-    skip_databases: []
-    sync_mode: hybrid
-    username: sa
-  vikas:
-    check_new_databases: true
-    password: root
-    port: 1433
-    server: 192.168.18.124
+    server: localhost
     skip_databases: []
     sync_mode: hybrid
     username: sa

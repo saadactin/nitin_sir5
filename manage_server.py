@@ -11,21 +11,31 @@ OUTPUT_DIR = os.path.abspath(
 )
 
 def load_config():
+    if not os.path.exists(CONFIG_PATH):
+        return {"sqlservers": {}}
     with open(CONFIG_PATH, 'r') as f:
-        return yaml.safe_load(f)
+        return yaml.safe_load(f) or {"sqlservers": {}}
 
 def save_config(config):
     with open(CONFIG_PATH, 'w') as f:
-        yaml.safe_dump(config, f)
+        yaml.safe_dump(config, f, default_flow_style=False)
 
 def list_servers():
     config = load_config()
-    for name, conf in config.get('sqlservers', {}).items():
-        print(f"{name}: {conf['server']}:{conf['port']}")
+    servers = config.get('sqlservers', {})
+    if not servers:
+        print("⚠️ No servers configured yet.")
+        return
+    for name, conf in servers.items():
+        print(f"{name} -> {conf['server']}:{conf['port']} (user: {conf['username']})")
 
 def add_server(name, host, username, password, port=1433):
     config = load_config()
-    config.setdefault('sqlservers', {})[name] = {
+    config.setdefault('sqlservers', {})
+    if name in config['sqlservers']:
+        print(f"❌ Server name '{name}' already exists! Use a different name.")
+        return
+    config['sqlservers'][name] = {
         'server': host,
         'username': username,
         'password': password,
@@ -35,16 +45,16 @@ def add_server(name, host, username, password, port=1433):
         'sync_mode': 'hybrid'
     }
     save_config(config)
-    print(f"✅ Server {name} added!")
+    print(f"✅ Server '{name}' added! ({host}:{port})")
 
 def delete_server(name):
     config = load_config()
     if name in config.get('sqlservers', {}):
         del config['sqlservers'][name]
         save_config(config)
-        print(f"✅ Server {name} deleted!")
+        print(f"✅ Server '{name}' deleted!")
     else:
-        print(f"❌ Server {name} not found!")
+        print(f"❌ Server '{name}' not found!")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
