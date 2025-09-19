@@ -5,22 +5,25 @@
     <title>Sync Summary - All Servers</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
-        .metric-card { transition: transform 0.2s; }
-        .metric-card:hover { transform: translateY(-2px); }
+        #main-content {
+            margin-left: 260px; /* aligns with sidebar */
+            padding: 20px;
+        }
+        .metric-card, .server-card { transition: transform 0.2s; }
+        .metric-card:hover, .server-card:hover { transform: translateY(-2px); }
         .table-row:hover { background-color: #f8f9fa; }
-        .server-card { transition: transform 0.2s; }
-        .server-card:hover { transform: translateY(-2px); }
+        .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
     </style>
 </head>
 <body>
 <div class="d-flex">
     {% include 'sidebar.html' %}
 
-    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+    <div id="main-content" class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>📈 Sync Summary - All Servers</h2>
-            <div>
-                <a href="{{ url_for('sync_summary') }}.json" class="btn btn-outline-info me-2" target="_blank">📄 Export JSON</a>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('sync_summary') }}.json" class="btn btn-outline-info" target="_blank">📄 Export JSON</a>
                 <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
             </div>
         </div>
@@ -28,32 +31,32 @@
         <!-- Overall Stats -->
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card bg-primary text-white metric-card">
-                    <div class="card-body text-center">
+                <div class="card bg-primary text-white metric-card text-center">
+                    <div class="card-body">
                         <h3>{{ summary.total_servers }}</h3>
                         <p class="mb-0">🖥️ Servers</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-success text-white metric-card">
-                    <div class="card-body text-center">
+                <div class="card bg-success text-white metric-card text-center">
+                    <div class="card-body">
                         <h3>{{ summary.total_databases }}</h3>
                         <p class="mb-0">📁 Databases</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-warning text-white metric-card">
-                    <div class="card-body text-center">
+                <div class="card bg-warning text-white metric-card text-center">
+                    <div class="card-body">
                         <h3>{{ summary.total_tables }}</h3>
                         <p class="mb-0">📋 Tables</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-info text-white metric-card">
-                    <div class="card-body text-center">
+                <div class="card bg-info text-white metric-card text-center">
+                    <div class="card-body">
                         <h3>{{ "{:,}".format(summary.total_source_rows) }}</h3>
                         <p class="mb-0">📥 Total Source Rows</p>
                     </div>
@@ -64,16 +67,16 @@
         <!-- Destination Stats -->
         <div class="row mb-4">
             <div class="col-md-6">
-                <div class="card bg-success text-white metric-card">
-                    <div class="card-body text-center">
+                <div class="card bg-success text-white metric-card text-center">
+                    <div class="card-body">
                         <h3>{{ "{:,}".format(summary.total_destination_rows) }}</h3>
                         <p class="mb-0">📤 Total Destination Rows</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card bg-info text-white metric-card">
-                    <div class="card-body text-center">
+                <div class="card bg-info text-white metric-card text-center">
+                    <div class="card-body">
                         <h3>{{ "{:,}".format(summary.total_source_rows - summary.total_destination_rows) }}</h3>
                         <p class="mb-0">📊 Total Row Difference</p>
                     </div>
@@ -163,28 +166,16 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3">
-                        <a href="{{ url_for('dashboard') }}" 
-                           class="btn btn-primary w-100">
-                            📊 Dashboard
-                        </a>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary w-100">📊 Dashboard</a>
                     </div>
                     <div class="col-md-3">
-                        <a href="{{ url_for('view_schedules') }}" 
-                           class="btn btn-warning w-100">
-                            📅 Schedules
-                        </a>
+                        <a href="{{ url_for('view_schedules') }}" class="btn btn-warning w-100">📅 Schedules</a>
                     </div>
                     <div class="col-md-3">
-                        <a href="{{ url_for('sync_summary') }}.json" 
-                           class="btn btn-outline-info w-100" target="_blank">
-                            📄 Export JSON
-                        </a>
+                        <a href="{{ url_for('sync_summary') }}.json" class="btn btn-outline-info w-100" target="_blank">📄 Export JSON</a>
                     </div>
                     <div class="col-md-3">
-                        <a href="{{ url_for('index') }}" 
-                           class="btn btn-outline-secondary w-100">
-                            🏠 Home
-                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100">🏠 Home</a>
                     </div>
                 </div>
             </div>

@@ -4,42 +4,50 @@
     <meta charset="UTF-8">
     <title>Validation - {{ server }}.{{ db }}.{{ table }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        #main-content { margin-left: 260px; padding: 20px; }
+        .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    </style>
 </head>
 <body>
 <div class="d-flex">
     {% include 'sidebar.html' %}
 
-    <div class="container-fluid" style="margin-left:260px; padding:20px;">
-        <h2 class="mb-4">✅ Validation - {{ server }} / {{ db }} / {{ table }}</h2>
+    <div id="main-content" class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>✅ Validation - {{ server }} / {{ db }} / {{ table }}</h2>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
+        </div>
 
+        <!-- Summary Stats -->
         <div class="row g-3 mb-4">
             <div class="col-md-3">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card text-center">
+                    <div class="card-body">
                         <div class="text-muted">Source Rows</div>
                         <h3>{{ result.rows_source }}</h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card text-center">
+                    <div class="card-body">
                         <div class="text-muted">Destination Rows</div>
                         <h3>{{ result.rows_destination }}</h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card text-center">
+                    <div class="card-body">
                         <div class="text-muted">Missing (delta)</div>
                         <h3 class="text-danger">{{ result.delta_missing }}</h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card text-center">
+                    <div class="card-body">
                         <div class="text-muted">Extra (delta)</div>
                         <h3 class="text-warning">{{ result.delta_extra }}</h3>
                     </div>
@@ -47,11 +55,12 @@
             </div>
         </div>
 
+        <!-- Duplicate Rows -->
         <div class="row g-3">
             <div class="col-md-6">
                 <div class="card shadow-sm">
                     <div class="card-header bg-warning">Duplicate Rows (Source)</div>
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h4 class="text-warning">{{ result.duplicate_source_rows }}</h4>
                         <small class="text-muted">Detected via row-hash duplication.</small>
                     </div>
@@ -60,7 +69,7 @@
             <div class="col-md-6">
                 <div class="card shadow-sm">
                     <div class="card-header bg-info text-white">Duplicate Rows (Destination)</div>
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h4 class="text-info">{{ result.duplicate_destination_rows }}</h4>
                         <small class="text-muted">Detected via row-hash duplication.</small>
                     </div>
@@ -70,5 +79,7 @@
 
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

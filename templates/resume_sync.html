@@ -4,18 +4,29 @@
     <meta charset="UTF-8">
     <title>Resume Sync - {{ server }}.{{ db }}.{{ table }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        #main-content {
+            margin-left: 260px; /* Align with sidebar */
+            padding: 20px;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
 <div class="d-flex">
     {% include 'sidebar.html' %}
 
-    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+    <div id="main-content" class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>🔁 Resume Sync - {{ server }} / {{ db }} / {{ table }}</h2>
             <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back</a>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <div class="card">
             <div class="card-header bg-light">Resume Options</div>
             <div class="card-body">
                 <form method="post">
@@ -38,7 +49,7 @@
         </div>
 
         {% if preview %}
-        <div class="card shadow-sm mb-4">
+        <div class="card">
             <div class="card-header bg-info text-white">Preview Result</div>
             <div class="card-body">
                 <div class="row">
@@ -59,8 +70,9 @@
             <strong>Queued:</strong> {{ info.table }} — will resume from last PK: <code>{{ info.resume_from_last_pk }}</code>
         </div>
         {% endif %}
-
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

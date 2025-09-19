@@ -1,98 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>SQL Server Sync Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        body {
-            background-color: #f4f6f9;
-            font-family: 'Segoe UI', sans-serif;
-        }
-        .server-card {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .server-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-        .status-badge {
-            font-size: 0.85rem;
-        }
-        .card-header-custom {
-            background: linear-gradient(90deg, #1f2937, #4b5563);
-            color: #fff;
-            font-weight: 600;
-        }
-        .btn-icon {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .server-info span {
-            font-weight: 500;
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SQL Servers Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>.material-icons { font-size: 20px; }</style>
 </head>
-<body>
-<div class="d-flex">
-    <!-- Sidebar -->
-    {% include 'sidebar.html' %}
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+<div class="flex h-screen">
+  <!-- Sidebar -->
+  {% include 'sidebar.html' %}
 
-    <!-- Main Content -->
-    <div class="container-fluid" style="margin-left:260px; padding:20px;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-dark">🖥️ SQL Servers Dashboard</h3>
-            <a href="{{ url_for('add_server') }}" class="btn btn-success btn-lg btn-icon">
-                <i class="bi bi-plus-circle"></i> Add New Server
-            </a>
+  <!-- Main Content -->
+  <main class="flex-1 ml-64 p-8 overflow-y-auto">
+    <header class="flex justify-between items-center mb-8">
+      <div class="flex items-center gap-4">
+        <span class="material-icons text-4xl text-subtext-light dark:text-subtext-dark">dns</span>
+        <h1 class="text-3xl font-bold">SQL Servers Dashboard</h1>
+      </div>
+      <a href="{{ url_for('add_server') }}" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-700 transition-colors">
+        <span class="material-icons">add</span>
+        <span>Add New Server</span>
+      </a>
+    </header>
+
+    {% if sqlservers and sqlservers|length > 0 %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for name, conf in sqlservers.items() %}
+      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-md border border-border-light dark:border-border-dark overflow-hidden">
+        <!-- Header -->
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 border-b border-border-light dark:border-border-dark flex justify-between items-center">
+          <h2 class="text-lg font-semibold">{{ name }}</h2>
+          <span class="text-xs font-mono bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">{{ conf.port }}</span>
         </div>
 
-        {% if sqlservers and sqlservers|length > 0 %}
-        <div class="row g-4">
-            {% for name, conf in sqlservers.items() %}
-            <div class="col-md-6 col-lg-4">
-                <div class="card server-card shadow-sm border-0 rounded-3">
-                    <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
-                        <span>{{ name }}</span>
-                        <span class="badge bg-info">{{ conf.port }}</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="server-info mb-3">
-                            <p class="mb-1"><i class="bi bi-hdd-stack"></i> Host: <span>{{ conf.server }}</span></p>
-                            <!-- Optional: Status indicator -->
-                            <p class="mb-0"><i class="bi bi-circle-fill text-success"></i> Status: <span>Online</span></p>
-                        </div>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a href="{{ url_for('view_server_databases', server_name=name) }}" class="btn btn-outline-primary btn-sm btn-icon">
-                                <i class="bi bi-collection"></i> Databases
-                            </a>
-                            <a href="{{ url_for('sync_server', server_name=name) }}" class="btn btn-primary btn-sm btn-icon">
-                                <i class="bi bi-arrow-clockwise"></i> Sync Server
-                            </a>
-                            {% if role in ['admin', 'operator'] %}
-                            <a href="{{ url_for('add_server') }}?edit={{ name }}" class="btn btn-warning btn-sm btn-icon">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </a>
-                            <form action="{{ url_for('delete_server_route', server_name=name) }}" method="POST" 
-                                  style="display:inline;" onsubmit="return confirm('Delete server {{ name }}?');">
-                                <button type="submit" class="btn btn-danger btn-sm btn-icon">
-                                    <i class="bi bi-trash"></i> Delete
-                                </button>
-                            </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+        <!-- Body -->
+        <div class="p-6 space-y-4">
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-subtext-light dark:text-subtext-dark">Host:</span>
+            <span>{{ conf.server }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-subtext-light dark:text-subtext-dark">Status:</span>
+            <div class="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+              <span class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+              <span>Online</span>
             </div>
-            {% endfor %}
+          </div>
         </div>
-        {% else %}
-            <div class="alert alert-info mt-4">No SQL servers configured yet.</div>
-        {% endif %}
+
+        <!-- Actions -->
+        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-border-light dark:border-border-dark flex flex-wrap gap-3">
+          <a href="{{ url_for('view_server_databases', server_name=name) }}" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary-DEFAULT border border-primary-DEFAULT rounded-md hover:bg-primary-DEFAULT hover:text-white transition-colors">
+            <span class="material-icons">dataset</span> Databases
+          </a>
+          <a href="{{ url_for('sync_server', server_name=name) }}" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-DEFAULT rounded-md hover:bg-primary-hover transition-colors">
+            <span class="material-icons">sync</span> Sync Server
+          </a>
+          {% if role in ['admin', 'operator'] %}
+          <a href="{{ url_for('add_server') }}?edit={{ name }}" class="flex items-center justify-center gap-1 p-2 text-sm text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded-md transition-colors">
+            <span class="material-icons">edit</span> Edit
+          </a>
+          <form action="{{ url_for('delete_server_route', server_name=name) }}" method="POST" onsubmit="return confirm('Delete server {{ name }}?');">
+            <button type="submit" class="flex items-center justify-center gap-1 p-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md transition-colors">
+              <span class="material-icons">delete</span> Delete
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
     </div>
+    {% else %}
+    <div class="mt-8 p-4 rounded-lg bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+      No SQL servers configured yet.
+    </div>
+    {% endif %}
+  </main>
 </div>
 </body>
 </html>

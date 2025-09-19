@@ -1,92 +1,88 @@
-<div class="d-flex flex-column flex-shrink-0 p-3 bg-dark text-white"
-     style="width: 250px; height: 100vh; position: fixed;">
-  <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-    <span class="fs-4">📂 SQL Sync</span>
-  </a>
-  <hr>
+<aside class="w-64 bg-surface-light dark:bg-surface-dark flex flex-col border-r border-border-light dark:border-border-dark h-screen fixed">
+  <!-- Header -->
+  <div class="flex items-center gap-3 p-4 border-b border-border-light dark:border-border-dark">
+    <span class="material-icons text-primary-DEFAULT text-3xl">storage</span>
+    <h1 class="text-xl font-bold">SQL Sync</h1>
+  </div>
 
-  <ul class="nav nav-pills flex-column mb-auto">
+  <!-- Navigation -->
+  <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
     {% if session.get("role") in ["admin", "operator", "viewer"] %}
-    <li class="nav-item">
-      <a href="{{ url_for('index') }}" 
-         class="nav-link text-white {% if request.endpoint == 'index' %}active bg-primary{% endif %}">
-        🏠 Home
-      </a>
-    </li>
+    <a href="{{ url_for('index') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'index' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">home</span>
+      <span>Home</span>
+    </a>
     {% endif %}
 
     {% if session.get("role") in ["admin", "operator"] %}
-    <li>
-      <a href="{{ url_for('add_server') }}" 
-         class="nav-link text-white {% if request.endpoint == 'add_server' %}active bg-primary{% endif %}">
-        ➕ Add Server
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for('schedule_page') }}" 
-         class="nav-link text-white {% if request.endpoint == 'schedule_page' %}active bg-primary{% endif %}">
-        ⏰ Schedule
-      </a>
-    </li>
+    <a href="{{ url_for('add_server') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'add_server' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">add_box</span>
+      <span>Add Server</span>
+    </a>
+    <a href="{{ url_for('schedule_page') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'schedule_page' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">schedule</span>
+      <span>Schedule</span>
+    </a>
     {% endif %}
 
     {% if session.get("role") in ["admin", "operator", "viewer"] %}
-    <li>
-      <a href="{{ url_for('dashboard') }}" 
-         class="nav-link text-white {% if request.endpoint == 'dashboard' %}active bg-primary{% endif %}">
-        📊 Dashboard
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for('view_schedules') }}" 
-         class="nav-link text-white {% if request.endpoint == 'view_schedules' %}active bg-primary{% endif %}">
-        📅 View Schedules
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for('sync_summary') }}" 
-         class="nav-link text-white {% if request.endpoint == 'sync_summary' %}active bg-primary{% endif %}">
-        📈 Sync Summary
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for('alerts') }}" 
-         class="nav-link text-white {% if request.endpoint == 'alerts' %}active bg-primary{% endif %}">
-        🚨 Alerts
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for('explore') }}" 
-         class="nav-link text-white {% if request.endpoint == 'explore' %}active bg-primary{% endif %}">
-        🧭 Explore
-      </a>
-    </li>
+    <a href="{{ url_for('dashboard') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'dashboard' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">dashboard</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('view_schedules') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'view_schedules' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">visibility</span>
+      <span>View Schedules</span>
+    </a>
+    <a href="{{ url_for('sync_summary') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'sync_summary' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">summarize</span>
+      <span>Sync Summary</span>
+    </a>
+    <a href="{{ url_for('alerts') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'alerts' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">notifications</span>
+      <span>Alerts</span>
+    </a>
+    <a href="{{ url_for('explore') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'explore' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">explore</span>
+      <span>Explore</span>
+    </a>
     {% endif %}
 
     {% if session.get("role") == "admin" %}
-    <li>
-      <a href="{{ url_for('create_user_route') }}" 
-         class="nav-link text-white {% if request.endpoint == 'create_user_route' %}active bg-primary{% endif %}">
-        👤 Create User
-      </a>
-    </li>
+    <a href="{{ url_for('create_user_route') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'create_user_route' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+      <span class="material-icons">person_add</span>
+      <span>Create User</span>
+    </a>
     {% endif %}
-  </ul>
+  </nav>
 
-  <hr>
-
-  <div class="text-white small">
+  <!-- Footer -->
+  <div class="px-4 py-4 border-t border-border-light dark:border-border-dark space-y-2 text-sm">
     {% if session.get("user") %}
-      👋 Logged in as <strong>{{ session["user"] }}</strong> ({{ session["role"] }})<br>
-      <a href="{{ url_for('logout') }}" class="text-decoration-none text-danger">🚪 Logout</a>
+    <div class="flex items-center gap-2 text-subtext-light dark:text-subtext-dark">
+      <span class="material-icons">person</span>
+      <span>Logged in as <b>{{ session["user"] }}</b> ({{ session["role"] }})</span>
+    </div>
+    <a href="{{ url_for('logout') }}" class="flex items-center gap-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200">
+      <span class="material-icons">logout</span> Logout
+    </a>
     {% else %}
-      <a href="{{ url_for('login') }}" class="text-decoration-none text-success">🔑 Login</a>
+    <a href="{{ url_for('login') }}" class="flex items-center gap-2 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200">
+      <span class="material-icons">login</span> Login
+    </a>
     {% endif %}
+    <div class="flex items-center gap-2 text-subtext-light dark:text-subtext-dark">
+      <span class="material-icons">bolt</span>
+      <span>Hybrid Sync Tool</span>
+    </div>
   </div>
-
-  <div class="text-white small mt-2">
-    ⚡ Hybrid Sync Tool
-  </div>
-</div>
-
-<script></script>
+</aside>

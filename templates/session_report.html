@@ -5,54 +5,62 @@
     <title>Session Report - {{ server }}.{{ db }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
+        #main-content {
+            margin-left: 260px; /* aligns with sidebar */
+            padding: 20px;
+        }
         .table-container { max-height: 420px; overflow-y: auto; }
         .card-stat { min-height: 100px; }
+        .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
     </style>
 </head>
 <body>
 <div class="d-flex">
     {% include 'sidebar.html' %}
 
-    <div class="container-fluid" style="margin-left:260px; padding:20px;">
-        <h2 class="mb-4">📑 Session Report - {{ server }} / {{ db }}</h2>
+    <div id="main-content" class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📑 Session Report - {{ server }} / {{ db }}</h2>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back</a>
+        </div>
 
         {% set s = report.session %}
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card card-stat shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card card-stat shadow-sm text-center">
+                    <div class="card-body">
                         <div class="text-muted">Started</div>
                         <h6>{{ s.started_at if s else '-' }}</h6>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card card-stat shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card card-stat shadow-sm text-center">
+                    <div class="card-body">
                         <div class="text-muted">Finished</div>
                         <h6>{{ s.finished_at if s else '-' }}</h6>
                     </div>
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card card-stat shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card card-stat shadow-sm text-center">
+                    <div class="card-body">
                         <div class="text-muted">Duration (ms)</div>
                         <h6>{{ s.duration_ms if s else '-' }}</h6>
                     </div>
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card card-stat shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card card-stat shadow-sm text-center">
+                    <div class="card-body">
                         <div class="text-muted">Tables</div>
                         <h6>{{ report.tables|length }}</h6>
                     </div>
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card card-stat shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card card-stat shadow-sm text-center">
+                    <div class="card-body">
                         <div class="text-muted">Alerts</div>
                         <h6>{{ report.alerts.counts.total }}</h6>
                     </div>
@@ -60,6 +68,7 @@
             </div>
         </div>
 
+        <!-- Tables -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-info text-white">📋 Tables</div>
             <div class="card-body p-0 table-container">
@@ -88,6 +97,7 @@
             </div>
         </div>
 
+        <!-- Alerts -->
         <div class="card shadow-sm">
             <div class="card-header bg-danger text-white">🚨 Alerts</div>
             <div class="card-body p-0 table-container">
@@ -114,5 +124,7 @@
 
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

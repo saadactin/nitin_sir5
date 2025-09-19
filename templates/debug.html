@@ -5,14 +5,16 @@
     <title>Debug - {{ server }}.{{ db }}.{{ table }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
+        #main-content { margin-left: 260px; padding: 20px; }
         .table-container { max-height: 480px; overflow-y: auto; }
+        .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
     </style>
 </head>
 <body>
 <div class="d-flex">
     {% include 'sidebar.html' %}
 
-    <div class="container-fluid" style="margin-left:260px; padding:20px;">
+    <div id="main-content" class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>🛠 Debug - {{ server }} / {{ db }} / {{ table }}</h2>
             <span class="badge bg-secondary">Sample size: {{ result.rows|length }}</span>
@@ -46,7 +48,12 @@
             </div>
         </div>
 
+        <div class="mt-3">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
+        </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
