@@ -39,31 +39,50 @@ BATCH_SIZE = int(os.environ.get('HYBRID_SYNC_BATCH_SIZE', '10000'))
 
 
 # ------------------------- Connections -------------------------
-
 def get_sql_connection(conf, database=None):
-    """Get connection to SQL Server using pyodbc (used for discovery/metadata)."""
+    """
+    Get a pyodbc connection to SQL Server.
+    Handles named instances, optional port, and escapes backslashes.
+    """
+    server = conf['server'].replace("\\", "\\\\")  # Escape backslash for pyodbc
+    port = conf.get('port')
+    if port:
+        # For TCP/IP connection, append port
+        server = f"{server},{port}"
+
     conn_str = (
         f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-        f"SERVER={conf['server']};"
-        f"UID={conf['username']};"
-        f"PWD={conf['password']}"
+        f"SERVER={server};"
+        f"UID={conf['username']};PWD={conf['password']}"
     )
     if database:
         conn_str += f";DATABASE={database}"
+    conn_str += ";MARS_Connection=Yes;Timeout=30"
+
     return pyodbc.connect(conn_str)
 
 
 def get_sqlalchemy_engine(conf, database=None):
-    """Get SQLAlchemy engine for SQL Server (used for Pandas read_sql)."""
+    """
+    Get a SQLAlchemy engine for SQL Server using pyodbc.
+    Handles named instances, optional port, and escaping.
+    """
     username = conf['username']
     password = conf['password']
-    server = conf['server']
-    port = conf.get('port', 1433)
+    server = conf['server'].replace("\\", "\\\\")
+    port = conf.get('port')
+    if port:
+        server = f"{server},{port}"  # SQLAlchemy + ODBC accepts comma for port
+
     db = database if database else "master"
-    conn_url = (
-        f"mssql+pyodbc://{username}:{password}@{server},{port}/{db}"
-        "?driver=ODBC+Driver+17+for+SQL+Server"
-    )
+
+    # URL-encode driver and password
+    from urllib.parse import quote_plus
+    driver = quote_plus("ODBC Driver 17 for SQL Server")
+    password_enc = quote_plus(password)
+
+    conn_url = f"mssql+pyodbc://{username}:{password_enc}@{server}/{db}?driver={driver}"
+
     return create_engine(conn_url, fast_executemany=True)
 
 
