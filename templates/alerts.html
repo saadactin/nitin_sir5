@@ -1,128 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Alerts & Logs</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <style>
-        .table-container { max-height: 420px; overflow-y: auto; }
-        .card-stat { min-height: 100px; }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alerts & Logs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+            "success": "#198754",
+            "success-dark": "#157347",
+            "warning": "#FACC15",
+            "danger": "#DC2626",
+            "info": "#0EA5E9"
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.5rem" }
+        },
+      },
+    };
+  </script>
+  <style>
+    .material-icons { font-size: 20px; vertical-align: middle; }
+  </style>
 </head>
-<body>
-<div class="d-flex">
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
     {% include 'sidebar.html' %}
 
-    <div class="container-fluid" style="margin-left:260px; padding:20px;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>🚨 Alerts & Logs</h2>
-            <div>
-                <a href="{{ url_for('alerts') }}.json" class="btn btn-outline-info" target="_blank">Export JSON</a>
-            </div>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto ml-64 p-8">
+      <div class="max-w-6xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold flex items-center gap-2">
+            <span class="material-icons text-danger">report</span>
+            Alerts & Logs
+          </h2>
+          <a href="{{ url_for('alerts') }}.json" target="_blank"
+             class="flex items-center gap-1 px-4 py-2 border border-border-light dark:border-border-dark rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+            <span class="material-icons">download</span> Export JSON
+          </a>
         </div>
 
         <!-- Summary Cards -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card card-stat shadow-sm">
-                    <div class="card-body text-center">
-                        <h3 class="text-danger">{{ alerts.failures|length }}</h3>
-                        <div class="text-muted">Failures</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card card-stat shadow-sm">
-                    <div class="card-body text-center">
-                        <h3 class="text-warning">{{ alerts.warnings|length }}</h3>
-                        <div class="text-muted">Warnings</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card card-stat shadow-sm">
-                    <div class="card-body text-center">
-                        <h3 class="text-info">{{ alerts.inconsistencies|length }}</h3>
-                        <div class="text-muted">Inconsistencies</div>
-                    </div>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark p-6 text-center">
+            <h3 class="text-3xl font-bold text-danger">{{ alerts.failures|length }}</h3>
+            <p class="text-subtext-light dark:text-subtext-dark">Failures</p>
+          </div>
+          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark p-6 text-center">
+            <h3 class="text-3xl font-bold text-warning">{{ alerts.warnings|length }}</h3>
+            <p class="text-subtext-light dark:text-subtext-dark">Warnings</p>
+          </div>
+          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark p-6 text-center">
+            <h3 class="text-3xl font-bold text-info">{{ alerts.inconsistencies|length }}</h3>
+            <p class="text-subtext-light dark:text-subtext-dark">Inconsistencies</p>
+          </div>
         </div>
 
         <!-- Failures -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-danger text-white">❌ Failures</div>
-            <div class="card-body p-0 table-container">
-                <table class="table table-hover mb-0">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Server</th>
-                            <th>Database</th>
-                            <th>Table</th>
-                            <th>Message</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for f in alerts.failures %}
-                        <tr class="table-danger">
-                            <td>{{ f.server_name or '-' }}</td>
-                            <td>{{ f.database_name or '-' }}</td>
-                            <td>{{ f.table or '-' }}</td>
-                            <td>{{ f.message or f.status }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark mb-6">
+          <div class="px-4 py-3 bg-danger text-white rounded-t-lg flex items-center gap-2">
+            <span class="material-icons">error</span>
+            <h3 class="text-lg font-semibold">Failures</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
+              <thead class="bg-gray-100 dark:bg-gray-800">
+                <tr>
+                  <th class="px-4 py-2 text-left">Server</th>
+                  <th class="px-4 py-2 text-left">Database</th>
+                  <th class="px-4 py-2 text-left">Table</th>
+                  <th class="px-4 py-2 text-left">Message</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for f in alerts.failures %}
+                <tr class="bg-red-50 dark:bg-red-900/20">
+                  <td class="px-4 py-2">{{ f.server_name or '-' }}</td>
+                  <td class="px-4 py-2">{{ f.database_name or '-' }}</td>
+                  <td class="px-4 py-2">{{ f.table or '-' }}</td>
+                  <td class="px-4 py-2">{{ f.message or f.status }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Warnings -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-warning">⚠️ Warnings</div>
-            <div class="card-body p-0 table-container">
-                <table class="table table-hover mb-0">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Table</th>
-                            <th>Message</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for w in alerts.warnings %}
-                        <tr class="table-warning">
-                            <td>{{ w.table or '-' }}</td>
-                            <td>{{ w.message }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark mb-6">
+          <div class="px-4 py-3 bg-warning text-black rounded-t-lg flex items-center gap-2">
+            <span class="material-icons">warning</span>
+            <h3 class="text-lg font-semibold">Warnings</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
+              <thead class="bg-gray-100 dark:bg-gray-800">
+                <tr>
+                  <th class="px-4 py-2 text-left">Table</th>
+                  <th class="px-4 py-2 text-left">Message</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for w in alerts.warnings %}
+                <tr class="bg-yellow-50 dark:bg-yellow-900/20">
+                  <td class="px-4 py-2">{{ w.table or '-' }}</td>
+                  <td class="px-4 py-2">{{ w.message }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Inconsistencies -->
-        <div class="card shadow-sm">
-            <div class="card-header bg-info text-white">🔎 Inconsistencies</div>
-            <div class="card-body p-0 table-container">
-                <table class="table table-hover mb-0">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Type</th>
-                            <th>Detail</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for i in alerts.inconsistencies %}
-                        <tr>
-                            <td>{{ i.type or '-' }}</td>
-                            <td>{{ i.detail or '-' }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+          <div class="px-4 py-3 bg-info text-white rounded-t-lg flex items-center gap-2">
+            <span class="material-icons">search</span>
+            <h3 class="text-lg font-semibold">Inconsistencies</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
+              <thead class="bg-gray-100 dark:bg-gray-800">
+                <tr>
+                  <th class="px-4 py-2 text-left">Type</th>
+                  <th class="px-4 py-2 text-left">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i in alerts.inconsistencies %}
+                <tr>
+                  <td class="px-4 py-2">{{ i.type or '-' }}</td>
+                  <td class="px-4 py-2">{{ i.detail or '-' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-    </div>
-</div>
+      </div>
+    </main>
+  </div>
 </body>
 </html>

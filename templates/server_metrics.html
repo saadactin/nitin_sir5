@@ -1,184 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Server Metrics - {{ server }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <style>
-        #main-content {
-            margin-left: 260px; /* align with sidebar */
-            padding: 20px;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📊 Server Metrics - {{ server }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            success: "#198754",
+            info: "#0DCAF0",
+            warning: "#FFC107",
+            danger: "#DC3545",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.75rem" }
         }
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .metric-card {
-            transition: transform 0.2s;
-        }
-        .metric-card:hover { transform: translateY(-2px); }
-        .table-row:hover { background-color: #f8f9fa; }
-        .badge-status { font-size: 0.9rem; padding: 0.5em 0.75em; }
-    </style>
+      }
+    };
+  </script>
+  <style>
+    .material-icons {
+      font-size: 20px;
+      vertical-align: middle;
+    }
+  </style>
 </head>
-<body>
-<div class="d-flex">
+
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
     {% include 'sidebar.html' %}
 
-    <div id="main-content" class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>📊 Server Metrics - {{ server }}</h2>
-            <div class="d-flex gap-2">
-                <a href="{{ url_for('sync_summary') }}" class="btn btn-outline-secondary">📈 Sync Summary</a>
-                <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
-            </div>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto ml-64 p-8">
+      <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center">
+          <h1 class="text-3xl font-bold flex items-center gap-2">
+            <span class="material-icons">dns</span> Server Metrics - {{ server }}
+          </h1>
+          <div class="flex gap-2">
+            <a href="{{ url_for('sync_summary') }}"
+              class="px-4 py-2 rounded-md border border-info text-info hover:bg-info hover:text-white transition">
+              📈 Sync Summary
+            </a>
+            <a href="{{ url_for('index') }}"
+              class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+              ← Back to Home
+            </a>
+          </div>
         </div>
 
         <!-- Server Info -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">🖥️ Server Information</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3"><strong>Server Name:</strong> {{ metrics.server_name }}</div>
-                    <div class="col-md-3"><strong>Host:</strong> {{ metrics.server_host }}</div>
-                    <div class="col-md-3"><strong>Databases:</strong> {{ metrics.total_databases }}</div>
-                    <div class="col-md-3"><strong>Last Updated:</strong> {{ metrics.last_updated[:19] }}</div>
-                </div>
-            </div>
+        <div
+          class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
+          <div class="bg-primary text-white px-4 py-3 rounded-t-lg">
+            <h5 class="font-semibold">🖥️ Server Information</h5>
+          </div>
+          <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+            <div><strong>Server Name:</strong> {{ metrics.server_name }}</div>
+            <div><strong>Host:</strong> {{ metrics.server_host }}</div>
+            <div><strong>Databases:</strong> {{ metrics.total_databases }}</div>
+            <div><strong>Last Updated:</strong> {{ metrics.last_updated[:19] }}</div>
+          </div>
         </div>
 
         <!-- Overall Stats -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ metrics.total_databases }}</h3>
-                        <p class="mb-0">📁 Databases</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ metrics.total_tables }}</h3>
-                        <p class="mb-0">📋 Tables</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ "{:,}".format(metrics.total_source_rows) }}</h3>
-                        <p class="mb-0">📥 Source Rows</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ "{:,}".format(metrics.total_destination_rows) }}</h3>
-                        <p class="mb-0">📤 Destination Rows</p>
-                    </div>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-primary text-white rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ metrics.total_databases }}</h3>
+            <p>📁 Databases</p>
+          </div>
+          <div class="bg-success text-white rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ metrics.total_tables }}</h3>
+            <p>📋 Tables</p>
+          </div>
+          <div class="bg-warning text-dark rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ "{:,}".format(metrics.total_source_rows) }}</h3>
+            <p>📥 Source Rows</p>
+          </div>
+          <div class="bg-info text-white rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ "{:,}".format(metrics.total_destination_rows) }}</h3>
+            <p>📤 Destination Rows</p>
+          </div>
         </div>
 
         <!-- Database Breakdown -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">📁 Database Breakdown</h5>
-                <small>Click on a database to view detailed metrics</small>
-            </div>
-            <div class="card-body p-0">
-                {% if metrics.databases|length > 0 %}
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th>Database</th>
-                                <th>Tables</th>
-                                <th>Source Rows</th>
-                                <th>Destination Rows</th>
-                                <th>Sync Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for db_name, db_data in metrics.databases.items() %}
-                            <tr class="table-row">
-                                <td><strong>{{ db_name }}</strong></td>
-                                <td><span class="badge bg-primary">{{ db_data.total_tables }}</span></td>
-                                <td><span class="badge bg-warning">{{ "{:,}".format(db_data.total_source_rows) }}</span></td>
-                                <td><span class="badge bg-info">{{ "{:,}".format(db_data.total_destination_rows) }}</span></td>
-                                <td>
-                                    {% if db_data.total_source_rows == db_data.total_destination_rows %}
-                                        <span class="badge bg-success badge-status">✅ Synced</span>
-                                    {% elif db_data.total_destination_rows == 0 %}
-                                        <span class="badge bg-danger badge-status">❌ Not Synced</span>
-                                    {% else %}
-                                        <span class="badge bg-warning badge-status">⚠️ Partial</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if 'error' not in db_data %}
-                                        <a href="{{ url_for('database_metrics', server=server, db=db_name) }}" class="btn btn-sm btn-outline-primary">📊 Details</a>
-                                    {% else %}
-                                        <span class="text-muted">Error</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="p-4 text-center">
-                    <div class="alert alert-info">No databases found or an error occurred retrieving data.</div>
-                </div>
-                {% endif %}
-            </div>
+        <div
+          class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
+          <div class="bg-gray-900 text-white px-4 py-3 rounded-t-lg">
+            <h5 class="font-semibold">📁 Database Breakdown</h5>
+            <small class="text-gray-300">Click on a database to view detailed metrics</small>
+          </div>
+          <div class="overflow-x-auto">
+            {% if metrics.databases|length > 0 %}
+            <table class="min-w-full text-sm text-left">
+              <thead class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                <tr>
+                  <th class="px-4 py-2">Database</th>
+                  <th class="px-4 py-2">Tables</th>
+                  <th class="px-4 py-2">Source Rows</th>
+                  <th class="px-4 py-2">Destination Rows</th>
+                  <th class="px-4 py-2">Sync Status</th>
+                  <th class="px-4 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for db_name, db_data in metrics.databases.items() %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium">{{ db_name }}</td>
+                  <td class="px-4 py-2"><span
+                      class="px-2 py-1 text-xs bg-primary text-white rounded">{{ db_data.total_tables }}</span></td>
+                  <td class="px-4 py-2"><span
+                      class="px-2 py-1 text-xs bg-warning text-dark rounded">{{ "{:,}".format(db_data.total_source_rows)
+                      }}</span></td>
+                  <td class="px-4 py-2"><span
+                      class="px-2 py-1 text-xs bg-info text-white rounded">{{ "{:,}".format(db_data.total_destination_rows)
+                      }}</span></td>
+                  <td class="px-4 py-2">
+                    {% if db_data.total_source_rows == db_data.total_destination_rows %}
+                    <span class="px-2 py-1 text-xs bg-success text-white rounded">✅ Synced</span>
+                    {% elif db_data.total_destination_rows == 0 %}
+                    <span class="px-2 py-1 text-xs bg-danger text-white rounded">❌ Not Synced</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs bg-warning text-dark rounded">⚠️ Partial</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-2">
+                    {% if 'error' not in db_data %}
+                    <a href="{{ url_for('database_metrics', server=server, db=db_name) }}"
+                      class="inline-block px-3 py-1 rounded-md border border-primary text-primary hover:bg-primary hover:text-white transition text-sm">
+                      📊 Details
+                    </a>
+                    {% else %}
+                    <span class="text-gray-400">Error</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <div class="p-6 text-center text-gray-500">No databases found or an error occurred retrieving data.</div>
+            {% endif %}
+          </div>
         </div>
 
         <!-- Quick Actions -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h6 class="mb-0">⚡ Quick Actions</h6>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <a href="{{ url_for('sync_server', server_name=server) }}" class="btn btn-success w-100">🔄 Sync Server</a>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ url_for('server_metrics', server=server) }}.json" class="btn btn-outline-info w-100" target="_blank">📄 Export JSON</a>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ url_for('sync_summary') }}" class="btn btn-outline-secondary w-100">📈 All Servers</a>
-                    </div>
-                </div>
-            </div>
+        <div
+          class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
+          <div class="px-4 py-2 border-b border-border-light dark:border-border-dark">
+            <h6 class="font-semibold">⚡ Quick Actions</h6>
+          </div>
+          <div class="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <a href="{{ url_for('sync_server', server_name=server) }}"
+              class="px-4 py-2 bg-success text-white rounded-lg text-center hover:bg-green-700">🔄 Sync Server</a>
+            <a href="{{ url_for('server_metrics', server=server) }}.json" target="_blank"
+              class="px-4 py-2 border border-info text-info rounded-lg text-center hover:bg-info hover:text-white transition">
+              📄 Export JSON</a>
+            <a href="{{ url_for('sync_summary') }}"
+              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-center hover:bg-gray-100 dark:hover:bg-gray-700">📈
+              All Servers</a>
+          </div>
         </div>
 
         <!-- Legend -->
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h6 class="mb-0">📖 Legend</h6>
-            </div>
-            <div class="card-body">
-                <div class="row g-2">
-                    <div class="col-md-3"><span class="badge bg-success">✅ Synced</span> <small class="text-muted">- Source and destination rows match</small></div>
-                    <div class="col-md-3"><span class="badge bg-warning">⚠️ Partial</span> <small class="text-muted">- Some data synced</small></div>
-                    <div class="col-md-3"><span class="badge bg-danger">❌ Not Synced</span> <small class="text-muted">- No data in destination</small></div>
-                    <div class="col-md-3"><span class="badge bg-primary">📊 Details</span> <small class="text-muted">- View table-level metrics</small></div>
-                </div>
-            </div>
+        <div
+          class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
+          <div class="px-4 py-2 border-b border-border-light dark:border-border-dark">
+            <h6 class="font-semibold">📖 Legend</h6>
+          </div>
+          <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+            <div><span class="px-2 py-1 text-xs bg-success text-white rounded">✅ Synced</span> <span
+                class="text-subtext-light dark:text-subtext-dark">- Rows match</span></div>
+            <div><span class="px-2 py-1 text-xs bg-warning text-dark rounded">⚠️ Partial</span> <span
+                class="text-subtext-light dark:text-subtext-dark">- Some data synced</span></div>
+            <div><span class="px-2 py-1 text-xs bg-danger text-white rounded">❌ Not Synced</span> <span
+                class="text-subtext-light dark:text-subtext-dark">- No data in destination</span></div>
+            <div><span class="px-2 py-1 text-xs bg-primary text-white rounded">📊 Details</span> <span
+                class="text-subtext-light dark:text-subtext-dark">- Table-level metrics</span></div>
+          </div>
         </div>
-    </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+      </div>
+    </main>
+  </div>
 </body>
+
 </html>

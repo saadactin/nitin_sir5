@@ -1,154 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Schedule Sync - SQL Sync</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
-        #main-content {
-            margin-left: 260px; /* Align with sidebar */
-            padding: 20px;
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Schedule Sync - SQL Sync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+            "success": "#198754",
+            "success-dark": "#157347",
+            "danger": "#DC2626",
+            "warning": "#F59E0B"
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.5rem" }
         }
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-    </style>
+      }
+    };
+  </script>
+  <style>
+    .material-icons { font-size: 20px; vertical-align: middle; }
+  </style>
 </head>
-<body>
-<div class="d-flex">
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
     {% include 'sidebar.html' %}
 
-    <div id="main-content" class="container-fluid">
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto ml-64 p-8">
+      <div class="max-w-6xl mx-auto space-y-8">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-semibold flex items-center gap-2">
+            <span class="material-icons">settings</span>
+            Schedule Sync
+          </h2>
+          <a href="{{ url_for('index') }}" 
+             class="flex items-center gap-1 px-4 py-2 border border-border-light dark:border-border-dark rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+            <span class="material-icons">arrow_back</span> Back
+          </a>
+        </div>
 
         <!-- Scheduling Form -->
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h4 class="mb-0">⚙️ Schedule Sync</h4>
-            </div>
-            <div class="card-body">
-                <form method="POST" class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Select SQL Server</label>
-                        <select class="form-select" name="server_name" required>
-                            {% for server in servers %}
-                                <option value="{{ server }}">{{ server }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+          <div class="p-4 bg-primary text-white rounded-t-lg flex items-center gap-2">
+            <span class="material-icons">schedule</span>
+            <h3 class="text-lg font-semibold">Set New Schedule</h3>
+          </div>
+          <div class="p-6">
+            <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Select SQL Server</label>
+                <select name="server_name" required 
+                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none">
+                  {% for server in servers %}
+                    <option value="{{ server }}">{{ server }}</option>
+                  {% endfor %}
+                </select>
+              </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label">Schedule Type</label>
-                        <select class="form-select" name="schedule_type" id="scheduleType" required>
-                            <option value="interval">Every X minutes</option>
-                            <option value="daily">At specific time</option>
-                        </select>
-                    </div>
+              <div>
+                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Schedule Type</label>
+                <select name="schedule_type" id="scheduleType" required
+                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none">
+                  <option value="interval">Every X minutes</option>
+                  <option value="daily">At specific time</option>
+                </select>
+              </div>
 
-                    <div id="intervalFields" class="col-md-6">
-                        <label class="form-label">Minutes</label>
-                        <input type="number" class="form-control" name="minutes" min="1" placeholder="e.g. 2">
-                    </div>
+              <!-- Interval Fields -->
+              <div id="intervalFields" class="md:col-span-1">
+                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Minutes</label>
+                <input type="number" name="minutes" min="1" placeholder="e.g. 2"
+                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none">
+              </div>
 
-                    <div id="dailyFields" class="row g-3" style="display:none;">
-                        <div class="col-md-6">
-                            <label class="form-label">Hour (0–23)</label>
-                            <input type="number" class="form-control" name="hour" min="0" max="23" placeholder="e.g. 14">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Minute (0–59)</label>
-                            <input type="number" class="form-control" name="minute" min="0" max="59" placeholder="e.g. 30">
-                        </div>
-                    </div>
+              <!-- Daily Fields -->
+              <div id="dailyFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                <div>
+                  <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Hour (0–23)</label>
+                  <input type="number" name="hour" min="0" max="23" placeholder="e.g. 14"
+                         class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none">
+                </div>
+                <div>
+                  <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Minute (0–59)</label>
+                  <input type="number" name="minute" min="0" max="59" placeholder="e.g. 30"
+                         class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none">
+                </div>
+              </div>
 
-                    <div class="col-12 mt-3">
-                        <button type="submit" class="btn btn-primary">✅ Set Schedule</button>
-                        <a href="{{ url_for('index') }}" class="btn btn-secondary">⬅ Back</a>
-                    </div>
-                </form>
-            </div>
+              <div class="md:col-span-2 flex justify-end mt-2">
+                <button type="submit" class="flex items-center gap-1 px-4 py-2 bg-success text-white rounded-md hover:bg-success-dark transition-colors">
+                  <span class="material-icons">check_circle</span> Set Schedule
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
 
         <!-- Scheduled Jobs Table -->
-        <div class="card">
-            <div class="card-header bg-secondary text-white">
-                <h4 class="mb-0">📋 Scheduled Jobs</h4>
-            </div>
-            <div class="card-body">
-                {% if jobs and jobs|length > 0 %}
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover align-middle mb-0">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Server</th>
-                                    <th>Type</th>
-                                    <th>Last Run</th>
-                                    <th>Status</th>
-                                    <th>Error</th>
-                                    {% if role in ['admin', 'operator'] %}
-                                    <th>Actions</th>
-                                    {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for job in jobs %}
-                                <tr>
-                                    <td>{{ job.server }}</td>
-                                    <td>{{ job.type }}</td>
-                                    <td>{{ job.last_run or "-" }}</td>
-                                    <td>
-                                        {% if job.status == "success" %}
-                                            <span class="badge bg-success">Success</span>
-                                        {% elif job.status == "failed" %}
-                                            <span class="badge bg-danger">Failed</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ job.status or "-" }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ job.error or "-" }}</td>
-                                    {% if role in ['admin', 'operator'] %}
-                                    <td>
-                                        <a href="#" class="btn btn-sm btn-warning">Edit</a>
-                                        <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}" 
-                                              method="POST" style="display:inline;" 
-                                              onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
-                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                        </form>
-                                    </td>
-                                    {% endif %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="alert alert-info">No schedules found.</div>
-                {% endif %}
-            </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+          <div class="p-4 bg-primary text-white rounded-t-lg flex items-center gap-2">
+            <span class="material-icons">list_alt</span>
+            <h3 class="text-lg font-semibold">Scheduled Jobs</h3>
+          </div>
+          <div class="p-6">
+            {% if jobs and jobs|length > 0 %}
+              <div class="overflow-x-auto">
+                <table class="w-full border border-border-light dark:border-border-dark rounded-lg overflow-hidden">
+                  <thead class="bg-gray-100 dark:bg-gray-800">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Server</th>
+                      <th class="px-4 py-2 text-left">Type</th>
+                      <th class="px-4 py-2 text-left">Last Run</th>
+                      <th class="px-4 py-2 text-left">Status</th>
+                      <th class="px-4 py-2 text-left">Error</th>
+                      {% if role in ['admin', 'operator'] %}
+                      <th class="px-4 py-2 text-left">Actions</th>
+                      {% endif %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for job in jobs %}
+                    <tr class="border-t border-border-light dark:border-border-dark">
+                      <td class="px-4 py-2">{{ job.server }}</td>
+                      <td class="px-4 py-2">{{ job.type }}</td>
+                      <td class="px-4 py-2">{{ job.last_run or "-" }}</td>
+                      <td class="px-4 py-2">
+                        {% if job.status == "success" %}
+                          <span class="px-2 py-1 text-xs rounded-md bg-success text-white">Success</span>
+                        {% elif job.status == "failed" %}
+                          <span class="px-2 py-1 text-xs rounded-md bg-danger text-white">Failed</span>
+                        {% else %}
+                          <span class="px-2 py-1 text-xs rounded-md bg-gray-400 text-white">{{ job.status or "-" }}</span>
+                        {% endif %}
+                      </td>
+                      <td class="px-4 py-2">{{ job.error or "-" }}</td>
+                      {% if role in ['admin', 'operator'] %}
+                      <td class="px-4 py-2 flex gap-2">
+                        <a href="#" class="px-3 py-1 rounded-md bg-warning text-white hover:bg-yellow-600 text-sm">Edit</a>
+                        <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}" 
+                              method="POST" onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
+                          <button type="submit" class="px-3 py-1 rounded-md bg-danger text-white hover:bg-red-700 text-sm">Delete</button>
+                        </form>
+                      </td>
+                      {% endif %}
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-subtext-light dark:text-subtext-dark">
+                No schedules found.
+              </div>
+            {% endif %}
+          </div>
         </div>
 
-    </div>
-</div>
+      </div>
+    </main>
+  </div>
 
 <script>
-    const scheduleType = document.getElementById('scheduleType');
-    const intervalFields = document.getElementById('intervalFields');
-    const dailyFields = document.getElementById('dailyFields');
+  const scheduleType = document.getElementById('scheduleType');
+  const intervalFields = document.getElementById('intervalFields');
+  const dailyFields = document.getElementById('dailyFields');
 
-    scheduleType.addEventListener('change', function() {
-        if (this.value === 'interval') {
-            intervalFields.style.display = 'block';
-            dailyFields.style.display = 'none';
-        } else {
-            intervalFields.style.display = 'none';
-            dailyFields.style.display = 'flex';
-        }
-    });
+  scheduleType.addEventListener('change', function() {
+    if (this.value === 'interval') {
+      intervalFields.classList.remove('hidden');
+      dailyFields.classList.add('hidden');
+    } else {
+      intervalFields.classList.add('hidden');
+      dailyFields.classList.remove('hidden');
+    }
+  });
 
-    // Auto-refresh table every 10 seconds
-    setInterval(() => location.reload(), 10000);
+  // Auto-refresh every 15s
+  setInterval(() => location.reload(), 15000);
 </script>
 </body>
 </html>

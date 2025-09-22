@@ -1,15 +1,14 @@
 <aside class="w-64 bg-surface-light dark:bg-surface-dark flex flex-col border-r border-border-light dark:border-border-dark h-screen fixed">
   <!-- Header -->
   <div class="flex items-center gap-3 p-4 border-b border-border-light dark:border-border-dark">
-    <span class="material-icons text-primary-DEFAULT text-3xl">storage</span>
-    <h1 class="text-xl font-bold">SQL Sync</h1>
+<img src="{{ url_for('static', filename='actin-logo.png') }}" alt="Logo" class="h-100 w-23 object-contain">
   </div>
 
   <!-- Navigation -->
   <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
     {% if session.get("role") in ["admin", "operator", "viewer"] %}
     <a href="{{ url_for('index') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'index' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'index' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">home</span>
       <span>Home</span>
     </a>
@@ -17,12 +16,12 @@
 
     {% if session.get("role") in ["admin", "operator"] %}
     <a href="{{ url_for('add_server') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'add_server' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'add_server' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">add_box</span>
       <span>Add Server</span>
     </a>
     <a href="{{ url_for('schedule_page') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'schedule_page' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'schedule_page' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">schedule</span>
       <span>Schedule</span>
     </a>
@@ -30,27 +29,27 @@
 
     {% if session.get("role") in ["admin", "operator", "viewer"] %}
     <a href="{{ url_for('dashboard') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'dashboard' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'dashboard' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">dashboard</span>
       <span>Dashboard</span>
     </a>
     <a href="{{ url_for('view_schedules') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'view_schedules' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'view_schedules' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">visibility</span>
       <span>View Schedules</span>
     </a>
     <a href="{{ url_for('sync_summary') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'sync_summary' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'sync_summary' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">summarize</span>
       <span>Sync Summary</span>
     </a>
     <a href="{{ url_for('alerts') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'alerts' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'alerts' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">notifications</span>
       <span>Alerts</span>
     </a>
     <a href="{{ url_for('explore') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'explore' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'explore' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">explore</span>
       <span>Explore</span>
     </a>
@@ -58,7 +57,8 @@
 
     {% if session.get("role") == "admin" %}
     <a href="{{ url_for('create_user_route') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg {% if request.endpoint == 'create_user_route' %}bg-primary-DEFAULT text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+       class="flex items-center gap-3 px-4 py-2 rounded-lg 
+              {% if request.endpoint == 'create_user_route' %}bg-amber-600 text-white{% else %}hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
       <span class="material-icons">person_add</span>
       <span>Create User</span>
     </a>

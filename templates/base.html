@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}SQL Sync Enterprise{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { 
+              50: '#EFF6FF',
+              100: '#DBEAFE',
+              200: '#BFDBFE',
+              300: '#93C5FD',
+              400: '#60A5FA',
+              500: '#3B82F6',
+              600: '#2563EB',
+              700: '#1D4ED8',
+              800: '#1E40AF',
+              900: '#1E3A8A',
+              950: '#172554',
+              DEFAULT: '#2563EB'
+            },
+            secondary: {
+              50: '#F8FAFC',
+              100: '#F1F5F9',
+              200: '#E2E8F0',
+              300: '#CBD5E1',
+              400: '#94A3B8',
+              500: '#64748B',
+              600: '#475569',
+              700: '#334155',
+              800: '#1E293B',
+              900: '#0F172A',
+              950: '#020617',
+              DEFAULT: '#475569'
+            },
+            success: {
+              light: '#D1FAE5',
+              DEFAULT: '#10B981',
+              dark: '#065F46'
+            },
+            warning: {
+              light: '#FEF3C7',
+              DEFAULT: '#F59E0B',
+              dark: '#B45309'
+            },
+            danger: {
+              light: '#FEE2E2',
+              DEFAULT: '#EF4444',
+              dark: '#B91C1C'
+            },
+            info: {
+              light: '#DBEAFE',
+              DEFAULT: '#3B82F6',
+              dark: '#1E40AF'
+            }
+          },
+          fontFamily: { 
+            sans: ['Poppins', 'sans-serif']
+          },
+          boxShadow: {
+            card: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .material-icons-round { 
+      font-size: 20px; 
+      vertical-align: middle; 
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+    
+    /* Dark mode scrollbar */
+    .dark ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+    
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    
+    /* Animations */
+    .fade-in {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* Table styles */
+    .enterprise-table th {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    
+    .enterprise-table tr:nth-child(even) {
+      background-color: rgba(243, 244, 246, 0.5);
+    }
+    
+    .dark .enterprise-table tr:nth-child(even) {
+      background-color: rgba(30, 41, 59, 0.5);
+    }
+    
+    /* Card hover effect */
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-4px);
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 min-h-screen flex flex-col">
+
+<div class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  {% include 'sidebar.html' %}
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden ml-64">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 py-4 px-6">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <h1 class="text-xl font-semibold text-gray-800 dark:text-white">{% block header_title %}SQL Sync Enterprise{% endblock %}</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+            <span class="material-icons-round dark:hidden">dark_mode</span>
+            <span class="material-icons-round hidden dark:block">light_mode</span>
+          </button>
+          <div class="relative">
+            <button id="notifications-menu" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 relative">
+              <span class="material-icons-round">notifications</span>
+              <span class="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+            </button>
+          </div>
+          <div class="relative">
+            <button id="user-menu" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+              <div class="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white">
+                {% if session.get("user") %}
+                  {{ session.get("user")[0]|upper }}
+                {% else %}
+                  G
+                {% endif %}
+              </div>
+              <span class="hidden md:block">
+                {% if session.get("user") %}
+                  {{ session.get("user") }}
+                {% else %}
+                  Guest
+                {% endif %}
+              </span>
+              <span class="material-icons-round">expand_more</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+      {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 text-sm text-gray-500 dark:text-gray-400">
+      <div class="flex justify-between items-center">
+        <div>
+          <span>SQL Sync Enterprise &copy; 2023</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="material-icons-round text-sm">bolt</span>
+          <span>Hybrid Sync Tool v2.0</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script>
+  // Theme toggle functionality
+  const themeToggle = document.getElementById('theme-toggle');
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      
+      // Save preference to localStorage
+      if (document.documentElement.classList.contains('dark')) {
+        localStorage.setItem('theme', 'dark');
+      } else {
+        localStorage.setItem('theme', 'light');
+      }
+    });
+    
+    // Check for saved theme preference
+    if (localStorage.getItem('theme') === 'dark' || 
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+  
+  // Initialize tooltips, popovers, etc.
+  document.addEventListener('DOMContentLoaded', () => {
+    // Add any additional initialization code here
+  });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

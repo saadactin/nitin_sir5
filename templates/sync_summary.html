@@ -1,216 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Sync Summary - All Servers</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <style>
-        #main-content {
-            margin-left: 260px; /* aligns with sidebar */
-            padding: 20px;
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📈 Sync Summary - All Servers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            success: "#198754",
+            info: "#0DCAF0",
+            warning: "#FFC107",
+            danger: "#DC3545",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.75rem" }
         }
-        .metric-card, .server-card { transition: transform 0.2s; }
-        .metric-card:hover, .server-card:hover { transform: translateY(-2px); }
-        .table-row:hover { background-color: #f8f9fa; }
-        .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    </style>
+      }
+    };
+  </script>
+  <style>
+    .material-icons { font-size: 20px; vertical-align: middle; }
+  </style>
 </head>
-<body>
-<div class="d-flex">
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
     {% include 'sidebar.html' %}
 
-    <div id="main-content" class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>📈 Sync Summary - All Servers</h2>
-            <div class="d-flex gap-2">
-                <a href="{{ url_for('sync_summary') }}.json" class="btn btn-outline-info" target="_blank">📄 Export JSON</a>
-                <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
-            </div>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto ml-64 p-8">
+      <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center">
+          <h1 class="text-3xl font-bold flex items-center gap-2">
+            <span class="material-icons">equalizer</span> Sync Summary - All Servers
+          </h1>
+          <div class="flex gap-2">
+            <a href="{{ url_for('sync_summary') }}.json" target="_blank"
+               class="px-4 py-2 rounded-md border border-info text-info hover:bg-info hover:text-white transition">
+              📄 Export JSON
+            </a>
+            <a href="{{ url_for('index') }}"
+               class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+              ← Back to Home
+            </a>
+          </div>
         </div>
 
         <!-- Overall Stats -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ summary.total_servers }}</h3>
-                        <p class="mb-0">🖥️ Servers</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ summary.total_databases }}</h3>
-                        <p class="mb-0">📁 Databases</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ summary.total_tables }}</h3>
-                        <p class="mb-0">📋 Tables</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ "{:,}".format(summary.total_source_rows) }}</h3>
-                        <p class="mb-0">📥 Total Source Rows</p>
-                    </div>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-primary text-white rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ summary.total_servers }}</h3>
+            <p>🖥️ Servers</p>
+          </div>
+          <div class="bg-success text-white rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ summary.total_databases }}</h3>
+            <p>📁 Databases</p>
+          </div>
+          <div class="bg-warning text-dark rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ summary.total_tables }}</h3>
+            <p>📋 Tables</p>
+          </div>
+          <div class="bg-info text-white rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ "{:,}".format(summary.total_source_rows) }}</h3>
+            <p>📥 Total Source Rows</p>
+          </div>
         </div>
 
         <!-- Destination Stats -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card bg-success text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ "{:,}".format(summary.total_destination_rows) }}</h3>
-                        <p class="mb-0">📤 Total Destination Rows</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card bg-info text-white metric-card text-center">
-                    <div class="card-body">
-                        <h3>{{ "{:,}".format(summary.total_source_rows - summary.total_destination_rows) }}</h3>
-                        <p class="mb-0">📊 Total Row Difference</p>
-                    </div>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-success text-white rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ "{:,}".format(summary.total_destination_rows) }}</h3>
+            <p>📤 Total Destination Rows</p>
+          </div>
+          <div class="bg-info text-white rounded-lg p-4 text-center shadow">
+            <h3 class="text-2xl font-semibold">{{ "{:,}".format(summary.total_source_rows - summary.total_destination_rows) }}</h3>
+            <p>📊 Total Row Difference</p>
+          </div>
         </div>
 
         <!-- Last Updated -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h6 class="mb-0">🕒 Last Updated: {{ summary.last_updated[:19] }}</h6>
-            </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4">
+          <h6 class="text-sm font-medium">🕒 Last Updated: {{ summary.last_updated[:19] }}</h6>
         </div>
 
         <!-- Server Breakdown -->
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">🖥️ Server Breakdown</h5>
-                <small>Click on a server to view detailed metrics</small>
-            </div>
-            <div class="card-body p-0">
-                {% if summary.servers|length > 0 %}
-                <div class="row p-3">
-                    {% for server_name, server_data in summary.servers.items() %}
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="card server-card h-100">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0">🖥️ {{ server_name }}</h6>
-                                <small>{{ server_data.server_host }}</small>
-                            </div>
-                            <div class="card-body">
-                                {% if 'error' not in server_data %}
-                                <div class="row text-center">
-                                    <div class="col-6">
-                                        <h5 class="text-primary">{{ server_data.total_databases }}</h5>
-                                        <small class="text-muted">Databases</small>
-                                    </div>
-                                    <div class="col-6">
-                                        <h5 class="text-success">{{ server_data.total_tables }}</h5>
-                                        <small class="text-muted">Tables</small>
-                                    </div>
-                                </div>
-                                <div class="row text-center mt-2">
-                                    <div class="col-6">
-                                        <h6 class="text-warning">{{ "{:,}".format(server_data.total_source_rows) }}</h6>
-                                        <small class="text-muted">Source Rows</small>
-                                    </div>
-                                    <div class="col-6">
-                                        <h6 class="text-info">{{ "{:,}".format(server_data.total_destination_rows) }}</h6>
-                                        <small class="text-muted">Dest Rows</small>
-                                    </div>
-                                </div>
-                                <div class="mt-3">
-                                    <a href="{{ url_for('server_metrics', server=server_name) }}" 
-                                       class="btn btn-outline-primary btn-sm w-100">
-                                        📊 View Details
-                                    </a>
-                                </div>
-                                {% else %}
-                                <div class="text-center">
-                                    <div class="alert alert-danger">
-                                        <small>Error: {{ server_data.error }}</small>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
+          <div class="p-4 border-b border-border-light dark:border-border-dark bg-dark text-white rounded-t-lg">
+            <h5 class="font-semibold">🖥️ Server Breakdown</h5>
+            <small class="text-gray-300">Click on a server to view detailed metrics</small>
+          </div>
+          <div class="p-4">
+            {% if summary.servers|length > 0 %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {% for server_name, server_data in summary.servers.items() %}
+              <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4 flex flex-col justify-between">
+                <div>
+                  <div class="bg-primary text-white rounded-md px-3 py-2 mb-3">
+                    <h6 class="font-semibold">🖥️ {{ server_name }}</h6>
+                    <small>{{ server_data.server_host }}</small>
+                  </div>
+                  {% if 'error' not in server_data %}
+                  <div class="grid grid-cols-2 text-center gap-2">
+                    <div>
+                      <h5 class="text-primary font-bold">{{ server_data.total_databases }}</h5>
+                      <small class="text-subtext-light dark:text-subtext-dark">Databases</small>
                     </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="p-4 text-center">
-                    <div class="alert alert-info">
-                        <h4 class="alert-heading">No Servers Found</h4>
-                        <p>No servers were found or there was an error retrieving the data.</p>
+                    <div>
+                      <h5 class="text-success font-bold">{{ server_data.total_tables }}</h5>
+                      <small class="text-subtext-light dark:text-subtext-dark">Tables</small>
                     </div>
+                    <div>
+                      <h6 class="text-warning font-semibold">{{ "{:,}".format(server_data.total_source_rows) }}</h6>
+                      <small class="text-subtext-light dark:text-subtext-dark">Source Rows</small>
+                    </div>
+                    <div>
+                      <h6 class="text-info font-semibold">{{ "{:,}".format(server_data.total_destination_rows) }}</h6>
+                      <small class="text-subtext-light dark:text-subtext-dark">Dest Rows</small>
+                    </div>
+                  </div>
+                  {% else %}
+                  <div class="bg-danger text-white rounded-md px-3 py-2 mt-2 text-center">
+                    <small>Error: {{ server_data.error }}</small>
+                  </div>
+                  {% endif %}
                 </div>
+                {% if 'error' not in server_data %}
+                <a href="{{ url_for('server_metrics', server=server_name) }}"
+                   class="mt-3 px-3 py-2 border border-primary text-primary rounded-md hover:bg-primary hover:text-white transition text-center">
+                  📊 View Details
+                </a>
                 {% endif %}
+              </div>
+              {% endfor %}
             </div>
+            {% else %}
+            <div class="p-6 text-center bg-info text-white rounded-lg">
+              <h4 class="text-lg font-semibold">No Servers Found</h4>
+              <p>No servers were found or there was an error retrieving the data.</p>
+            </div>
+            {% endif %}
+          </div>
         </div>
 
         <!-- Quick Actions -->
-        <div class="card shadow-sm mt-4">
-            <div class="card-header bg-light">
-                <h6 class="mb-0">⚡ Quick Actions</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary w-100">📊 Dashboard</a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('view_schedules') }}" class="btn btn-warning w-100">📅 Schedules</a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('sync_summary') }}.json" class="btn btn-outline-info w-100" target="_blank">📄 Export JSON</a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100">🏠 Home</a>
-                    </div>
-                </div>
-            </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
+          <div class="p-4 border-b border-border-light dark:border-border-dark">
+            <h6 class="font-medium">⚡ Quick Actions</h6>
+          </div>
+          <div class="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <a href="{{ url_for('dashboard') }}" class="px-4 py-2 rounded-md bg-primary text-white text-center hover:bg-primary-hover transition">📊 Dashboard</a>
+            <a href="{{ url_for('view_schedules') }}" class="px-4 py-2 rounded-md bg-warning text-dark text-center hover:bg-yellow-400 transition">📅 Schedules</a>
+            <a href="{{ url_for('sync_summary') }}.json" target="_blank" class="px-4 py-2 rounded-md border border-info text-info text-center hover:bg-info hover:text-white transition">📄 Export JSON</a>
+            <a href="{{ url_for('index') }}" class="px-4 py-2 rounded-md border border-gray-400 text-gray-600 dark:text-gray-300 text-center hover:bg-gray-200 dark:hover:bg-gray-700 transition">🏠 Home</a>
+          </div>
         </div>
 
         <!-- Legend -->
-        <div class="card shadow-sm mt-4">
-            <div class="card-header bg-light">
-                <h6 class="mb-0">📖 Legend</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <span class="badge bg-primary">🖥️ Servers</span>
-                        <small class="text-muted"> - Total SQL Server instances</small>
-                    </div>
-                    <div class="col-md-3">
-                        <span class="badge bg-success">📁 Databases</span>
-                        <small class="text-muted"> - Total databases across all servers</small>
-                    </div>
-                    <div class="col-md-3">
-                        <span class="badge bg-warning">📋 Tables</span>
-                        <small class="text-muted"> - Total tables across all databases</small>
-                    </div>
-                    <div class="col-md-3">
-                        <span class="badge bg-info">📊 Row Difference</span>
-                        <small class="text-muted"> - Source rows - Destination rows</small>
-                    </div>
-                </div>
-            </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
+          <div class="p-4 border-b border-border-light dark:border-border-dark">
+            <h6 class="font-medium">📖 Legend</h6>
+          </div>
+          <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+            <div><span class="bg-primary text-white px-2 py-1 rounded">🖥️ Servers</span> - Total SQL Server instances</div>
+            <div><span class="bg-success text-white px-2 py-1 rounded">📁 Databases</span> - Total databases across all servers</div>
+            <div><span class="bg-warning text-dark px-2 py-1 rounded">📋 Tables</span> - Total tables across all databases</div>
+            <div><span class="bg-info text-white px-2 py-1 rounded">📊 Row Difference</span> - Source rows - Destination rows</div>
+          </div>
         </div>
 
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+      </div>
+    </main>
+  </div>
 </body>
 </html>
