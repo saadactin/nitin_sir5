@@ -158,7 +158,7 @@ def sync_selected_databases(server_name):
             return redirect(url_for("view_server_databases", server_name=server_name))
 
         # Prepare engines and ensure tracking tables exist
-        pg_engine = get_pg_engine()
+        pg_engine = get_pg_engine(server_conf.get("target_postgres_db"))
         create_sync_tracking_table(pg_engine)
         create_table_sync_tracking(pg_engine)
         server_clean = ''.join(c for c in server_conf['server'] if c.isalnum() or c in '_-')

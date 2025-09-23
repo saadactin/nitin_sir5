@@ -86,13 +86,14 @@ def get_sqlalchemy_engine(conf, database=None):
     return create_engine(conn_url, fast_executemany=True)
 
 
-def get_pg_engine():
-    """Get PostgreSQL engine"""
+def get_pg_engine(target_db=None):
+    """Get PostgreSQL engine for a specific target DB"""
+    db_name = target_db if target_db else pg_conf['database']
     conn_str = (
-        f"postgresql+psycopg2://{pg_conf['username']}:{pg_conf['password']}@{pg_conf['host']}:{pg_conf['port']}/{pg_conf['database']}"
+        f"postgresql+psycopg2://{pg_conf['username']}:{pg_conf['password']}@"
+        f"{pg_conf['host']}:{pg_conf['port']}/{db_name}"
     )
     return create_engine(conn_str)
-
 
 # ------------------------- Param coercion -------------------------
 
@@ -673,7 +674,7 @@ def cleanup_system_tables(engine, schema_name):
 
 def process_sql_server_hybrid(server_name, server_conf):
     try:
-        pg_engine = get_pg_engine()
+        pg_engine = get_pg_engine(server_conf.get("target_postgres_db"))
         create_sync_tracking_table(pg_engine)
         create_table_sync_tracking(pg_engine)
 
