@@ -452,42 +452,131 @@ def batch_fetch_new_rows(engine, schema, table, sync_column, last_value, batch_s
         yield df, next_marker
 
 
+
 def full_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table):
     if should_skip_table(schema, table):
         return 0
-    query = f"SELECT * FROM [{schema}].[{table}]"
-    df = pd.read_sql(query, sql_engine)
-    if df.empty:
+    
+    # First, get the schema information regardless of data
+    try:
+        # Get column information from SQL Server
+        schema_query = f"""
+        SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
+        ORDER BY ORDINAL_POSITION
+        """
+        schema_df = pd.read_sql(schema_query, sql_engine)
+        
+        if schema_df.empty:
+            logging.warning(f"No schema information found for {schema}.{table}")
+            return 0
+        
+        # Create an empty DataFrame with the correct column structure
+        column_types = {}
+        for _, row in schema_df.iterrows():
+            col_name = row['COLUMN_NAME']
+            data_type = row['DATA_TYPE']
+            # Map SQL Server types to pandas dtypes for empty DataFrame creation
+            if data_type in ('int', 'bigint', 'smallint', 'tinyint'):
+                column_types[col_name] = 'int64'
+            elif data_type in ('decimal', 'numeric', 'float', 'real'):
+                column_types[col_name] = 'float64'
+            elif data_type in ('datetime', 'datetime2', 'smalldatetime', 'date'):
+                column_types[col_name] = 'datetime64[ns]'
+            elif data_type in ('bit',):
+                column_types[col_name] = 'bool'
+            else:
+                column_types[col_name] = 'object'
+        
+        # Create empty DataFrame with proper schema
+        empty_df = pd.DataFrame({col: pd.Series(dtype=dtype) for col, dtype in column_types.items()})
+        
+        # Create schema in PostgreSQL (this happens regardless of data)
+        schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
+        table_name = f"{schema}_{table}"
+        ensure_table_and_columns(pg_engine, schema_name, table_name, empty_df)
+        
+        # Now try to get actual data
+        query = f"SELECT * FROM [{schema}].[{table}]"
+        df = pd.read_sql(query, sql_engine)
+        
+        if not df.empty:
+            df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
+            pk_columns = get_primary_key_info(conn, schema, table)
+            ts_col = get_timestamp_column(conn, schema, table)
+            uid_col = get_unique_identifier_column(conn, schema, table)
+            sync_col = pk_columns[0] if pk_columns else (ts_col if ts_col else uid_col)
+            if sync_col and sync_col in df.columns:
+                update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, df[sync_col].max())
+            write_audit_csv(server_clean, db_name, schema, table, df.head(0))
+            return len(df)
+        else:
+            logging.info(f"Table {schema}.{table} is empty, but schema created in PostgreSQL")
+            # Write empty CSV for audit
+            write_audit_csv(server_clean, db_name, schema, table, empty_df)
+            return 0  # Return 0 for row count, but schema was created
+            
+    except Exception as e:
+        logging.error(f"Failed to process table {schema}.{table}: {e}")
         return 0
-    schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
-    table_name = f"{schema}_{table}"
-    ensure_table_and_columns(pg_engine, schema_name, table_name, df)
-    df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
-    pk_columns = get_primary_key_info(conn, schema, table)
-    ts_col = get_timestamp_column(conn, schema, table)
-    uid_col = get_unique_identifier_column(conn, schema, table)
-    sync_col = pk_columns[0] if pk_columns else (ts_col if ts_col else uid_col)
-    if sync_col and sync_col in df.columns:
-        update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, df[sync_col].max())
-    write_audit_csv(server_clean, db_name, schema, table, df.head(0))
-    return len(df)
-
-
+    
 def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table):
     if should_skip_table(schema, table):
         return 0
+    
+    # First ensure schema exists even for empty tables
+    try:
+        # Get schema information first
+        schema_query = f"""
+        SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
+        ORDER BY ORDINAL_POSITION
+        """
+        schema_df = pd.read_sql(schema_query, sql_engine)
+        
+        if not schema_df.empty:
+            # Create empty DataFrame with correct schema
+            column_types = {}
+            for _, row in schema_df.iterrows():
+                col_name = row['COLUMN_NAME']
+                data_type = row['DATA_TYPE']
+                if data_type in ('int', 'bigint', 'smallint', 'tinyint'):
+                    column_types[col_name] = 'int64'
+                elif data_type in ('decimal', 'numeric', 'float', 'real'):
+                    column_types[col_name] = 'float64'
+                elif data_type in ('datetime', 'datetime2', 'smalldatetime', 'date'):
+                    column_types[col_name] = 'datetime64[ns]'
+                elif data_type in ('bit',):
+                    column_types[col_name] = 'bool'
+                else:
+                    column_types[col_name] = 'object'
+            
+            empty_df = pd.DataFrame({col: pd.Series(dtype=dtype) for col, dtype in column_types.items()})
+            schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
+            table_name = f"{schema}_{table}"
+            ensure_table_and_columns(pg_engine, schema_name, table_name, empty_df)
+    except Exception as e:
+        logging.warning(f"Could not ensure schema for {schema}.{table}: {e}")
+    
+    # Now continue with the existing incremental sync logic
     current_count = get_table_row_count(conn, schema, table)
     last_value = get_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table)
+    
     if last_value is not None and current_count == 0:
         logging.info(f"Detected empty source (possible TRUNCATE) for {schema}.{table}; skipping to preserve target")
         return 0
+    
     pk_columns = get_primary_key_info(conn, schema, table)
     ts_col = get_timestamp_column(conn, schema, table)
     uid_col = get_unique_identifier_column(conn, schema, table)
     sync_col = pk_columns[0] if pk_columns else (ts_col if ts_col else uid_col)
+    
     schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
     table_name = f"{schema}_{table}"
     processed = 0
+    
     if sync_col:
         if last_value is None:
             # When last_value is None, use hash-based deduplication instead of skipping
@@ -497,9 +586,8 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
             query = f"SELECT * FROM [{schema}].[{table}]"
             df = pd.read_sql(query, sql_engine)
             if df.empty:
-                return 0
-            
-            ensure_table_and_columns(pg_engine, schema_name, table_name, df)
+                logging.info(f"Table {schema}.{table} is empty, but schema ensured in PostgreSQL")
+                return 0  # Schema already created above
             
             # Check if target table exists and has data
             with pg_engine.connect() as pg_conn:
@@ -547,7 +635,6 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
             for df, _ in batch_fetch_new_rows(sql_engine, schema, table, sync_col, last_value, BATCH_SIZE):
                 if df.empty:
                     continue
-                ensure_table_and_columns(pg_engine, schema_name, table_name, df)
                 df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
                 next_marker = df[sync_col].max()
                 update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, next_marker)
@@ -557,38 +644,39 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
         query = f"SELECT * FROM [{schema}].[{table}]"
         df = pd.read_sql(query, sql_engine)
         if df.empty:
-            return 0
-        ensure_table_and_columns(pg_engine, schema_name, table_name, df)
+            logging.info(f"Table {schema}.{table} is empty, but schema ensured in PostgreSQL")
+            return 0  # Schema already created above
+        
         with pg_engine.connect() as pg_conn:
             try:
                 dst_df = pd.read_sql(f'SELECT * FROM "{schema_name}"."{table_name}"', pg_conn)
             except Exception:
                 dst_df = pd.DataFrame()
+        
         common = list(set(df.columns) & set(dst_df.columns)) if not dst_df.empty else list(df.columns)
         if not common:
             return 0
+        
         src = df[common].fillna('')
         if dst_df.empty:
             df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
             processed = len(df)
         else:
             dst = dst_df[common].fillna('')
-            #commented by vikas for the row duplication
-            #src['row_hash'] = src.apply(lambda x: hash(tuple(x)), axis=1)
-            #dst['row_hash'] = dst.apply(lambda x: hash(tuple(x)), axis=1)
+            
             def row_md5(row):
-    # Convert row to tuple of strings to handle NaNs consistently
-             row_tuple = tuple(str(x) for x in row)
-             return hashlib.md5(str(row_tuple).encode('utf-8')).hexdigest()
+                # Convert row to tuple of strings to handle NaNs consistently
+                row_tuple = tuple(str(x) for x in row)
+                return hashlib.md5(str(row_tuple).encode('utf-8')).hexdigest()
  
             src['row_hash'] = src.apply(row_md5, axis=1)
             dst['row_hash'] = dst.apply(row_md5, axis=1)
-            
             
             new_rows_idx = src[~src['row_hash'].isin(dst['row_hash'])].index
             if len(new_rows_idx) > 0:
                 df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
                 processed = len(new_rows_idx)
+    
     return processed
 
 def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_dir, pg_engine):
@@ -607,11 +695,14 @@ def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_di
         try:
             logging.info(f"[FULL SYNC] Processing {schema}.{table}")
             processed = full_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, cursor, schema, table)
-            processed_count += 1 if processed > 0 else 0
+            # Count the table as processed even if it's empty (schema was created)
+            processed_count += 1
         except Exception as e:
             logging.error(f"Failed to export/load {schema}.{table}: {e}")
+    
     logging.info(f"=== FULL sync completed for {db_name}, {processed_count}/{len(tables)} tables processed ===")
     return processed_count
+
 
 
 def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_clean, output_dir, pg_engine):
@@ -642,7 +733,8 @@ def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_cle
             processed = incremental_sync_table(
                 pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table
             )
-            processed_count += 1 if processed > 0 else 0
+            # Count the table as processed even if no new rows were found (schema was ensured)
+            processed_count += 1
         except Exception as e:
             logging.error(f"Failed to sync/load {schema}.{table}: {e}")
 
@@ -650,7 +742,6 @@ def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_cle
         f"=== INCREMENTAL sync completed for {db_name}, {processed_count}/{len(tables)} tables processed ==="
     )
     return processed_count
-
 
 
 
