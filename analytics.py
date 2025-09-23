@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 def compare_table_rows(server_name, db_name, table_name):
     """
     Compare source vs destination rows for a given table.
+    Only compares data that should have been synced based on last sync time.
     
     Args:
         server_name (str): Name of the SQL Server
@@ -38,12 +39,48 @@ def compare_table_rows(server_name, db_name, table_name):
             schema = 'dbo'
             table = table_name
         
-        # Get source data
+        # Get last sync status to determine what should be synced
+        sync_status = get_table_sync_status(server_name, db_name, table_name)
+        last_sync_time = sync_status.get('last_sync_time')
+        last_pk_value = sync_status.get('last_pk_value')
+        
+        # Get source data - filter by last sync time if available
         sql_engine = get_sqlalchemy_engine(server_conf, db_name)
-        source_query = f"SELECT * FROM [{schema}].[{table}]"
+        
+        # Build source query based on sync status
+        if last_sync_time:
+            # Try to use timestamp column first
+            timestamp_column = get_timestamp_column(server_name, db_name, table_name)
+            if timestamp_column:
+                source_query = f"SELECT * FROM [{schema}].[{table}] WHERE [{timestamp_column}] <= '{last_sync_time}'"
+                logger.info(f"Filtering source data by timestamp column: {timestamp_column} <= {last_sync_time}")
+            elif last_pk_value:
+                # Use primary key if timestamp not available
+                pk_columns = get_primary_key_info(server_name, db_name, table_name)
+                if pk_columns and len(pk_columns) == 1:  # Single column PK
+                    pk_column = pk_columns[0]
+                    source_query = f"SELECT * FROM [{schema}].[{table}] WHERE [{pk_column}] <= {last_pk_value}"
+                    logger.info(f"Filtering source data by PK column: {pk_column} <= {last_pk_value}")
+                else:
+                    # Fallback: compare all data but warn
+                    source_query = f"SELECT * FROM [{schema}].[{table}]"
+                    logger.warning(f"No timestamp or single-column PK found for filtering: {table_name}. Comparing all data.")
+            else:
+                source_query = f"SELECT * FROM [{schema}].[{table}]"
+                logger.info(f"No PK value available, comparing all source data for: {table_name}")
+        else:
+            # Never synced - compare all data
+            source_query = f"SELECT * FROM [{schema}].[{table}]"
+            logger.info(f"Table never synced, comparing all source data for: {table_name}")
+        
         source_df = pd.read_sql(source_query, sql_engine)
         
-        # Get destination data
+        # Get total source count for context (including unsynced data)
+        total_source_query = f"SELECT COUNT(*) as total_count FROM [{schema}].[{table}]"
+        total_source_df = pd.read_sql(total_source_query, sql_engine)
+        total_source_count = total_source_df.iloc[0]['total_count'] if not total_source_df.empty else 0
+        
+        # Get destination data (this should contain ONLY synced data)
         pg_engine = get_pg_engine()
         server_clean = ''.join(c for c in server_conf['server'] if c.isalnum() or c in '_-')
         schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
@@ -52,8 +89,9 @@ def compare_table_rows(server_name, db_name, table_name):
         try:
             dest_query = f'SELECT * FROM "{schema_name}"."{pg_table_name}"'
             dest_df = pd.read_sql(dest_query, pg_engine)
-        except Exception:
+        except Exception as e:
             # Table doesn't exist in destination
+            logger.info(f"Destination table not found: {schema_name}.{pg_table_name}")
             dest_df = pd.DataFrame()
         
         # Calculate row hashes for comparison
@@ -79,13 +117,21 @@ def compare_table_rows(server_name, db_name, table_name):
         
         sql_engine.dispose()
         
+        # Calculate new data since last sync
+        new_data_since_sync = total_source_count - len(source_df)
+        
         return {
-            'rows_source': len(source_df),
+            'rows_source': len(source_df),  # Only synced portion
             'rows_destination': len(dest_df),
             'missing_rows': missing_rows,
             'extra_rows': extra_rows,
             'source_data': source_df.drop('row_hash', axis=1) if not source_df.empty else pd.DataFrame(),
-            'destination_data': dest_df.drop('row_hash', axis=1) if not dest_df.empty else pd.DataFrame()
+            'destination_data': dest_df.drop('row_hash', axis=1) if not dest_df.empty else pd.DataFrame(),
+            'total_source_rows': total_source_count,  # Total including unsynced
+            'last_sync_time': last_sync_time,
+            'new_data_since_sync': new_data_since_sync,  # Unsynced data count
+            'sync_status': sync_status['sync_status'],
+            'data_match': len(missing_rows) == 0 and len(extra_rows) == 0
         }
         
     except Exception as e:
@@ -96,6 +142,7 @@ def compare_table_rows(server_name, db_name, table_name):
 def delta_tracking(server_name, db_name, table_name):
     """
     Track rows added/updated since last sync using row_hash comparison.
+    Only considers data that should have been synced.
     
     Args:
         server_name (str): Name of the SQL Server
@@ -118,9 +165,22 @@ def delta_tracking(server_name, db_name, table_name):
             schema = 'dbo'
             table = table_name
         
-        # Get source data
+        # Get last sync status
+        sync_status = get_table_sync_status(server_name, db_name, table_name)
+        last_sync_time = sync_status.get('last_sync_time')
+        
+        # Get source data - filtered by last sync time
         sql_engine = get_sqlalchemy_engine(server_conf, db_name)
-        source_query = f"SELECT * FROM [{schema}].[{table}]"
+        
+        if last_sync_time:
+            timestamp_column = get_timestamp_column(server_name, db_name, table_name)
+            if timestamp_column:
+                source_query = f"SELECT * FROM [{schema}].[{table}] WHERE [{timestamp_column}] <= '{last_sync_time}'"
+            else:
+                source_query = f"SELECT * FROM [{schema}].[{table}]"
+        else:
+            source_query = f"SELECT * FROM [{schema}].[{table}]"
+        
         source_df = pd.read_sql(source_query, sql_engine)
         
         # Get destination data
@@ -147,7 +207,7 @@ def delta_tracking(server_name, db_name, table_name):
         else:
             dest_df['row_hash'] = pd.Series(dtype='int64')
         
-        # Find delta rows (new/updated)
+        # Find delta rows (new/updated) - only in the synced portion
         source_hashes = set(source_df['row_hash'].values) if not source_df.empty else set()
         dest_hashes = set(dest_df['row_hash'].values) if not dest_df.empty else set()
         
@@ -159,9 +219,11 @@ def delta_tracking(server_name, db_name, table_name):
         return {
             'delta_count': len(delta_rows),
             'delta_rows': delta_rows,
-            'total_source_rows': len(source_df),
+            'total_source_rows': len(source_df),  # Synced portion only
             'total_destination_rows': len(dest_df),
-            'last_check': datetime.now().isoformat()
+            'last_sync_time': last_sync_time,
+            'last_check': datetime.now().isoformat(),
+            'sync_status': sync_status['sync_status']
         }
         
     except Exception as e:
@@ -172,6 +234,7 @@ def delta_tracking(server_name, db_name, table_name):
 def top_changed_tables(server_name, db_name):
     """
     Get ranked list of tables by number of rows added/updated in last sync.
+    Only considers data that should have been synced.
     
     Args:
         server_name (str): Name of the SQL Server
@@ -199,7 +262,7 @@ def top_changed_tables(server_name, db_name):
         
         conn.close()
         
-        # Calculate delta for each table
+        # Calculate delta for each table (only synced portion)
         table_deltas = []
         for table in tables:
             try:
@@ -208,7 +271,9 @@ def top_changed_tables(server_name, db_name):
                     'table': table,
                     'delta_count': delta_info['delta_count'],
                     'total_source_rows': delta_info['total_source_rows'],
-                    'total_destination_rows': delta_info['total_destination_rows']
+                    'total_destination_rows': delta_info['total_destination_rows'],
+                    'last_sync_time': delta_info['last_sync_time'],
+                    'sync_status': delta_info['sync_status']
                 })
             except Exception as e:
                 logger.warning(f"Could not calculate delta for {table}: {e}")
@@ -216,7 +281,9 @@ def top_changed_tables(server_name, db_name):
                     'table': table,
                     'delta_count': 0,
                     'total_source_rows': 0,
-                    'total_destination_rows': 0
+                    'total_destination_rows': 0,
+                    'last_sync_time': None,
+                    'sync_status': 'error'
                 })
         
         # Sort by delta count (descending)
@@ -291,4 +358,39 @@ def get_table_sync_status(server_name, db_name, table_name):
         
     except Exception as e:
         logger.error(f"Error getting sync status for {server_name}.{db_name}.{table_name}: {e}")
+        raise
+
+
+def get_sync_health_summary(server_name, db_name):
+    """
+    Get overall sync health summary for a database.
+    
+    Args:
+        server_name (str): Name of the SQL Server
+        db_name (str): Database name
+    
+    Returns:
+        dict: Sync health summary
+    """
+    try:
+        table_deltas = top_changed_tables(server_name, db_name)
+        
+        synced_tables = [t for t in table_deltas if t['sync_status'] == 'synced']
+        never_synced_tables = [t for t in table_deltas if t['sync_status'] == 'never_synced']
+        error_tables = [t for t in table_deltas if t['sync_status'] == 'error']
+        
+        total_mismatches = sum(t['delta_count'] for t in synced_tables)
+        
+        return {
+            'total_tables': len(table_deltas),
+            'synced_tables': len(synced_tables),
+            'never_synced_tables': len(never_synced_tables),
+            'error_tables': len(error_tables),
+            'total_mismatches': total_mismatches,
+            'tables_with_mismatches': len([t for t in synced_tables if t['delta_count'] > 0]),
+            'last_updated': datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting sync health summary for {server_name}.{db_name}: {e}")
         raise
