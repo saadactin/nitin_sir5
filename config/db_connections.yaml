@@ -1,5 +1,5 @@
 postgresql:
-  database: Vikas1
+  database: NewSaad1
   host: localhost
   password: StrongPassword123
   port: 5432
@@ -9,16 +9,9 @@ sqlservers:
   server1:
     check_new_databases: true
     password: root
-    port: 14344
-    server: localhost\SQL2019_Second
-    skip_databases: []
-    sync_mode: hybrid
-    username: sa
-  server2:
-    check_new_databases: true
-    password: root
     port: 1433
     server: localhost
     skip_databases: []
     sync_mode: hybrid
+    target_postgres_db: NewSaad1
     username: sa

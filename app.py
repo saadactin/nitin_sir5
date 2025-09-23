@@ -1,5 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response
 import json
+import psycopg2
+import yaml
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash
+
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config, save_config
@@ -213,20 +218,55 @@ def sync_server(server_name):
         flash(f"Server {server_name} not found!", "danger")
     return redirect(url_for("index"))
 
+CONFIG_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "config/db_connections.yaml")
+)
+
+def load_config():
+    with open(CONFIG_PATH, "r") as f:
+        return yaml.safe_load(f)
+
+def load_pg_databases():
+    """Return list of Postgres DBs, or [] if connection fails"""
+    try:
+        config = load_config()
+        pg_conf = config.get("postgresql", {})
+
+        conn = psycopg2.connect(
+            dbname="postgres",  
+            user=pg_conf.get("username"),
+            password=pg_conf.get("password"),
+            host=pg_conf.get("host"),
+            port=pg_conf.get("port", 5432),
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
+        dbs = [row[0] for row in cur.fetchall()]
+        conn.close()
+        return dbs
+    except Exception as e:
+        print(f"⚠️ Could not load Postgres DBs: {e}")
+        return []
+
 
 @app.route("/add-server", methods=["GET", "POST"])
 @require_role(["admin", "operator"])
 def add_server():
-    """Add new SQL Server to config"""
     if request.method == "POST":
         server_name = request.form["server_name"]
         server = request.form["server"]
         username = request.form["username"]
         password = request.form["password"]
         port = int(request.form.get("port", 1433))
+        pg_database = request.form.get("pg_database")
 
         config = load_config()
-        config.setdefault("sqlservers", {})[server_name] = {
+        config.setdefault("sqlservers", {})
+        if server_name in config["sqlservers"]:
+            flash(f"❌ Server {server_name} already exists!", "error")
+            return redirect(url_for("add_server"))
+
+        config["sqlservers"][server_name] = {
             "server": server,
             "username": username,
             "password": password,
@@ -234,12 +274,17 @@ def add_server():
             "check_new_databases": True,
             "skip_databases": [],
             "sync_mode": "hybrid",
+            "target_postgres_db": pg_database,   # store selection
         }
         save_config(config)
-        flash(f"✅ Server {server_name} added!", "success")
+
+        flash(f"✅ Server {server_name} added with Postgres target {pg_database}", "success")
         return redirect(url_for("index"))
 
-    return render_template("add_sources.html")
+    # ---- GET request ----
+    postgres_dbs = load_pg_databases()   # <--- here you call it
+    return render_template("add_sources.html", postgres_dbs=postgres_dbs)
+
 
 @app.route("/delete-server/<server_name>", methods=["POST"])
 @require_role(["admin", "operator"])

@@ -29,12 +29,14 @@ def list_servers():
     for name, conf in servers.items():
         print(f"{name} -> {conf['server']}:{conf['port']} (user: {conf['username']})")
 
-def add_server(name, host, username, password, port=1433):
+def add_server(name, host, username, password, port=1433, pg_database=None):
     config = load_config()
     config.setdefault('sqlservers', {})
+
     if name in config['sqlservers']:
         print(f"❌ Server name '{name}' already exists! Use a different name.")
         return
+
     config['sqlservers'][name] = {
         'server': host,
         'username': username,
@@ -42,10 +44,11 @@ def add_server(name, host, username, password, port=1433):
         'port': port,
         'check_new_databases': True,
         'skip_databases': [],
-        'sync_mode': 'hybrid'
+        'sync_mode': 'hybrid',
+        'target_postgres_db': pg_database  # <---- NEW FIELD
     }
     save_config(config)
-    print(f"✅ Server '{name}' added! ({host}:{port})")
+    print(f"✅ Server '{name}' added! Target Postgres DB: {pg_database}")
 
 def delete_server(name):
     config = load_config()
