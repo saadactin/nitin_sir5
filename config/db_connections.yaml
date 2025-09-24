@@ -9,9 +9,9 @@ sqlservers:
   server1:
     check_new_databases: true
     password: root
-    port: 14344
-    server: localhost\SQL2019_Second
+    port: 1433
+    server: localhost
     skip_databases: []
     sync_mode: hybrid
-    target_postgres_db: NewSaad5
+    target_postgres_db: NewSaad6
     username: sa
