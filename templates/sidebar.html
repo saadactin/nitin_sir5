@@ -49,6 +49,14 @@
       <span class="material-icons">notifications</span>
       <span>Alerts</span>
     </a>
+    
+    <!-- NEW: Log Analysis Link -->
+    <a href="{{ url_for('view_logs') }}"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+              {% if request.endpoint == 'view_logs' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">
+      <span class="material-icons">analytics</span>
+      <span>Log Analysis</span>
+    </a>
     {% endif %}
 
     {% if session.get("role") == "admin" %}

@@ -4,7 +4,8 @@ import psycopg2
 import yaml
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash
-
+from alerts import LogAnalyzer
+from datetime import datetime
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config, save_config
@@ -437,6 +438,75 @@ def top_changed(server, db):
         return redirect(url_for("index"))
 
 
+# -----------------------------Alerts---------------------------------
+@app.route("/alerts")
+@require_role(["admin", "operator", "viewer"])
+def alerts():
+    """Show system alerts and notifications"""
+    try:
+        # Collect alerts from various sources
+        alert_data = collect_alerts()
+        return render_template("alerts.html", 
+                             alerts=alert_data.get("alerts", []),
+                             warnings=alert_data.get("warnings", []),
+                             infos=alert_data.get("infos", []),
+                             role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error loading alerts: {e}", "danger")
+        return redirect(url_for("index"))
+
+@app.route("/logs")
+@require_role(["admin", "operator", "viewer"])
+def view_logs():
+    """View and analyze log files"""
+    log_file = 'load_postgres.log'
+    if not os.path.exists(log_file):
+        flash(f"❌ Log file '{log_file}' not found", "danger")
+        return render_template("logs.html", alerts=[], warnings=[], infos=[], log_exists=False)
+    
+    analyzer = LogAnalyzer(log_file)
+    analyzer.parse_logs()
+    
+    return render_template("logs.html", 
+                         alerts=analyzer.alerts,
+                         warnings=analyzer.warnings,
+                         infos=analyzer.infos[-50:],  # Show last 50 info messages
+                         log_exists=True,
+                         role=session.get("role"))
+
+@app.route("/logs/generate-report")
+@require_role(["admin", "operator"])
+def generate_log_report():
+    """Generate HTML report from logs"""
+    log_file = 'load_postgres.log'
+    if not os.path.exists(log_file):
+        flash(f"❌ Log file '{log_file}' not found", "danger")
+        return redirect(url_for("view_logs"))
+    
+    try:
+        analyzer = LogAnalyzer(log_file)
+        output_file = f"alerts_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        analyzer.generate_html_report(output_file)
+        flash(f"✅ HTML report generated: {output_file}", "success")
+    except Exception as e:
+        flash(f"❌ Error generating report: {e}", "danger")
+    
+    return redirect(url_for("view_logs"))
+
+@app.route("/logs/download")
+@require_role(["admin", "operator", "viewer"])
+def download_logs():
+    """Download raw log file"""
+    log_file = 'load_postgres.log'
+    if not os.path.exists(log_file):
+        flash(f"❌ Log file '{log_file}' not found", "danger")
+        return redirect(url_for("view_logs"))
+    
+    from flask import send_file
+    return send_file(log_file, as_attachment=True, download_name="postgres_sync_log.log")
+
+
+
 # ------------------ METRICS ROUTES ------------------
 
 @app.route("/metrics/<server>")
@@ -595,27 +665,6 @@ def schema_changes_json(server, db):
     try:
         events = parse_schema_changes_from_log()
         return jsonify({"events": events})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/alerts")
-@require_role(["admin", "operator", "viewer"])
-def alerts():
-    try:
-        data = collect_alerts()
-        return render_template("alerts.html", alerts=data, role=session.get("role"))
-    except Exception as e:
-        flash(f"❌ Error loading alerts: {e}", "danger")
-        return redirect(url_for("index"))
-
-
-@app.route("/alerts.json")
-@require_role(["admin", "operator", "viewer"])
-def alerts_json():
-    try:
-        data = collect_alerts()
-        return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
