@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Scheduled Jobs - SQL Sync</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
@@ -24,6 +25,7 @@
             "border-light": "#E2E8F0",
             "border-dark": "#334155",
             "success": "#198754",
+            "success-dark": "#157347",
             "danger": "#DC3545",
             "warning": "#FFC107"
           },
@@ -33,88 +35,89 @@
       },
     };
   </script>
+  <style>
+    .material-icons { font-size: 20px; vertical-align: middle; }
+  </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
-<div class="flex h-screen">
-  
-  <!-- Sidebar -->
-  {% include 'sidebar.html' %}
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
 
-  <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto ml-64 p-8">
-    <div class="max-w-5xl mx-auto">
-      
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="flex items-center text-2xl font-semibold">
-          <span class="material-icons mr-2 text-primary">schedule</span>
-          Scheduled Jobs
-        </h2>
-      </div>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto ml-64 p-8">
+      <div class="max-w-5xl mx-auto">
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+          
+          <!-- Header -->
+          <div class="p-4 bg-primary text-white rounded-t-lg flex items-center gap-2">
+            <span class="material-icons">schedule</span>
+            <h2 class="text-xl font-semibold">Scheduled Jobs</h2>
+          </div>
 
-      <!-- Jobs Table -->
-      {% if jobs and jobs|length > 0 %}
-      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
-        <div class="overflow-x-auto">
-          <table class="min-w-full table-auto">
-            <thead class="bg-gray-100 dark:bg-gray-800 text-left">
-              <tr>
-                <th class="px-4 py-3">Server</th>
-                <th class="px-4 py-3">Type</th>
-                <th class="px-4 py-3">Last Run</th>
-                <th class="px-4 py-3">Status</th>
-                <th class="px-4 py-3">Error</th>
-                {% if role in ['admin', 'operator'] %}
-                <th class="px-4 py-3">Actions</th>
-                {% endif %}
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border-light dark:divide-border-dark">
-              {% for job in jobs %}
-              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td class="px-4 py-3">{{ job.server }}</td>
-                <td class="px-4 py-3">{{ job.type }}</td>
-                <td class="px-4 py-3">{{ job.last_run or '-' }}</td>
-                <td class="px-4 py-3">
-                  {% if job.status == 'success' %}
-                    <span class="px-3 py-1 rounded-full text-white bg-success">Success</span>
-                  {% elif job.status == 'failed' %}
-                    <span class="px-3 py-1 rounded-full text-white bg-danger">Failed</span>
-                  {% else %}
-                    <span class="px-3 py-1 rounded-full bg-gray-400 text-white">{{ job.status or '-' }}</span>
-                  {% endif %}
-                </td>
-                <td class="px-4 py-3">{{ job.error or '-' }}</td>
-                {% if role in ['admin', 'operator'] %}
-                <td class="px-4 py-3 flex gap-2">
-                  <a href="{{ url_for('edit_schedule_page', server_name=job.server, job_type=job.type) }}" 
-                     class="px-3 py-1 bg-warning text-black rounded-md hover:bg-yellow-500 flex items-center gap-1">
-                    <span class="material-icons text-sm">edit</span> Edit
-                  </a>
-                  <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}" 
-                        method="POST" onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
-                    <button type="submit" 
-                            class="px-3 py-1 bg-danger text-white rounded-md hover:bg-red-700 flex items-center gap-1">
-                      <span class="material-icons text-sm">delete</span> Delete
-                    </button>
-                  </form>
-                </td>
-                {% endif %}
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <!-- Table / No Jobs -->
+          <div class="p-6">
+            {% if jobs and jobs|length > 0 %}
+              <div class="overflow-x-auto">
+                <table class="min-w-full table-auto border-collapse">
+                  <thead class="bg-gray-100 dark:bg-gray-800 text-left">
+                    <tr>
+                      <th class="px-4 py-3">Server</th>
+                      <th class="px-4 py-3">Type</th>
+                      <th class="px-4 py-3">Last Run</th>
+                      <th class="px-4 py-3">Status</th>
+                      <th class="px-4 py-3">Error</th>
+                      {% if role in ['admin', 'operator'] %}
+                      <th class="px-4 py-3">Actions</th>
+                      {% endif %}
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border-light dark:divide-border-dark">
+                    {% for job in jobs %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td class="px-4 py-3">{{ job.server }}</td>
+                      <td class="px-4 py-3">{{ job.type }}</td>
+                      <td class="px-4 py-3">{{ job.last_run or '-' }}</td>
+                      <td class="px-4 py-3">
+                        {% if job.status == 'success' %}
+                          <span class="px-3 py-1 rounded-full text-white bg-success">Success</span>
+                        {% elif job.status == 'failed' %}
+                          <span class="px-3 py-1 rounded-full text-white bg-danger">Failed</span>
+                        {% else %}
+                          <span class="px-3 py-1 rounded-full bg-gray-400 text-white">{{ job.status or '-' }}</span>
+                        {% endif %}
+                      </td>
+                      <td class="px-4 py-3">{{ job.error or '-' }}</td>
+                      {% if role in ['admin', 'operator'] %}
+                      <td class="px-4 py-3 flex gap-2">
+                        <a href="{{ url_for('edit_schedule_page', server_name=job.server, job_type=job.type) }}" 
+                           class="px-3 py-1 bg-warning text-black rounded-md hover:bg-yellow-500 flex items-center gap-1">
+                          <span class="material-icons">edit</span> Edit
+                        </a>
+                        <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}" 
+                              method="POST" onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
+                          <button type="submit" 
+                                  class="px-3 py-1 bg-danger text-white rounded-md hover:bg-red-700 flex items-center gap-1">
+                            <span class="material-icons">delete</span> Delete
+                          </button>
+                        </form>
+                      </td>
+                      {% endif %}
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="p-6 bg-yellow-100 text-yellow-800 rounded-lg shadow text-center flex items-center justify-center gap-2">
+                <span class="material-icons">info</span>
+                No schedules found.
+              </div>
+            {% endif %}
+          </div>
         </div>
       </div>
-      {% else %}
-      <div class="p-6 bg-yellow-100 text-yellow-800 rounded-lg shadow text-center">
-        <span class="material-icons align-middle mr-1">info</span>
-        No schedules found.
-      </div>
-      {% endif %}
-
-    </div>
-  </main>
-</div>
+    </main>
+  </div>
 </body>
 </html>

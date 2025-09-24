@@ -14,6 +14,9 @@
         extend: {
           colors: {
             primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
+            danger: { DEFAULT: "#DC2626", hover: "#B91C1C" },
+            warning: { DEFAULT: "#D97706", hover: "#B45309" },
             "background-light": "#F8FAFC",
             "background-dark": "#0F172A",
             "surface-light": "#FFFFFF",
@@ -39,56 +42,72 @@
 
   <!-- Main Content -->
   <main class="flex-1 ml-64 p-8 overflow-y-auto">
+    <!-- Header -->
     <header class="flex justify-between items-center mb-8">
       <div class="flex items-center gap-4">
-        <span class="material-icons text-4xl text-subtext-light dark:text-subtext-dark">dns</span>
+        <span class="material-icons text-4xl text-primary">dns</span>
         <h1 class="text-3xl font-bold">SQL Servers Dashboard</h1>
       </div>
-      <a href="{{ url_for('add_server') }}" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-700 transition-colors">
-        <span class="material-icons">add</span>
+      <a href="{{ url_for('add_server') }}"
+         class="flex items-center gap-2 px-5 py-2.5 bg-accent text-white rounded-lg shadow-md hover:bg-accent-hover transition-colors">
+        <span class="material-icons">add_circle</span>
         <span>Add New Server</span>
       </a>
     </header>
 
     {% if sqlservers and sqlservers|length > 0 %}
+    <!-- Server Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for name, conf in sqlservers.items() %}
-      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-md border border-border-light dark:border-border-dark overflow-hidden">
-        <!-- Header -->
+      <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-md border border-border-light dark:border-border-dark overflow-hidden hover:shadow-lg transition-shadow">
+        <!-- Card Header -->
         <div class="p-4 bg-gray-50 dark:bg-gray-800 border-b border-border-light dark:border-border-dark flex justify-between items-center">
-          <h2 class="text-lg font-semibold">{{ name }}</h2>
-          <span class="text-xs font-mono bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">{{ conf.port }}</span>
+          <h2 class="text-lg font-semibold truncate">{{ name }}</h2>
+          <span class="text-xs font-mono bg-primary/10 text-primary px-2 py-1 rounded-full">{{ conf.port }}</span>
         </div>
 
-        <!-- Body -->
+        <!-- Card Body -->
         <div class="p-6 space-y-4">
           <div class="flex items-center gap-2">
             <span class="font-medium text-subtext-light dark:text-subtext-dark">Host:</span>
-            <span>{{ conf.server }}</span>
+            <span class="truncate">{{ conf.server }}</span>
           </div>
           <div class="flex items-center gap-2">
             <span class="font-medium text-subtext-light dark:text-subtext-dark">Status:</span>
-            <div class="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+            <div class="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
               <span class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
-              <span>Online</span>
+              Online
             </div>
           </div>
         </div>
 
-        <!-- Actions -->
+        <!-- Card Actions -->
         <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-border-light dark:border-border-dark flex flex-wrap gap-3">
-          <a href="{{ url_for('view_server_databases', server_name=name) }}" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary-DEFAULT border border-primary-DEFAULT rounded-md hover:bg-primary-DEFAULT hover:text-white transition-colors">
+          <!-- Databases -->
+          <a href="{{ url_for('view_server_databases', server_name=name) }}"
+             class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
             <span class="material-icons">dataset</span> Databases
           </a>
-          <a href="{{ url_for('sync_server', server_name=name) }}" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-DEFAULT rounded-md hover:bg-primary-hover transition-colors">
+
+          <!-- Sync -->
+          <a href="{{ url_for('sync_server', server_name=name) }}"
+             id="sync-button-{{ loop.index }}"
+             class="sync-button flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors"
+          >
             <span class="material-icons">sync</span> Sync Server
           </a>
+
           {% if role in ['admin', 'operator'] %}
-          <a href="{{ url_for('add_server') }}?edit={{ name }}" class="flex items-center justify-center gap-1 p-2 text-sm text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded-md transition-colors">
+          <!-- Edit -->
+          <a href="{{ url_for('add_server') }}?edit={{ name }}"
+             class="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-warning border border-warning rounded-lg hover:bg-warning hover:text-white transition-colors">
             <span class="material-icons">edit</span> Edit
           </a>
-          <form action="{{ url_for('delete_server_route', server_name=name) }}" method="POST" onsubmit="return confirm('Delete server {{ name }}?');">
-            <button type="submit" class="flex items-center justify-center gap-1 p-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md transition-colors">
+          <!-- Delete -->
+          <form action="{{ url_for('delete_server_route', server_name=name) }}" method="POST"
+                onsubmit="return confirm('Delete server {{ name }}?');">
+            <button type="submit"
+                    class="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-danger border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
               <span class="material-icons">delete</span> Delete
             </button>
           </form>
@@ -98,11 +117,49 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="mt-8 p-4 rounded-lg bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-      No SQL servers configured yet.
+    <!-- Empty State -->
+    <div class="mt-12 text-center">
+      <div class="inline-flex items-center gap-3 px-6 py-4 rounded-lg bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+        <span class="material-icons text-blue-600 dark:text-blue-300">info</span>
+        <span class="font-medium">No SQL servers configured yet. Click <strong>Add New Server</strong> to get started.</span>
+      </div>
     </div>
     {% endif %}
   </main>
 </div>
+
+<!-- JavaScript for Sync Button -->
+<script>
+document.querySelectorAll('.sync-button').forEach(button => {
+    button.addEventListener('click', function(e) {
+        e.preventDefault(); // Stop normal navigation
+
+        // Change to red while syncing
+        button.classList.remove('bg-primary', 'hover:bg-primary-hover');
+        button.classList.add('bg-danger');
+
+        fetch(button.href)
+            .then(response => {
+                if (!response.ok) throw new Error("Sync failed");
+                return response.text();
+            })
+            .then(() => {
+                // Turn green for 5 seconds
+                button.classList.remove('bg-danger');
+                button.classList.add('bg-accent');
+
+                setTimeout(() => {
+                    button.classList.remove('bg-accent');
+                    button.classList.add('bg-primary');
+                }, 5000);
+            })
+            .catch(() => {
+                // If error, revert to blue
+                button.classList.remove('bg-danger');
+                button.classList.add('bg-primary');
+            });
+    });
+});
+</script>
 </body>
 </html>

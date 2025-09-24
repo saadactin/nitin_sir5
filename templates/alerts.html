@@ -47,7 +47,7 @@
 
     <!-- Main Content -->
     <main class="flex-1 overflow-y-auto ml-64 p-8">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
 
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
@@ -77,88 +77,92 @@
           </div>
         </div>
 
-        <!-- Failures -->
-        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark mb-6">
-          <div class="px-4 py-3 bg-danger text-white rounded-t-lg flex items-center gap-2">
-            <span class="material-icons">error</span>
-            <h3 class="text-lg font-semibold">Failures</h3>
+        <!-- Horizontal Tables -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Failures -->
+          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+            <div class="px-4 py-3 bg-danger text-white rounded-t-lg flex items-center gap-2">
+              <span class="material-icons">error</span>
+              <h3 class="text-lg font-semibold">Failures</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
+                <thead class="bg-gray-100 dark:bg-gray-800">
+                  <tr>
+                    <th class="px-4 py-2 text-left">Server</th>
+                    <th class="px-4 py-2 text-left">Database</th>
+                    <th class="px-4 py-2 text-left">Table</th>
+                    <th class="px-4 py-2 text-left">Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for f in alerts.failures %}
+                  <tr class="bg-red-50 dark:bg-red-900/20">
+                    <td class="px-4 py-2">{{ f.server_name or '-' }}</td>
+                    <td class="px-4 py-2">{{ f.database_name or '-' }}</td>
+                    <td class="px-4 py-2">{{ f.table or '-' }}</td>
+                    <td class="px-4 py-2">{{ f.message or f.status }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
-              <thead class="bg-gray-100 dark:bg-gray-800">
-                <tr>
-                  <th class="px-4 py-2 text-left">Server</th>
-                  <th class="px-4 py-2 text-left">Database</th>
-                  <th class="px-4 py-2 text-left">Table</th>
-                  <th class="px-4 py-2 text-left">Message</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for f in alerts.failures %}
-                <tr class="bg-red-50 dark:bg-red-900/20">
-                  <td class="px-4 py-2">{{ f.server_name or '-' }}</td>
-                  <td class="px-4 py-2">{{ f.database_name or '-' }}</td>
-                  <td class="px-4 py-2">{{ f.table or '-' }}</td>
-                  <td class="px-4 py-2">{{ f.message or f.status }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        <!-- Warnings -->
-        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark mb-6">
-          <div class="px-4 py-3 bg-warning text-black rounded-t-lg flex items-center gap-2">
-            <span class="material-icons">warning</span>
-            <h3 class="text-lg font-semibold">Warnings</h3>
+          <!-- Warnings -->
+          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+            <div class="px-4 py-3 bg-warning text-black rounded-t-lg flex items-center gap-2">
+              <span class="material-icons">warning</span>
+              <h3 class="text-lg font-semibold">Warnings</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
+                <thead class="bg-gray-100 dark:bg-gray-800">
+                  <tr>
+                    <th class="px-4 py-2 text-left">Table</th>
+                    <th class="px-4 py-2 text-left">Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for w in alerts.warnings %}
+                  <tr class="bg-yellow-50 dark:bg-yellow-900/20">
+                    <td class="px-4 py-2">{{ w.table or '-' }}</td>
+                    <td class="px-4 py-2">{{ w.message }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
-              <thead class="bg-gray-100 dark:bg-gray-800">
-                <tr>
-                  <th class="px-4 py-2 text-left">Table</th>
-                  <th class="px-4 py-2 text-left">Message</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for w in alerts.warnings %}
-                <tr class="bg-yellow-50 dark:bg-yellow-900/20">
-                  <td class="px-4 py-2">{{ w.table or '-' }}</td>
-                  <td class="px-4 py-2">{{ w.message }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        <!-- Inconsistencies -->
-        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
-          <div class="px-4 py-3 bg-info text-white rounded-t-lg flex items-center gap-2">
-            <span class="material-icons">search</span>
-            <h3 class="text-lg font-semibold">Inconsistencies</h3>
+          <!-- Inconsistencies -->
+          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+            <div class="px-4 py-3 bg-info text-white rounded-t-lg flex items-center gap-2">
+              <span class="material-icons">search</span>
+              <h3 class="text-lg font-semibold">Inconsistencies</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
+                <thead class="bg-gray-100 dark:bg-gray-800">
+                  <tr>
+                    <th class="px-4 py-2 text-left">Type</th>
+                    <th class="px-4 py-2 text-left">Detail</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for i in alerts.inconsistencies %}
+                  <tr>
+                    <td class="px-4 py-2">{{ i.type or '-' }}</td>
+                    <td class="px-4 py-2">{{ i.detail or '-' }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
-              <thead class="bg-gray-100 dark:bg-gray-800">
-                <tr>
-                  <th class="px-4 py-2 text-left">Type</th>
-                  <th class="px-4 py-2 text-left">Detail</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for i in alerts.inconsistencies %}
-                <tr>
-                  <td class="px-4 py-2">{{ i.type or '-' }}</td>
-                  <td class="px-4 py-2">{{ i.detail or '-' }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
+        </div>
       </div>
     </main>
   </div>

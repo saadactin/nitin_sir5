@@ -54,10 +54,7 @@
             <span class="material-icons">settings</span>
             Schedule Sync
           </h2>
-          <a href="{{ url_for('index') }}" 
-             class="flex items-center gap-1 px-4 py-2 border border-border-light dark:border-border-dark rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
-            <span class="material-icons">arrow_back</span> Back
-          </a>
+         
         </div>
 
         <!-- Scheduling Form -->
@@ -196,8 +193,15 @@
     }
   });
 
-  // Auto-refresh every 15s
-  setInterval(() => location.reload(), 15000);
+  // Reload page only after form submission
+  const scheduleForm = document.querySelector("form");
+  scheduleForm.addEventListener("submit", function() {
+    // Allow backend to process, then reload
+    setTimeout(() => {
+      location.reload();
+    }, 500); // small delay so server saves the schedule
+  });
 </script>
+
 </body>
 </html>
