@@ -4,64 +4,95 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit Schedule - SQL Sync</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+            "success": "#198754",
+            "success-dark": "#157347"
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.5rem" }
+        },
+      },
+    };
+  </script>
   <style>
-    body { background-color: #f8f9fa; }
-    /* Sidebar adjustments (reuse included sidebar) */
-    #main-content {
-      margin-left: 260px; 
-      padding: 20px;
-    }
-    .card {
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
+    .material-icons { font-size: 20px; vertical-align: middle; }
   </style>
 </head>
-<body>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
 
-<div class="d-flex">
-  {% include 'sidebar.html' %}
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto ml-64 p-8">
+      <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+          <h2 class="text-2xl font-semibold flex items-center gap-2">
+            <span class="material-icons">edit</span> Edit Schedule for <strong>{{ job.server }}</strong> ({{ job.type }})
+          </h2>
+        </div>
 
-  <!-- Main Content -->
-  <div id="main-content" class="container-fluid">
-    <h2 class="mb-4">
-      <i class="bi bi-pencil-square"></i> Edit Schedule for <strong>{{ job.server }}</strong> ({{ job.type }})
-    </h2>
+        <!-- Form Card -->
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+          <!-- Card Header -->
+          <div class="p-4 bg-success text-white rounded-t-lg flex items-center gap-2">
+            <span class="material-icons">schedule</span>
+            <h3 class="text-lg font-semibold">Schedule Settings</h3>
+          </div>
 
-    <div class="card">
-      <form method="POST">
-        {% if job.type.startswith('interval') %}
-        <div class="mb-3">
-          <label for="minutes" class="form-label">Minutes:</label>
-          <input type="number" name="minutes" id="minutes" class="form-control" value="{{ job.minutes }}" required>
-        </div>
-        {% elif job.type.startswith('daily') %}
-        <div class="mb-3">
-          <label for="hour" class="form-label">Hour (0-23):</label>
-          <input type="number" name="hour" id="hour" class="form-control" value="{{ job.hour }}" min="0" max="23" required>
-        </div>
-        <div class="mb-3">
-          <label for="minute" class="form-label">Minute (0-59):</label>
-          <input type="number" name="minute" id="minute" class="form-control" value="{{ job.minute }}" min="0" max="59" required>
-        </div>
-        {% endif %}
+          <!-- Form Body -->
+          <div class="p-6">
+            <form method="POST">
+              {% if job.type.startswith('interval') %}
+              <div class="mb-4">
+                <label for="minutes" class="block mb-2 font-medium text-subtext-light dark:text-subtext-dark">Minutes:</label>
+                <input type="number" name="minutes" id="minutes" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none" value="{{ job.minutes }}" required>
+              </div>
+              {% elif job.type.startswith('daily') %}
+              <div class="mb-4">
+                <label for="hour" class="block mb-2 font-medium text-subtext-light dark:text-subtext-dark">Hour (0-23):</label>
+                <input type="number" name="hour" id="hour" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none" value="{{ job.hour }}" min="0" max="23" required>
+              </div>
+              <div class="mb-4">
+                <label for="minute" class="block mb-2 font-medium text-subtext-light dark:text-subtext-dark">Minute (0-59):</label>
+                <input type="number" name="minute" id="minute" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none" value="{{ job.minute }}" min="0" max="59" required>
+              </div>
+              {% endif %}
 
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-check-circle"></i> Update Schedule
-          </button>
-          <a href="{{ url_for('schedule_page') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left-circle"></i> Cancel
-          </a>
+              <!-- Buttons -->
+              <div class="flex gap-2 mt-6">
+                <button type="submit" class="flex items-center gap-1 px-4 py-2 bg-success text-white rounded-md hover:bg-success-dark transition-colors">
+                  <span class="material-icons">check_circle</span> Update Schedule
+                </button>
+                <a href="{{ url_for('schedule_page') }}" class="flex items-center gap-1 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
+                  <span class="material-icons">arrow_back</span> Cancel
+                </a>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </main>
   </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

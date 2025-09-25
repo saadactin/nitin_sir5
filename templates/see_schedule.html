@@ -119,5 +119,50 @@
       </div>
     </main>
   </div>
+
+  <!-- Status Update Script -->
+ <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const pollInterval = 3000; // every 3 seconds
+  const successDuration = 10000; // keep green for 10 seconds
+
+  async function fetchStatuses() {
+    try {
+      const response = await fetch("/api/job-statuses");
+      const data = await response.json();
+
+      document.querySelectorAll("tbody tr").forEach(row => {
+        const server = row.querySelector("td:nth-child(1)").innerText.trim();
+        const type = row.querySelector("td:nth-child(2)").innerText.trim();
+
+        const job = data.find(j => j.server === server && j.type === type);
+        if (!job) return;
+
+        const statusCell = row.querySelector("td:nth-child(4)");
+
+        if (job.status === "pending" || job.status === "running") {
+          statusCell.innerHTML = `<span class="px-3 py-1 rounded-full bg-yellow-400 text-white">Running</span>`;
+        } 
+        else if (job.status === "success") {
+          statusCell.innerHTML = `<span class="px-3 py-1 rounded-full text-white bg-success">Success</span>`;
+          setTimeout(() => {
+            statusCell.innerHTML = `<span class="px-3 py-1 rounded-full bg-success text-white">Completed</span>`;
+          }, successDuration);
+        } 
+        else if (job.status === "failed") {
+          statusCell.innerHTML = `<span class="px-3 py-1 rounded-full text-white bg-danger">Failed</span>`;
+        }
+      });
+
+    } catch (err) {
+      console.error("Error fetching job statuses:", err);
+    }
+  }
+
+  setInterval(fetchStatuses, pollInterval);
+  fetchStatuses(); // initial fetch
+});
+</script>
+
 </body>
 </html>

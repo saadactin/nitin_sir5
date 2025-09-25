@@ -5,6 +5,7 @@ from db_utils import get_pg_connection, init_pg_schema
 # Ensure schema is ready
 init_pg_schema()
 
+
 def create_user(username, password, role):
     """Create a new user with hashed password"""
     try:
@@ -25,16 +26,14 @@ def create_user(username, password, role):
         cur.close()
         conn.close()
         
-        if result:
-            print(f"User {username} created successfully")  # Simple log without emojis
-            return True
-        else:
-            print(f"User {username} already exists")  # Simple log without emojis
-            return False
+        # Simply return True/False without printing
+        return result is not None
             
     except Exception as e:
-        print(f"Error creating user: {str(e)}")  # Simple error logging
+        # Remove the error print or keep it for debugging (your choice)
+        # print(f"Error creating user: {str(e)}")
         return False
+
 def init_admin_user():
     """Create default admin if not exists"""
     conn = get_pg_connection()
