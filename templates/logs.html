@@ -1,296 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Log Analysis Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
-            "background-light": "#F8FAFC",
-            "background-dark": "#0F172A",
-            "surface-light": "#FFFFFF",
-            "surface-dark": "#1E293B",
-            "text-light": "#0F172A",
-            "text-dark": "#E2E8F0",
-            "subtext-light": "#64748B",
-            "subtext-dark": "#94A3B8",
-            "border-light": "#E2E8F0",
-            "border-dark": "#334155",
-            "success": "#198754",
-            "success-dark": "#157347",
-            "warning": "#f39c12",
-            "error": "#e74c3c",
-            "info": "#3498db"
-          },
-          fontFamily: { display: ["Inter", "sans-serif"] },
-          borderRadius: { DEFAULT: "0.5rem" }
-        },
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Log Analysis Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+        "background-light": "#F8FAFC",
+        "background-dark": "#0F172A",
+        "surface-light": "#FFFFFF",
+        "surface-dark": "#1E293B",
+        "text-light": "#0F172A",
+        "text-dark": "#E2E8F0",
+        "subtext-light": "#64748B",
+        "subtext-dark": "#94A3B8",
+        "border-light": "#E2E8F0",
+        "border-dark": "#334155",
+        "success": "#198754",
+        "success-dark": "#157347",
+        "warning": "#f39c12",
+        "error": "#e74c3c",
+        "info": "#3498db"
       },
-    };
-  </script>
-  <style>
-    .material-icons { font-size: 20px; vertical-align: middle; }
-    .log-entry { transition: all 0.2s ease; }
-    .log-entry:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    .level-badge { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600; }
-    .level-error { background-color: #fee2e2; color: #dc2626; }
-    .level-warning { background-color: #fef3c7; color: #d97706; }
-    .level-info { background-color: #dbeafe; color: #2563eb; }
-    .level-unknown { background-color: #f3f4f6; color: #6b7280; }
-    .section-header { display: flex; align-items: center; gap: 0.5rem; }
-    .dark .level-error { background-color: #7f1d1d; color: #fecaca; }
-    .dark .level-warning { background-color: #78350f; color: #fde68a; }
-    .dark .level-info { background-color: #1e3a8a; color: #93c5fd; }
-    .dark .level-unknown { background-color: #374151; color: #d1d5db; }
-  </style>
+      fontFamily: { display: ["Inter", "sans-serif"] },
+      borderRadius: { DEFAULT: "0.5rem" }
+    }
+  }
+};
+</script>
+<style>
+.material-icons { font-size: 20px; vertical-align: middle; }
+.level-badge { font-weight: bold; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.8rem; }
+.level-error { background-color: #fee2e2; color: #b91c1c; }
+.level-warning { background-color: #fff7e0; color: #b45309; }
+.level-info { background-color: #e0f2fe; color: #0369a1; }
+</style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
-  <div class="flex h-screen">
-    <!-- Sidebar -->
-    <div class="w-64 bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark flex flex-col fixed h-full">
-      <div class="p-4 border-b border-border-light dark:border-border-dark">
-        <h1 class="text-xl font-bold flex items-center gap-2">
-          <span class="material-icons text-success">analytics</span>
-          Log Analyzer
-        </h1>
-        <p class="text-sm text-subtext-light dark:text-subtext-dark mt-1">PostgreSQL Sync Dashboard</p>
-      </div>
-      
-      <nav class="flex-1 p-4">
-        <ul class="space-y-2">
-          <li>
-            <a href="/" class="flex items-center gap-2 p-2 rounded-md hover:bg-background-light dark:hover:bg-background-dark text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark">
-              <span class="material-icons">dashboard</span>
-              Dashboard
-            </a>
-          </li>
-          <li>
-            <a href="/logs" class="flex items-center gap-2 p-2 rounded-md bg-success text-white">
-              <span class="material-icons">list_alt</span>
-              Log Analysis
-            </a>
-          </li>
-          <li>
-            <a href="/servers" class="flex items-center gap-2 p-2 rounded-md hover:bg-background-light dark:hover:bg-background-dark text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark">
-              <span class="material-icons">dns</span>
-              SQL Servers
-            </a>
-          </li>
-          <li>
-            <a href="/settings" class="flex items-center gap-2 p-2 rounded-md hover:bg-background-light dark:hover:bg-background-dark text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark">
-              <span class="material-icons">settings</span>
-              Settings
-            </a>
-          </li>
-        </ul>
-        
-        <div class="mt-8 pt-4 border-t border-border-light dark:border-border-dark">
-          <div class="flex items-center gap-2 p-2">
-            <div class="w-8 h-8 rounded-full bg-success flex items-center justify-center text-white font-medium">
-              {{ session.user_initials }}
-            </div>
-            <div>
-              <p class="text-sm font-medium">{{ session.username }}</p>
-              <p class="text-xs text-subtext-light dark:text-subtext-dark capitalize">{{ session.role }}</p>
-            </div>
-          </div>
-          <a href="/logout" class="flex items-center gap-2 p-2 mt-2 rounded-md hover:bg-background-light dark:hover:bg-background-dark text-subtext-light dark:text-subtext-dark hover:text-text-light dark:hover:text-text-dark">
-            <span class="material-icons">logout</span>
-            Logout
-          </a>
-        </div>
-      </nav>
-    </div>
+<div class="flex h-screen">
+  <!-- Sidebar -->
+  {% include 'sidebar.html' %}
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto ml-64 p-8">
-      <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="mb-6">
-          <h1 class="text-2xl font-bold flex items-center gap-2">
-            <span class="material-icons text-success">analytics</span>
-            Log Analysis Dashboard
-          </h1>
-          <p class="text-subtext-light dark:text-subtext-dark">Monitor and analyze PostgreSQL sync logs</p>
-        </div>
+  <!-- Main Content -->
+  <main class="flex-1 overflow-y-auto ml-64 p-8">
+    <div class="max-w-7xl mx-auto">
+
+      <!-- Header -->
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold flex items-center gap-2">
+          <span class="material-icons text-success">analytics</span>
+          Log Analysis Dashboard
+        </h1>
+        <p class="text-subtext-light dark:text-subtext-dark">Monitor and analyze PostgreSQL sync logs</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-4 mb-6">
         
-        <!-- Alert Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="mb-6 space-y-2">
-              {% for category, message in messages %}
-                <div class="p-3 rounded-md {% if category == 'danger' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% elif category == 'success' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
-                  {{ message }}
-                </div>
-              {% endfor %}
+        <a href="/logs/download" class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition">
+          <span class="material-icons">download</span> Download Logs
+        </a>
+     
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow p-4">
+          <h3 class="text-lg font-semibold">Total Entries</h3>
+          <p class="text-2xl font-bold mt-2">{{ alerts_total + warnings_total + infos_total }}</p>
+        </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow p-4">
+          <h3 class="text-lg font-semibold">Alerts / Errors</h3>
+          <p class="text-2xl font-bold mt-2 text-error">{{ alerts_total }}</p>
+        </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow p-4">
+          <h3 class="text-lg font-semibold">Warnings</h3>
+          <p class="text-2xl font-bold mt-2 text-warning">{{ warnings_total }}</p>
+        </div>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow p-4">
+          <h3 class="text-lg font-semibold">Info Messages</h3>
+          <p class="text-2xl font-bold mt-2 text-info">{{ infos_total }}</p>
+        </div>
+      </div>
+
+      {% if not log_exists %}
+      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow p-6 text-center">
+        <span class="material-icons text-6xl text-subtext-light mb-4">find_in_page</span>
+        <h2 class="text-xl font-semibold mb-2">Log File Not Found</h2>
+        <p class="text-subtext-light dark:text-subtext-dark">The log file 'load_postgres.log' could not be found.</p>
+      </div>
+      {% else %}
+
+      <!-- Alerts Section -->
+      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow p-4 mb-6">
+        <div class="bg-error text-white p-4 flex items-center gap-2">
+          <span class="material-icons">error</span>
+          <h2 class="text-lg font-semibold">Alerts & Errors ({{ alerts_total }})</h2>
+        </div>
+        <div class="divide-y divide-border-light dark:divide-border-dark">
+          {% for entry in alerts %}
+          <div class="p-4 hover:bg-background-light dark:hover:bg-background-dark">
+            <div class="flex justify-between items-start mb-2">
+              <span class="level-badge level-error">{{ entry.level }}</span>
+              <span class="text-sm text-subtext-light">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
             </div>
+            <p class="text-sm">{{ entry.message }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% if alerts_total > per_page %}
+        <div class="flex justify-between p-4">
+          {% if errors_page > 1 %}
+          <a href="{{ url_for('view_logs', errors_page=errors_page-1) }}" class="px-3 py-1 bg-gray-200 rounded">Prev</a>
           {% endif %}
-        {% endwith %}
-        
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap gap-4 mb-6">
-          <a href="/logs/generate-report" class="flex items-center gap-2 px-4 py-2 bg-success text-white rounded-md hover:bg-success-dark transition-colors">
-            <span class="material-icons">description</span>
-            Generate Report
-          </a>
-          <a href="/logs/download" class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors">
-            <span class="material-icons">download</span>
-            Download Logs
-          </a>
-          <button id="theme-toggle" class="flex items-center gap-2 px-4 py-2 bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark border border-border-light dark:border-border-dark rounded-md hover:bg-background-light dark:hover:bg-background-dark transition-colors">
-            <span class="material-icons">dark_mode</span>
-            Toggle Theme
-          </button>
+          {% if errors_page * per_page < alerts_total %}
+          <a href="{{ url_for('view_logs', errors_page=errors_page+1) }}" class="px-3 py-1 bg-gray-200 rounded">Next</a>
+          {% endif %}
         </div>
-        
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4">
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Total Entries</h3>
-              <span class="material-icons text-info">format_list_numbered</span>
-            </div>
-            <p class="text-2xl font-bold mt-2">{{ alerts|length + warnings|length + infos|length }}</p>
-          </div>
-          
-          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4">
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Alerts/Errors</h3>
-              <span class="material-icons text-error">error</span>
-            </div>
-            <p class="text-2xl font-bold mt-2 text-error">{{ alerts|length }}</p>
-          </div>
-          
-          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4">
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Warnings</h3>
-              <span class="material-icons text-warning">warning</span>
-            </div>
-            <p class="text-2xl font-bold mt-2 text-warning">{{ warnings|length }}</p>
-          </div>
-          
-          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4">
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Info Messages</h3>
-              <span class="material-icons text-info">info</span>
-            </div>
-            <p class="text-2xl font-bold mt-2 text-info">{{ infos|length }}</p>
-          </div>
-        </div>
-        
-        <!-- Log Sections -->
-        {% if not log_exists %}
-          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-6 text-center">
-            <span class="material-icons text-6xl text-subtext-light dark:text-subtext-dark mb-4">find_in_page</span>
-            <h2 class="text-xl font-semibold mb-2">Log File Not Found</h2>
-            <p class="text-subtext-light dark:text-subtext-dark">The log file 'load_postgres.log' could not be found in the current directory.</p>
-          </div>
-        {% else %}
-          <!-- Info Messages Section -->
-          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark mb-6 overflow-hidden">
-            <div class="bg-info text-white p-4 flex items-center gap-2">
-              <span class="material-icons">info</span>
-              <h2 class="text-lg font-semibold">Recent Info Messages (Last 50)</h2>
-            </div>
-            
-            <div class="divide-y divide-border-light dark:divide-border-dark">
-              {% for entry in infos|reverse %}
-                <div class="log-entry p-4 hover:bg-background-light dark:hover:bg-background-dark">
-                  <div class="flex justify-between items-start mb-2">
-                    <span class="level-badge level-info">{{ entry.level }}</span>
-                    <span class="text-sm text-subtext-light dark:text-subtext-dark">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
-                  </div>
-                  <p class="text-sm">{{ entry.message }}</p>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-          
-          <!-- Warnings Section -->
-          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark mb-6 overflow-hidden">
-            <div class="bg-warning text-white p-4 flex items-center gap-2">
-              <span class="material-icons">warning</span>
-              <h2 class="text-lg font-semibold">Warnings ({{ warnings|length }})</h2>
-            </div>
-            
-            {% if warnings %}
-              <div class="divide-y divide-border-light dark:divide-border-dark">
-                {% for entry in warnings|reverse %}
-                  <div class="log-entry p-4 hover:bg-background-light dark:hover:bg-background-dark">
-                    <div class="flex justify-between items-start mb-2">
-                      <span class="level-badge level-warning">{{ entry.level }}</span>
-                      <span class="text-sm text-subtext-light dark:text-subtext-dark">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
-                    </div>
-                    <p class="text-sm">{{ entry.message }}</p>
-                  </div>
-                {% endfor %}
-              </div>
-            {% else %}
-              <div class="p-6 text-center">
-                <span class="material-icons text-4xl text-success mb-2">check_circle</span>
-                <p class="text-subtext-light dark:text-subtext-dark">No warnings found in the logs.</p>
-              </div>
-            {% endif %}
-          </div>
-          
-          <!-- Alerts Section -->
-          <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark mb-6 overflow-hidden">
-            <div class="bg-error text-white p-4 flex items-center gap-2">
-              <span class="material-icons">error</span>
-              <h2 class="text-lg font-semibold">Alerts & Errors ({{ alerts|length }})</h2>
-            </div>
-            
-            {% if alerts %}
-              <div class="divide-y divide-border-light dark:divide-border-dark">
-                {% for entry in alerts|reverse %}
-                  <div class="log-entry p-4 hover:bg-background-light dark:hover:bg-background-dark">
-                    <div class="flex justify-between items-start mb-2">
-                      <span class="level-badge level-error">{{ entry.level }}</span>
-                      <span class="text-sm text-subtext-light dark:text-subtext-dark">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
-                    </div>
-                    <p class="text-sm">{{ entry.message }}</p>
-                  </div>
-                {% endfor %}
-              </div>
-            {% else %}
-              <div class="p-6 text-center">
-                <span class="material-icons text-4xl text-success mb-2">check_circle</span>
-                <p class="text-subtext-light dark:text-subtext-dark">No alerts or errors found in the logs.</p>
-              </div>
-            {% endif %}
-          </div>
         {% endif %}
       </div>
-    </main>
-  </div>
 
-  <script>
-    // Theme toggle functionality
-    document.getElementById('theme-toggle').addEventListener('click', function() {
-      if (document.documentElement.classList.contains('dark')) {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      } else {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      }
-    });
+      <!-- Warnings Section -->
+      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow p-4 mb-6">
+        <div class="bg-warning text-white p-4 flex items-center gap-2">
+          <span class="material-icons">warning</span>
+          <h2 class="text-lg font-semibold">Warnings ({{ warnings_total }})</h2>
+        </div>
+        <div class="divide-y divide-border-light dark:divide-border-dark">
+          {% for entry in warnings %}
+          <div class="p-4 hover:bg-background-light dark:hover:bg-background-dark">
+            <div class="flex justify-between items-start mb-2">
+              <span class="level-badge level-warning">{{ entry.level }}</span>
+              <span class="text-sm text-subtext-light">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            </div>
+            <p class="text-sm">{{ entry.message }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% if warnings_total > per_page %}
+        <div class="flex justify-between p-4">
+          {% if warnings_page > 1 %}
+          <a href="{{ url_for('view_logs', warnings_page=warnings_page-1) }}" class="px-3 py-1 bg-gray-200 rounded">Prev</a>
+          {% endif %}
+          {% if warnings_page * per_page < warnings_total %}
+          <a href="{{ url_for('view_logs', warnings_page=warnings_page+1) }}" class="px-3 py-1 bg-gray-200 rounded">Next</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
 
-    // Check for saved theme preference or respect OS setting
-    if (localStorage.getItem('theme') === 'dark' || 
-        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  </script>
+      <!-- Info Section -->
+      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow p-4 mb-6">
+        <div class="bg-info text-white p-4 flex items-center gap-2">
+          <span class="material-icons">info</span>
+          <h2 class="text-lg font-semibold">Info Messages ({{ infos_total }})</h2>
+        </div>
+        <div class="divide-y divide-border-light dark:divide-border-dark">
+          {% for entry in infos %}
+          <div class="p-4 hover:bg-background-light dark:hover:bg-background-dark">
+            <div class="flex justify-between items-start mb-2">
+              <span class="level-badge level-info">{{ entry.level }}</span>
+              <span class="text-sm text-subtext-light">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            </div>
+            <p class="text-sm">{{ entry.message }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% if infos_total > per_page %}
+        <div class="flex justify-between p-4">
+          {% if info_page > 1 %}
+          <a href="{{ url_for('view_logs', info_page=info_page-1) }}" class="px-3 py-1 bg-gray-200 rounded">Prev</a>
+          {% endif %}
+          {% if info_page * per_page < infos_total %}
+          <a href="{{ url_for('view_logs', info_page=info_page+1) }}" class="px-3 py-1 bg-gray-200 rounded">Next</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<script>
+document.getElementById('theme-toggle').addEventListener('click', function() {
+  if (document.documentElement.classList.contains('dark')) {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  } else {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  }
+});
+if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  document.documentElement.classList.add('dark');
+} else {
+  document.documentElement.classList.remove('dark');
+}
+</script>
 </body>
 </html>

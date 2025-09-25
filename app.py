@@ -85,19 +85,23 @@ def logout():
     return redirect(url_for("login"))
 
 
+
 @app.route("/create-user", methods=["GET", "POST"])
-@require_role(["admin"])  # Only admin can create users
+@require_role(["admin"])
 def create_user_route():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
         role = request.form["role"]
-        create_user(username, password, role)
-        flash(f"✅ User {username} created with role {role}", "user")
+        
+        if create_user(username, password, role):
+            flash(f"User {username} created with role {role}", "success")
+        else:
+            flash(f"User {username} already exists or creation failed", "warning")
+            
         return redirect(url_for("index"))
+    
     return render_template("create_user.html")
-
-
 # ------------------ PROTECTED ROUTES ------------------
 @app.route("/")
 @require_role(["admin", "operator", "viewer"])
@@ -458,21 +462,59 @@ def alerts():
 @app.route("/logs")
 @require_role(["admin", "operator", "viewer"])
 def view_logs():
-    """View and analyze log files"""
+    """View and analyze log files with pagination"""
     log_file = 'load_postgres.log'
     if not os.path.exists(log_file):
         flash(f"❌ Log file '{log_file}' not found", "danger")
-        return render_template("logs.html", alerts=[], warnings=[], infos=[], log_exists=False)
-    
+        return render_template(
+            "logs.html",
+            alerts=[],
+            warnings=[],
+            infos=[],
+            log_exists=False,
+            alerts_total=0,
+            warnings_total=0,
+            infos_total=0,
+            errors_page=1,
+            warnings_page=1,
+            info_page=1,
+            per_page=10
+        )
+
     analyzer = LogAnalyzer(log_file)
     analyzer.parse_logs()
-    
-    return render_template("logs.html", 
-                         alerts=analyzer.alerts,
-                         warnings=analyzer.warnings,
-                         infos=analyzer.infos[-50:],  # Show last 50 info messages
-                         log_exists=True,
-                         role=session.get("role"))
+
+    # Pagination settings
+    per_page = 10
+    warnings_page = int(request.args.get("warnings_page", 1))
+    errors_page = int(request.args.get("errors_page", 1))
+    info_page = int(request.args.get("info_page", 1))
+
+    # Reverse to show latest first
+    warnings = analyzer.warnings[::-1]
+    alerts = analyzer.alerts[::-1]
+    infos = analyzer.infos[::-1]
+
+    # Slice logs for current page
+    warnings_paginated = warnings[(warnings_page-1)*per_page : warnings_page*per_page]
+    alerts_paginated = alerts[(errors_page-1)*per_page : errors_page*per_page]
+    infos_paginated = infos[(info_page-1)*per_page : info_page*per_page]
+
+    return render_template(
+        "logs.html",
+        alerts=alerts_paginated,
+        warnings=warnings_paginated,
+        infos=infos_paginated,
+        warnings_page=warnings_page,
+        errors_page=errors_page,
+        info_page=info_page,
+        alerts_total=len(alerts),
+        warnings_total=len(warnings),
+        infos_total=len(infos),
+        per_page=per_page,
+        log_exists=True,
+        role=session.get("role")
+    )
 
 @app.route("/logs/generate-report")
 @require_role(["admin", "operator"])

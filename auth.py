@@ -7,21 +7,34 @@ init_pg_schema()
 
 def create_user(username, password, role):
     """Create a new user with hashed password"""
-    conn = get_pg_connection()
-    cur = conn.cursor()
+    try:
+        conn = get_pg_connection()
+        cur = conn.cursor()
 
-    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-    cur.execute("""
-        INSERT INTO metrics_sync_tables.users (username, password, role)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (username) DO NOTHING
-    """, (username, hashed_pw, role))
+        cur.execute("""
+            INSERT INTO metrics_sync_tables.users (username, password, role)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (username) DO NOTHING
+            RETURNING id
+        """, (username, hashed_pw, role))
 
-    conn.commit()
-    cur.close()
-    conn.close()
-
+        result = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        if result:
+            print(f"User {username} created successfully")  # Simple log without emojis
+            return True
+        else:
+            print(f"User {username} already exists")  # Simple log without emojis
+            return False
+            
+    except Exception as e:
+        print(f"Error creating user: {str(e)}")  # Simple error logging
+        return False
 def init_admin_user():
     """Create default admin if not exists"""
     conn = get_pg_connection()
