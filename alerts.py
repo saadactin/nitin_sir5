@@ -1,5 +1,6 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
+
 import os
 
 class LogAnalyzer:
@@ -8,38 +9,42 @@ class LogAnalyzer:
         self.alerts = []
         self.warnings = []
         self.infos = []
-        
+
     def parse_logs(self):
-        """Parse the log file and categorize messages by severity"""
+        """Parse the log file and categorize messages by severity (only last 7 days)"""
         if not os.path.exists(self.log_file_path):
             print(f"Error: Log file not found at {self.log_file_path}")
             return
-            
+
+        seven_days_ago = datetime.now() - timedelta(days=7)
+
         with open(self.log_file_path, 'r') as file:
             for line in file:
                 line = line.strip()
                 if not line:
                     continue
-                    
-                # Parse log line format: "2025-09-23 11:00:56,358 - INFO - message"
+
                 pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) - (\w+) - (.*)'
                 match = re.match(pattern, line)
-                
+
                 if match:
                     timestamp_str, level, message = match.groups()
-                    
                     try:
                         timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S,%f')
                     except ValueError:
                         timestamp = datetime.now()
-                    
+
+                    # ✅ Only include entries from the last 7 days
+                    if timestamp < seven_days_ago:
+                        continue
+
                     log_entry = {
                         'timestamp': timestamp,
                         'level': level,
                         'message': message,
                         'raw_line': line
                     }
-                    
+
                     if level == 'ERROR' or 'error' in message.lower():
                         self.alerts.append(log_entry)
                     elif level == 'WARNING' or 'warning' in message.lower() or 'failed' in message.lower():
@@ -47,14 +52,15 @@ class LogAnalyzer:
                     else:
                         self.infos.append(log_entry)
                 else:
-                    # Handle lines that don't match the pattern
-                    log_entry = {
-                        'timestamp': datetime.now(),
-                        'level': 'UNKNOWN',
-                        'message': line,
-                        'raw_line': line
-                    }
-                    self.infos.append(log_entry)
+                    # Non-matching lines (still check date filter)
+                    if datetime.now() >= seven_days_ago:
+                        log_entry = {
+                            'timestamp': datetime.now(),
+                            'level': 'UNKNOWN',
+                            'message': line,
+                            'raw_line': line
+                        }
+                        self.infos.append(log_entry)
     
     def generate_html_report(self, output_file='alerts.html'):
         """Generate HTML report with categorized alerts"""

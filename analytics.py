@@ -361,6 +361,28 @@ def get_table_sync_status(server_name, db_name, table_name):
         raise
 
 
+def get_postgres_table_row_count(schema, table, database=None):
+    """
+    Get row count for a PostgreSQL table.
+    """
+    try:
+        pg_engine = get_pg_engine()
+        
+        if database:
+            # Connect to specific database
+            db_engine = create_engine(f"{pg_engine.url}?database={database}")
+        else:
+            db_engine = pg_engine
+        
+        with db_engine.connect() as conn:
+            query = f'SELECT COUNT(*) FROM "{schema}"."{table}"'
+            result = conn.execute(text(query))
+            return result.fetchone()[0]
+            
+    except Exception as e:
+        logger.error(f"Error getting PostgreSQL row count for {schema}.{table}: {e}")
+        return 0
+
 def get_sync_health_summary(server_name, db_name):
     """
     Get overall sync health summary for a database.

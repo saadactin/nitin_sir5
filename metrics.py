@@ -13,9 +13,110 @@ from manage_server import load_config
 logger = logging.getLogger(__name__)
 
 
+def get_postgres_metrics():
+    """
+    Get comprehensive metrics for ALL databases in PostgreSQL server.
+    
+    Returns:
+        dict: PostgreSQL server metrics with all databases
+    """
+    try:
+        pg_engine = get_pg_engine()
+        
+        # Get all databases in PostgreSQL
+        with pg_engine.connect() as conn:
+            # Get list of all databases
+            db_query = """
+            SELECT datname 
+            FROM pg_database 
+            WHERE datistemplate = false 
+            AND datname NOT IN ('postgres', 'template0', 'template1')
+            ORDER BY datname
+            """
+            db_result = conn.execute(text(db_query))
+            databases = [row[0] for row in db_result.fetchall()]
+        
+        pg_metrics = {
+            'server_type': 'postgresql',
+            'total_databases': len(databases),
+            'databases': {},
+            'total_tables': 0,
+            'total_rows': 0,
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        for db_name in databases:
+            try:
+                # Get tables and row counts for each database
+                db_conn = create_engine(f"{pg_engine.url}?database={db_name}").connect()
+                
+                # Get all tables in the database
+                table_query = """
+                SELECT schemaname, tablename 
+                FROM pg_tables 
+                WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
+                ORDER BY schemaname, tablename
+                """
+                table_result = db_conn.execute(text(table_query))
+                tables = [(row[0], row[1]) for row in table_result.fetchall()]
+                
+                db_table_count = len(tables)
+                db_row_count = 0
+                table_details = {}
+                
+                for schema, table in tables:
+                    try:
+                        # Get row count for each table
+                        count_query = f'SELECT COUNT(*) FROM "{schema}"."{table}"'
+                        count_result = db_conn.execute(text(count_query))
+                        table_rows = count_result.fetchone()[0]
+                        
+                        table_details[f"{schema}.{table}"] = {
+                            'rows': table_rows,
+                            'schema': schema,
+                            'table': table
+                        }
+                        db_row_count += table_rows
+                    except Exception as e:
+                        logger.warning(f"Could not get row count for {schema}.{table} in {db_name}: {e}")
+                        table_details[f"{schema}.{table}"] = {
+                            'rows': 0,
+                            'schema': schema,
+                            'table': table,
+                            'error': str(e)
+                        }
+                
+                db_conn.close()
+                
+                pg_metrics['databases'][db_name] = {
+                    'database_name': db_name,
+                    'total_tables': db_table_count,
+                    'total_rows': db_row_count,
+                    'tables': table_details
+                }
+                
+                pg_metrics['total_tables'] += db_table_count
+                pg_metrics['total_rows'] += db_row_count
+                
+            except Exception as e:
+                logger.warning(f"Could not get metrics for PostgreSQL database {db_name}: {e}")
+                pg_metrics['databases'][db_name] = {
+                    'error': str(e),
+                    'total_tables': 0,
+                    'total_rows': 0,
+                    'tables': {}
+                }
+        
+        return pg_metrics
+        
+    except Exception as e:
+        logger.error(f"Error getting PostgreSQL metrics: {e}")
+        raise
+
+
 def get_server_metrics(server_name):
     """
-    Get all table metrics for a server.
+    Get all table metrics for a SQL Server.
     
     Args:
         server_name (str): Name of the SQL Server
@@ -52,6 +153,7 @@ def get_server_metrics(server_name):
         server_metrics = {
             'server_name': server_name,
             'server_host': server_conf['server'],
+            'server_type': 'sqlserver',
             'total_databases': len(databases),
             'databases': {},
             'total_tables': 0,
@@ -242,46 +344,6 @@ def get_table_metrics(server_name, db_name, table_name):
         raise
 
 
-def get_sync_summary():
-    """
-    Get overall sync summary across all servers.
-    
-    Returns:
-        dict: Overall sync summary
-    """
-    try:
-        config = load_config()
-        sqlservers = config.get("sqlservers", {})
-        
-        summary = {
-            'total_servers': len(sqlservers),
-            'servers': {},
-            'total_databases': 0,
-            'total_tables': 0,
-            'total_source_rows': 0,
-            'total_destination_rows': 0,
-            'last_updated': datetime.now().isoformat()
-        }
-        
-        for server_name in sqlservers.keys():
-            try:
-                server_metrics = get_server_metrics(server_name)
-                summary['servers'][server_name] = server_metrics
-                summary['total_databases'] += server_metrics['total_databases']
-                summary['total_tables'] += server_metrics['total_tables']
-                summary['total_source_rows'] += server_metrics['total_source_rows']
-                summary['total_destination_rows'] += server_metrics['total_destination_rows']
-            except Exception as e:
-                logger.warning(f"Could not get summary for server {server_name}: {e}")
-                summary['servers'][server_name] = {'error': str(e)}
-        
-        return summary
-        
-    except Exception as e:
-        logger.error(f"Error getting sync summary: {e}")
-        raise
-
-
 def get_table_sync_history(server_name, db_name, table_name, limit=10):
     """
     Get sync history for a specific table.
@@ -345,3 +407,78 @@ def get_table_sync_history(server_name, db_name, table_name, limit=10):
     except Exception as e:
         logger.error(f"Error getting sync history for {server_name}.{db_name}.{table_name}: {e}")
         raise
+
+
+def get_comprehensive_sync_summary():
+    """
+    Get comprehensive sync summary comparing ALL SQL Servers vs PostgreSQL.
+    
+    Returns:
+        dict: Comprehensive comparison summary
+    """
+    try:
+        config = load_config()
+        sqlservers = config.get("sqlservers", {})
+        
+        # Get PostgreSQL metrics
+        pg_metrics = get_postgres_metrics()
+        
+        # Get SQL Server metrics
+        sql_metrics = {
+            'total_servers': len(sqlservers),
+            'servers': {},
+            'total_databases': 0,
+            'total_tables': 0,
+            'total_source_rows': 0,
+            'total_destination_rows': 0,
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        for server_name in sqlservers.keys():
+            try:
+                server_metrics = get_server_metrics(server_name)
+                sql_metrics['servers'][server_name] = server_metrics
+                sql_metrics['total_databases'] += server_metrics['total_databases']
+                sql_metrics['total_tables'] += server_metrics['total_tables']
+                sql_metrics['total_source_rows'] += server_metrics['total_source_rows']
+                sql_metrics['total_destination_rows'] += server_metrics['total_destination_rows']
+            except Exception as e:
+                logger.warning(f"Could not get summary for server {server_name}: {e}")
+                sql_metrics['servers'][server_name] = {'error': str(e)}
+        
+        # Calculate comparison metrics
+        comparison = {
+            'sql_servers': sql_metrics,
+            'postgresql': pg_metrics,
+            'comparison': {
+                'sql_server_instances': sql_metrics['total_servers'],
+                'sql_server_databases': sql_metrics['total_databases'],
+                'sql_server_tables': sql_metrics['total_tables'],
+                'sql_server_rows': sql_metrics['total_source_rows'],
+                'postgresql_databases': pg_metrics['total_databases'],
+                'postgresql_tables': pg_metrics['total_tables'],
+                'postgresql_rows': pg_metrics['total_rows'],
+                'database_difference': pg_metrics['total_databases'] - sql_metrics['total_databases'],
+                'table_difference': pg_metrics['total_tables'] - sql_metrics['total_tables'],
+                'row_difference': pg_metrics['total_rows'] - sql_metrics['total_source_rows'],
+                'sync_coverage_percentage': (sql_metrics['total_destination_rows'] / sql_metrics['total_source_rows'] * 100) if sql_metrics['total_source_rows'] > 0 else 0
+            },
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        return comparison
+        
+    except Exception as e:
+        logger.error(f"Error getting comprehensive sync summary: {e}")
+        raise
+
+
+def get_sync_summary():
+    """
+    Get overall sync summary across all servers (backward compatibility).
+    Now returns comprehensive comparison.
+    
+    Returns:
+        dict: Overall sync summary
+    """
+    return get_comprehensive_sync_summary()

@@ -13,5 +13,5 @@ sqlservers:
     server: localhost
     skip_databases: []
     sync_mode: hybrid
-    target_postgres_db: NewSaad3
+    target_postgres_db: NewSaad6
     username: sa

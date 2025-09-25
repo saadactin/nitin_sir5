@@ -504,6 +504,9 @@ def alerts():
         flash(f"❌ Error loading alerts: {e}", "danger")
         return redirect(url_for("index"))
 
+
+
+
 @app.route("/logs")
 @require_role(["admin", "operator", "viewer"])
 def view_logs():
