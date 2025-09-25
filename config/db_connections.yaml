@@ -9,7 +9,7 @@ sqlservers:
   server1:
     check_new_databases: true
     password: root
-    port: 1432
+    port: 1433
     server: localhost
     skip_databases: []
     sync_mode: hybrid
