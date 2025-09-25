@@ -52,11 +52,7 @@
               <span class="material-icons">storage</span>
               <h2 class="text-xl font-semibold">Databases - {{ server_name }}</h2>
             </div>
-            <div class="flex gap-2">
-              <a href="{{ url_for('sync_server', server_name=server_name) }}" 
-                 class="flex items-center gap-1 px-3 py-2 bg-primary hover:bg-primary-hover text-white rounded-md transition-colors">
-                <span class="material-icons">sync</span> Sync Entire Server
-              </a>
+            <div>
               <a href="{{ url_for('index') }}" 
                  class="flex items-center gap-1 px-3 py-2 border border-border-light dark:border-border-dark rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
                 <span class="material-icons">arrow_back</span> Back
@@ -66,53 +62,26 @@
 
           <!-- Body -->
           <div class="p-6">
-            <form method="post" action="{{ url_for('sync_selected_databases', server_name=server_name) }}">
-              <div class="mb-4 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" id="selectAll" 
-                         class="rounded border-gray-300 text-success focus:ring-success-dark"
-                         onclick="toggleAll(this)">
-                  <label for="selectAll" class="font-medium">Select All</label>
-                </div>
-                <button type="submit" 
-                        class="flex items-center gap-1 px-4 py-2 bg-success text-white rounded-md hover:bg-success-dark transition-colors">
-                  <span class="material-icons">check_circle</span> Sync Selected
-                </button>
-              </div>
-
-              <div class="overflow-y-auto max-h-[480px] border border-border-light dark:border-border-dark rounded-lg">
-                <table class="min-w-full text-left border-collapse">
-                  <thead class="bg-gray-100 dark:bg-gray-800 sticky top-0">
-                    <tr>
-                      <th class="w-12 p-3"></th>
-                      <th class="p-3 font-semibold">Database</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-border-light dark:divide-border-dark">
-                    {% for d in databases %}
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td class="p-3">
-                        <input type="checkbox" name="databases" value="{{ d }}" 
-                               class="rounded border-gray-300 text-success focus:ring-success-dark">
-                      </td>
-                      <td class="p-3">{{ d }}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </form>
+            <div class="overflow-y-auto max-h-[480px] border border-border-light dark:border-border-dark rounded-lg">
+              <table class="min-w-full text-left border-collapse">
+                <thead class="bg-gray-100 dark:bg-gray-800 sticky top-0">
+                  <tr>
+                    <th class="p-3 font-semibold">Database</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border-light dark:divide-border-dark">
+                  {% for d in databases %}
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td class="p-3">{{ d }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
     </main>
   </div>
-
-<script>
-function toggleAll(source){
-  const boxes = document.querySelectorAll('input[name="databases"]');
-  boxes.forEach(b => b.checked = source.checked);
-}
-</script>
 </body>
 </html>

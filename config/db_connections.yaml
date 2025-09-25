@@ -9,18 +9,9 @@ sqlservers:
   server1:
     check_new_databases: true
     password: root
-    port: 1433
+    port: 1432
     server: localhost
     skip_databases: []
     sync_mode: hybrid
-    target_postgres_db: NewSaad6
-    username: sa
-  server3:
-    check_new_databases: true
-    password: root
-    port: 1433
-    server: 192.168.18.124
-    skip_databases: []
-    sync_mode: hybrid
-    target_postgres_db: NewSaad6
+    target_postgres_db: NewSaad3
     username: sa

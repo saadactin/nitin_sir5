@@ -25,7 +25,9 @@
             "border-light": "#E2E8F0",
             "border-dark": "#334155",
             "success": "#198754",
-            "success-dark": "#157347"
+            "success-dark": "#157347",
+            "warning": "#ffc107",
+            "warning-dark": "#e0a800"
           },
           fontFamily: { display: ["Inter", "sans-serif"] },
           borderRadius: { DEFAULT: "0.5rem" }
@@ -92,6 +94,16 @@
 
               <!-- Buttons -->
               <div class="flex items-end justify-between mt-2 md:col-span-2">
+                <!-- Edit Button that redirects to edit page if server_name exists -->
+                {% if server_name and server_config %}
+                <a href="{{ url_for('edit_server', server_name=server_name) }}" class="flex items-center gap-1 px-4 py-2 bg-warning text-white rounded-md hover:bg-warning-dark transition-colors">
+                  <span class="material-icons">edit</span> Edit Server
+                </a>
+                {% else %}
+                <a href="{{ url_for('index') }}" class="flex items-center gap-1 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
+                  <span class="material-icons">arrow_back</span> Back to List
+                </a>
+                {% endif %}
                
                 <button type="submit" class="flex items-center gap-1 px-4 py-2 bg-success text-white rounded-md hover:bg-success-dark transition-colors">
                   <span class="material-icons">check_circle</span> Add Server

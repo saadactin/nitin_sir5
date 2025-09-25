@@ -267,6 +267,7 @@ def add_server():
 
         config = load_config()
         config.setdefault("sqlservers", {})
+
         if server_name in config["sqlservers"]:
             flash(f"❌ Server {server_name} already exists!", "error")
             return redirect(url_for("add_server"))
@@ -279,17 +280,61 @@ def add_server():
             "check_new_databases": True,
             "skip_databases": [],
             "sync_mode": "hybrid",
-            "target_postgres_db": pg_database,   # store selection
+            "target_postgres_db": pg_database,
         }
         save_config(config)
 
         flash(f"✅ Server {server_name} added with Postgres target {pg_database}", "success")
         return redirect(url_for("index"))
 
-    # ---- GET request ----
-    postgres_dbs = load_pg_databases()   # <--- here you call it
+    # GET request
+    postgres_dbs = load_pg_databases()
     return render_template("add_sources.html", postgres_dbs=postgres_dbs)
+@app.route("/edit-server/<server_name>", methods=["GET", "POST"])
+@require_role(["admin", "operator"])
+def edit_server(server_name):
+    config = load_config()
+    servers = config.get("sqlservers", {})
 
+    if request.method == "POST":
+        server = request.form["server"]
+        username = request.form["username"]
+        password = request.form["password"]
+        port = int(request.form.get("port", 1433))
+        pg_database = request.form.get("pg_database")
+
+        if server_name not in servers:
+            flash(f"❌ Server {server_name} does not exist!", "error")
+            return redirect(url_for("index"))
+
+        servers[server_name] = {
+            "server": server,
+            "username": username,
+            "password": password,
+            "port": port,
+            "check_new_databases": True,
+            "skip_databases": [],
+            "sync_mode": "hybrid",
+            "target_postgres_db": pg_database,
+        }
+        save_config(config)
+
+        flash(f"✅ Server {server_name} updated successfully!", "success")
+        return redirect(url_for("index"))
+
+    # GET request → pre-fill form
+    server_config = servers.get(server_name)
+    if not server_config:
+        flash(f"❌ Server {server_name} not found!", "error")
+        return redirect(url_for("index"))
+
+    postgres_dbs = load_pg_databases()
+    return render_template(
+        "edit_sources.html",   # ✅ now points to your edit page
+        postgres_dbs=postgres_dbs,
+        server_name=server_name,
+        server_config=server_config
+    )
 
 @app.route("/delete-server/<server_name>", methods=["POST"])
 @require_role(["admin", "operator"])
