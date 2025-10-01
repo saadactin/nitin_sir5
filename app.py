@@ -3,6 +3,8 @@ import json
 import psycopg2
 import yaml
 import os
+import logging
+import sys
 from flask import Flask, render_template, request, redirect, url_for, flash
 from alerts import LogAnalyzer
 from datetime import datetime
@@ -20,7 +22,7 @@ from scheduler_utils import (
 )
 from analytics import compare_table_rows, delta_tracking, top_changed_tables
 from metrics import get_server_metrics, get_database_metrics
-from sync_summary import get_sync_comparison, get_all_server_comparisons, get_individual_server_comparison
+from sync_summary import get_sync_comparison, get_all_server_comparisons, get_individual_server_comparison, get_detailed_table_comparison
 from analytics_advanced import (
     fetch_database_history,
     fetch_table_history,
@@ -45,8 +47,34 @@ from hybrid_sync import (
     create_sync_tracking_table,
     create_table_sync_tracking,
 )
+
+# Configure logging for better visibility
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('app.log')
+    ]
+)
+
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # required for flash + sessions
+
+# Enable Flask request logging
+app.logger.setLevel(logging.INFO)
+logging.getLogger('werkzeug').setLevel(logging.INFO)
+
+# Add request logging middleware
+@app.before_request
+def log_request_info():
+    app.logger.info(f'📥 {request.method} {request.path} - {request.remote_addr}')
+
+@app.after_request
+def log_response_info(response):
+    app.logger.info(f'📤 {request.method} {request.path} - {response.status_code}')
+    return response
+
 init_admin_user()
 
 def require_role(allowed_roles):
@@ -108,9 +136,11 @@ def create_user_route():
 @require_role(["admin", "operator", "viewer"])
 def index():
     """Homepage → show available servers and sync option"""
+    app.logger.info(f"🏠 Homepage accessed by user: {session.get('username', 'Unknown')}")
     config = load_config()
     sqlservers = config.get("sqlservers", {})
     role = session.get("role")  # make sure this is aligned with the above line
+    app.logger.info(f"📊 Loaded {len(sqlservers)} SQL servers for display")
     return render_template("sync_servers.html", sqlservers=sqlservers, role=role)
 
 
@@ -210,17 +240,26 @@ def sync_selected_databases(server_name):
 @require_role(["admin", "operator"])
 def sync_server(server_name):
     """Run sync for the selected server"""
+    app.logger.info(f"🔄 Starting sync operation for server: {server_name}")
+    print(f"🔄 SYNC STARTED: {server_name} at {datetime.now().strftime('%H:%M:%S')}")
+    
     config = load_config()
     server_conf = config["sqlservers"].get(server_name)
     if server_conf:
         try:
+            app.logger.info(f"⚡ Processing hybrid sync for {server_name}")
             process_sql_server_hybrid(server_name, server_conf)
+            app.logger.info(f"✅ Sync completed successfully for {server_name}")
+            print(f"✅ SYNC COMPLETED: {server_name} at {datetime.now().strftime('%H:%M:%S')}")
             flash(f"✅ Sync completed for {server_name}", "success")
             log_sync(server_name, "success")
         except Exception as e:
+            app.logger.error(f"❌ Sync failed for {server_name}: {e}")
+            print(f"❌ SYNC FAILED: {server_name} - {e}")
             flash(f"❌ Sync failed for {server_name}: {e}", "danger")
             log_sync(server_name, "failed", str(e))
     else:
+        app.logger.warning(f"⚠️ Server {server_name} not found in configuration")
         flash(f"Server {server_name} not found!", "danger")
     return redirect(url_for("index"))
 
@@ -676,6 +715,9 @@ def sync_summary_detail(server_name):
             flash(f"❌ Error: {comparison_data['error']}", "danger")
             return redirect(url_for("sync_summary"))
         
+        # Get detailed table comparison
+        table_comparison = get_detailed_table_comparison(server_name)
+        
         # Get server info from config
         config = load_config()
         sqlservers = config.get("sqlservers", {})
@@ -683,7 +725,7 @@ def sync_summary_detail(server_name):
         
         server_info = {
             'server_name': server_name,
-            'host': server_config.get('host', 'localhost'),
+            'host': server_config.get('server', 'localhost'),
             'port': server_config.get('port', 1433),
             'target_postgres_db': server_config.get('target_postgres_db', 'unknown')
         }
@@ -691,6 +733,7 @@ def sync_summary_detail(server_name):
         return render_template("sync_summary_detail.html", 
                              server_info=server_info,
                              comparison=comparison_data['comparison'],
+                             table_comparison=table_comparison,
                              role=session.get("role"))
     except Exception as e:
         flash(f"❌ Error getting detailed comparison for {server_name}: {e}", "danger")
@@ -826,4 +869,34 @@ def explore():
 
 # ------------------ MAIN ------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("="*60)
+    print("[STARTING] ACTIN SYNC APPLICATION")
+    print("="*60)
+    print(f"[DATE] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"[PYTHON] {sys.version.split()[0]}")
+    print(f"[FLASK] Debug Mode: ON")
+    print(f"[LOGGING] Level: INFO")
+    print("="*60)
+    
+    # Configure werkzeug to be more verbose
+    logging.getLogger('werkzeug').setLevel(logging.DEBUG)
+    
+    try:
+        # Show startup status
+        app.logger.info("[INIT] Initializing Flask application...")
+        app.logger.info("[CONFIG] Loading configuration...")
+        app.logger.info("[AUTH] Authentication system ready")
+        app.logger.info("[DATABASE] Database connections configured")
+        app.logger.info("[SCHEDULER] Scheduler system active")
+        app.logger.info("[STARTUP] Application startup complete!")
+        
+        print("[READY] Application ready! Access at: http://127.0.0.1:5000")
+        print("="*60)
+        
+        # Run with verbose output
+        app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=True, use_debugger=True)
+        
+    except Exception as e:
+        print(f"[ERROR] STARTUP ERROR: {e}")
+        app.logger.error(f"Failed to start application: {e}")
+        sys.exit(1)

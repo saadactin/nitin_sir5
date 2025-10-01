@@ -1,0 +1,483 @@
+2025-10-01 14:11:50,481 - WARNING -  * Debugger is active!
+2025-10-01 14:11:50,484 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:11:50,958 - WARNING -  * Debugger is active!
+2025-10-01 14:11:50,963 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:12:03,083 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\test_sync_logging.py', reloading
+2025-10-01 14:12:04,879 - WARNING -  * Debugger is active!
+2025-10-01 14:12:04,882 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:13:10,742 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-10-01 14:13:10,742 - INFO - [33mPress CTRL+C to quit[0m
+2025-10-01 14:13:10,745 - INFO -  * Restarting with stat
+2025-10-01 14:13:12,469 - WARNING -  * Debugger is active!
+2025-10-01 14:13:12,478 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:13:16,915 - INFO - Sync tracking table created/verified
+2025-10-01 14:13:17,027 - INFO - Connected to SQL Server: localhost\SQL2019_Second
+2025-10-01 14:13:17,100 - INFO - Found 9 databases on localhost\SQL2019_Second
+2025-10-01 14:13:17,105 - INFO - Cleaned up system table: localhostSQL2019_Second_newdb.sys_trace_xe_event_map
+2025-10-01 14:13:17,108 - INFO - Cleaned up system table: localhostSQL2019_Second_newdb.sys_trace_xe_action_map
+2025-10-01 14:13:17,215 - INFO - === Starting INCREMENTAL sync for database: newdb ===
+2025-10-01 14:13:17,630 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:17,826 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:17,827 - INFO - === INCREMENTAL sync completed for newdb, 2/2 tables processed ===
+2025-10-01 14:13:17,854 - INFO - MSSQLSERVER/newdb: processed 2 tables
+2025-10-01 14:13:17,859 - INFO - Cleaned up system table: localhostSQL2019_Second_Saad1.sys_trace_xe_event_map
+2025-10-01 14:13:17,862 - INFO - Cleaned up system table: localhostSQL2019_Second_Saad1.sys_trace_xe_action_map
+2025-10-01 14:13:17,907 - INFO - === Starting INCREMENTAL sync for database: Saad1 ===
+2025-10-01 14:13:18,271 - INFO - [INCR SYNC] dbo.Employees: row_count=0, sync_col=EmployeeID, last_value=None
+2025-10-01 14:13:18,479 - INFO - Schema 'localhostSQL2019_Second_Saad1' created/verified successfully
+2025-10-01 14:13:18,566 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:13:18,581 - INFO - Table dbo.Employees is empty, but schema ensured in PostgreSQL
+2025-10-01 14:13:18,824 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:19,031 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:19,033 - INFO - === INCREMENTAL sync completed for Saad1, 3/3 tables processed ===
+2025-10-01 14:13:19,059 - INFO - MSSQLSERVER/Saad1: processed 3 tables
+2025-10-01 14:13:19,066 - INFO - Cleaned up system table: localhostSQL2019_Second_saadtest.sys_trace_xe_event_map
+2025-10-01 14:13:19,069 - INFO - Cleaned up system table: localhostSQL2019_Second_saadtest.sys_trace_xe_action_map
+2025-10-01 14:13:19,125 - INFO - === Starting INCREMENTAL sync for database: saadtest ===
+2025-10-01 14:13:19,549 - INFO - [INCR SYNC] dbo.Employees: row_count=7, sync_col=EmployeeID, last_value=None
+2025-10-01 14:13:19,702 - INFO - Schema 'localhostSQL2019_Second_saadtest' created/verified successfully
+2025-10-01 14:13:19,719 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:13:19,744 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:13:19,998 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:20,198 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:20,198 - INFO - === INCREMENTAL sync completed for saadtest, 3/3 tables processed ===
+2025-10-01 14:13:20,200 - INFO - MSSQLSERVER/saadtest: processed 3 tables
+2025-10-01 14:13:20,205 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB.sys_trace_xe_event_map
+2025-10-01 14:13:20,207 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB.sys_trace_xe_action_map
+2025-10-01 14:13:20,246 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-10-01 14:13:20,608 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:13:20,786 - INFO - Schema 'localhostSQL2019_Second_SampleDB' created/verified successfully
+2025-10-01 14:13:20,803 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:13:20,819 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:13:21,017 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:21,208 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:21,209 - INFO - === INCREMENTAL sync completed for SampleDB, 3/3 tables processed ===
+2025-10-01 14:13:21,234 - INFO - MSSQLSERVER/SampleDB: processed 3 tables
+2025-10-01 14:13:21,238 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:13:21,239 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:13:21,284 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:13:21,646 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:13:21,787 - INFO - Schema 'localhostSQL2019_Second_SampleDB1' created/verified successfully
+2025-10-01 14:13:21,798 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:13:21,812 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:13:22,005 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:22,220 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:22,221 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:13:22,223 - INFO - MSSQLSERVER/SampleDB1: processed 3 tables
+2025-10-01 14:13:22,237 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:13:22,238 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:13:22,287 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:13:22,629 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:13:22,767 - INFO - Schema 'localhostSQL2019_Second_SampleDB2' created/verified successfully
+2025-10-01 14:13:22,782 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:13:22,798 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:13:22,988 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:23,184 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:23,186 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:13:23,190 - INFO - MSSQLSERVER/SampleDB2: processed 3 tables
+2025-10-01 14:13:23,196 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB20.sys_trace_xe_event_map
+2025-10-01 14:13:23,198 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB20.sys_trace_xe_action_map
+2025-10-01 14:13:23,269 - INFO - === Starting INCREMENTAL sync for database: SampleDB20 ===
+2025-10-01 14:13:23,638 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:13:23,809 - INFO - Schema 'localhostSQL2019_Second_SampleDB20' created/verified successfully
+2025-10-01 14:13:23,822 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:13:23,842 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:13:24,076 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:24,264 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:24,265 - INFO - === INCREMENTAL sync completed for SampleDB20, 3/3 tables processed ===
+2025-10-01 14:13:24,267 - INFO - MSSQLSERVER/SampleDB20: processed 3 tables
+2025-10-01 14:13:24,271 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB21.sys_trace_xe_event_map
+2025-10-01 14:13:24,274 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB21.sys_trace_xe_action_map
+2025-10-01 14:13:24,321 - INFO - === Starting INCREMENTAL sync for database: SampleDB21 ===
+2025-10-01 14:13:24,714 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:13:24,891 - INFO - Schema 'localhostSQL2019_Second_SampleDB21' created/verified successfully
+2025-10-01 14:13:24,902 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:13:24,918 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:13:25,104 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:25,280 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:25,281 - INFO - === INCREMENTAL sync completed for SampleDB21, 3/3 tables processed ===
+2025-10-01 14:13:25,283 - INFO - MSSQLSERVER/SampleDB21: processed 3 tables
+2025-10-01 14:13:25,287 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB3.sys_trace_xe_event_map
+2025-10-01 14:13:25,289 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB3.sys_trace_xe_action_map
+2025-10-01 14:13:25,332 - INFO - === Starting INCREMENTAL sync for database: SampleDB3 ===
+2025-10-01 14:13:25,650 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:13:25,811 - INFO - Schema 'localhostSQL2019_Second_SampleDB3' created/verified successfully
+2025-10-01 14:13:25,836 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:13:25,862 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:13:26,592 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:13:26,846 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:13:26,847 - INFO - === INCREMENTAL sync completed for SampleDB3, 3/3 tables processed ===
+2025-10-01 14:13:26,872 - INFO - MSSQLSERVER/SampleDB3: processed 3 tables
+2025-10-01 14:13:26,874 - INFO - Completed MSSQLSERVER
+2025-10-01 14:13:26,967 - INFO - 127.0.0.1 - - [01/Oct/2025 14:13:26] "[32mGET /sync/MSSQLSERVER HTTP/1.1[0m" 302 -
+2025-10-01 14:13:27,041 - INFO - 127.0.0.1 - - [01/Oct/2025 14:13:27] "GET / HTTP/1.1" 200 -
+2025-10-01 14:15:14,506 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:15:14,648 - INFO -  * Restarting with stat
+2025-10-01 14:15:15,028 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:15:16,393 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:15:16,394 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:15:16,394 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:15:16,395 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:15:16,395 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:15:16,395 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:15:16,416 - WARNING -  * Debugger is active!
+2025-10-01 14:15:16,421 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:15:17,164 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:15:17,164 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:15:17,165 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:15:17,165 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:15:17,165 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:15:17,166 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:15:17,182 - WARNING -  * Debugger is active!
+2025-10-01 14:15:17,185 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:15:42,656 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\hybrid_sync.py', reloading
+2025-10-01 14:15:42,767 - INFO -  * Restarting with stat
+2025-10-01 14:15:42,870 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\hybrid_sync.py', reloading
+2025-10-01 14:15:44,474 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:15:44,475 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:15:44,475 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:15:44,476 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:15:44,476 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:15:44,477 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:15:44,503 - WARNING -  * Debugger is active!
+2025-10-01 14:15:44,509 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:15:44,909 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:15:44,909 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:15:44,909 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:15:44,910 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:15:44,910 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:15:44,910 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:15:44,932 - WARNING -  * Debugger is active!
+2025-10-01 14:15:44,936 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:16:10,664 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\scheduler_utils.py', reloading
+2025-10-01 14:16:10,734 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\scheduler_utils.py', reloading
+2025-10-01 14:16:10,859 - INFO -  * Restarting with stat
+2025-10-01 14:16:12,340 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:16:12,341 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:16:12,341 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:16:12,342 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:16:12,342 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:16:12,342 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:16:12,364 - WARNING -  * Debugger is active!
+2025-10-01 14:16:12,368 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:16:12,428 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:16:12,429 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:16:12,429 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:16:12,430 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:16:12,430 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:16:12,430 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:16:12,448 - WARNING -  * Debugger is active!
+2025-10-01 14:16:12,451 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:18:10,679 - INFO - Sync tracking table created/verified
+2025-10-01 14:18:10,794 - INFO - Connected to SQL Server: localhost
+2025-10-01 14:18:10,853 - INFO - Found 3 databases on localhost
+2025-10-01 14:18:10,854 - INFO - Skipping database: SampleDB (listed in skip_databases)
+2025-10-01 14:18:10,857 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:18:10,860 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:18:11,011 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:18:11,376 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:18:11,550 - INFO - Schema 'localhost_SampleDB1' created/verified successfully
+2025-10-01 14:18:11,660 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:18:11,739 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:18:11,942 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:18:12,179 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:18:12,181 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:18:12,190 - INFO - server1/SampleDB1: processed 3 tables
+2025-10-01 14:18:12,195 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:18:12,197 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:18:12,262 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:18:12,631 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:18:12,761 - INFO - Schema 'localhost_SampleDB2' created/verified successfully
+2025-10-01 14:18:12,772 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:18:12,788 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:18:13,015 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:18:13,258 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:18:13,260 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:18:13,262 - INFO - server1/SampleDB2: processed 3 tables
+2025-10-01 14:18:13,265 - INFO - Completed server1
+2025-10-01 14:19:53,521 - INFO - Sync tracking table created/verified
+2025-10-01 14:19:53,616 - INFO - Connected to SQL Server: localhost\SQL2019_Second
+2025-10-01 14:19:53,686 - INFO - Found 9 databases on localhost\SQL2019_Second
+2025-10-01 14:19:53,688 - INFO - Cleaned up system table: localhostSQL2019_Second_newdb.sys_trace_xe_event_map
+2025-10-01 14:19:53,690 - INFO - Cleaned up system table: localhostSQL2019_Second_newdb.sys_trace_xe_action_map
+2025-10-01 14:19:53,775 - INFO - === Starting INCREMENTAL sync for database: newdb ===
+2025-10-01 14:19:54,213 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:19:54,406 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:19:54,408 - INFO - === INCREMENTAL sync completed for newdb, 2/2 tables processed ===
+2025-10-01 14:19:54,437 - INFO - MSSQLSERVER/newdb: processed 2 tables
+2025-10-01 14:19:54,441 - INFO - Cleaned up system table: localhostSQL2019_Second_Saad1.sys_trace_xe_event_map
+2025-10-01 14:19:54,444 - INFO - Cleaned up system table: localhostSQL2019_Second_Saad1.sys_trace_xe_action_map
+2025-10-01 14:19:54,494 - INFO - === Starting INCREMENTAL sync for database: Saad1 ===
+2025-10-01 14:19:54,824 - INFO - [INCR SYNC] dbo.Employees: row_count=0, sync_col=EmployeeID, last_value=None
+2025-10-01 14:19:55,022 - INFO - Schema 'localhostSQL2019_Second_Saad1' created/verified successfully
+2025-10-01 14:19:55,070 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:19:55,079 - INFO - Table dbo.Employees is empty, but schema ensured in PostgreSQL
+2025-10-01 14:19:55,306 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:19:55,514 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:19:55,515 - INFO - === INCREMENTAL sync completed for Saad1, 3/3 tables processed ===
+2025-10-01 14:19:55,517 - INFO - MSSQLSERVER/Saad1: processed 3 tables
+2025-10-01 14:19:55,521 - INFO - Cleaned up system table: localhostSQL2019_Second_saadtest.sys_trace_xe_event_map
+2025-10-01 14:19:55,522 - INFO - Cleaned up system table: localhostSQL2019_Second_saadtest.sys_trace_xe_action_map
+2025-10-01 14:19:55,565 - INFO - === Starting INCREMENTAL sync for database: saadtest ===
+2025-10-01 14:19:55,904 - INFO - [INCR SYNC] dbo.Employees: row_count=7, sync_col=EmployeeID, last_value=None
+2025-10-01 14:19:56,065 - INFO - Schema 'localhostSQL2019_Second_saadtest' created/verified successfully
+2025-10-01 14:19:56,080 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:19:56,126 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:19:56,332 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:19:56,520 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:19:56,520 - INFO - === INCREMENTAL sync completed for saadtest, 3/3 tables processed ===
+2025-10-01 14:19:56,545 - INFO - MSSQLSERVER/saadtest: processed 3 tables
+2025-10-01 14:19:56,555 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB.sys_trace_xe_event_map
+2025-10-01 14:19:56,557 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB.sys_trace_xe_action_map
+2025-10-01 14:19:56,618 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-10-01 14:19:57,016 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:19:57,237 - INFO - Schema 'localhostSQL2019_Second_SampleDB' created/verified successfully
+2025-10-01 14:19:57,261 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:19:57,287 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:19:57,551 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:19:57,747 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:19:57,749 - INFO - === INCREMENTAL sync completed for SampleDB, 3/3 tables processed ===
+2025-10-01 14:19:57,753 - INFO - MSSQLSERVER/SampleDB: processed 3 tables
+2025-10-01 14:19:57,758 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:19:57,760 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:19:57,812 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:19:58,202 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:19:58,361 - INFO - Schema 'localhostSQL2019_Second_SampleDB1' created/verified successfully
+2025-10-01 14:19:58,398 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:19:58,413 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:19:58,635 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:19:58,818 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:19:58,820 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:19:58,844 - INFO - MSSQLSERVER/SampleDB1: processed 3 tables
+2025-10-01 14:19:58,849 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:19:58,851 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:19:58,892 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:19:59,220 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:19:59,340 - INFO - Schema 'localhostSQL2019_Second_SampleDB2' created/verified successfully
+2025-10-01 14:19:59,351 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:19:59,366 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:19:59,551 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:19:59,734 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:19:59,735 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:19:59,737 - INFO - MSSQLSERVER/SampleDB2: processed 3 tables
+2025-10-01 14:19:59,738 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB20.sys_trace_xe_event_map
+2025-10-01 14:19:59,740 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB20.sys_trace_xe_action_map
+2025-10-01 14:19:59,783 - INFO - === Starting INCREMENTAL sync for database: SampleDB20 ===
+2025-10-01 14:20:00,236 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:20:00,476 - INFO - Schema 'localhostSQL2019_Second_SampleDB20' created/verified successfully
+2025-10-01 14:20:00,492 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:20:00,513 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:20:00,734 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:00,924 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:00,925 - INFO - === INCREMENTAL sync completed for SampleDB20, 3/3 tables processed ===
+2025-10-01 14:20:00,928 - INFO - MSSQLSERVER/SampleDB20: processed 3 tables
+2025-10-01 14:20:00,931 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB21.sys_trace_xe_event_map
+2025-10-01 14:20:00,932 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB21.sys_trace_xe_action_map
+2025-10-01 14:20:00,980 - INFO - === Starting INCREMENTAL sync for database: SampleDB21 ===
+2025-10-01 14:20:01,296 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:20:01,446 - INFO - Schema 'localhostSQL2019_Second_SampleDB21' created/verified successfully
+2025-10-01 14:20:01,459 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:20:01,477 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:20:01,697 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:01,833 - INFO - Sync tracking table created/verified
+2025-10-01 14:20:01,877 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:01,879 - INFO - === INCREMENTAL sync completed for SampleDB21, 3/3 tables processed ===
+2025-10-01 14:20:01,882 - INFO - MSSQLSERVER/SampleDB21: processed 3 tables
+2025-10-01 14:20:01,886 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB3.sys_trace_xe_event_map
+2025-10-01 14:20:01,888 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB3.sys_trace_xe_action_map
+2025-10-01 14:20:01,895 - INFO - Connected to SQL Server: localhost
+2025-10-01 14:20:01,936 - INFO - === Starting INCREMENTAL sync for database: SampleDB3 ===
+2025-10-01 14:20:01,949 - INFO - Found 3 databases on localhost
+2025-10-01 14:20:01,950 - INFO - Skipping database: SampleDB (listed in skip_databases)
+2025-10-01 14:20:01,951 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:20:01,953 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:20:01,999 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:20:02,258 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:20:02,356 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:20:02,421 - INFO - Schema 'localhostSQL2019_Second_SampleDB3' created/verified successfully
+2025-10-01 14:20:02,437 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:20:02,449 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:20:02,580 - INFO - Schema 'localhost_SampleDB1' created/verified successfully
+2025-10-01 14:20:02,635 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:20:02,645 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:20:02,748 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:02,863 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:02,938 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:02,939 - INFO - === INCREMENTAL sync completed for SampleDB3, 3/3 tables processed ===
+2025-10-01 14:20:02,964 - INFO - MSSQLSERVER/SampleDB3: processed 3 tables
+2025-10-01 14:20:02,967 - INFO - Completed MSSQLSERVER
+2025-10-01 14:20:03,057 - INFO - 127.0.0.1 - - [01/Oct/2025 14:20:03] "[32mGET /sync/MSSQLSERVER HTTP/1.1[0m" 302 -
+2025-10-01 14:20:03,092 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:03,093 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:20:03,096 - INFO - server1/SampleDB1: processed 3 tables
+2025-10-01 14:20:03,100 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:20:03,101 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:20:03,142 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:20:03,403 - INFO - 127.0.0.1 - - [01/Oct/2025 14:20:03] "GET / HTTP/1.1" 200 -
+2025-10-01 14:20:03,459 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:20:03,624 - INFO - Schema 'localhost_SampleDB2' created/verified successfully
+2025-10-01 14:20:03,643 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:20:03,663 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:20:03,897 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:04,129 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:04,131 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:20:04,135 - INFO - server1/SampleDB2: processed 3 tables
+2025-10-01 14:20:04,140 - INFO - Completed server1
+2025-10-01 14:20:04,286 - INFO - 127.0.0.1 - - [01/Oct/2025 14:20:04] "[32mGET /sync/server1 HTTP/1.1[0m" 302 -
+2025-10-01 14:20:04,629 - INFO - 127.0.0.1 - - [01/Oct/2025 14:20:04] "GET / HTTP/1.1" 200 -
+2025-10-01 14:20:11,016 - INFO - Sync tracking table created/verified
+2025-10-01 14:20:11,032 - INFO - Connected to SQL Server: localhost\SQL2019_Second
+2025-10-01 14:20:11,163 - INFO - Found 9 databases on localhost\SQL2019_Second
+2025-10-01 14:20:11,167 - INFO - Cleaned up system table: localhostSQL2019_Second_newdb.sys_trace_xe_event_map
+2025-10-01 14:20:11,169 - INFO - Cleaned up system table: localhostSQL2019_Second_newdb.sys_trace_xe_action_map
+2025-10-01 14:20:11,189 - INFO - === Starting INCREMENTAL sync for database: newdb ===
+2025-10-01 14:20:11,668 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:11,952 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:11,953 - INFO - === INCREMENTAL sync completed for newdb, 2/2 tables processed ===
+2025-10-01 14:20:11,979 - INFO - MSSQLSERVER/newdb: processed 2 tables
+2025-10-01 14:20:11,983 - INFO - Cleaned up system table: localhostSQL2019_Second_Saad1.sys_trace_xe_event_map
+2025-10-01 14:20:11,987 - INFO - Cleaned up system table: localhostSQL2019_Second_Saad1.sys_trace_xe_action_map
+2025-10-01 14:20:11,998 - INFO - === Starting INCREMENTAL sync for database: Saad1 ===
+2025-10-01 14:20:12,525 - INFO - [INCR SYNC] dbo.Employees: row_count=0, sync_col=EmployeeID, last_value=None
+2025-10-01 14:20:12,759 - INFO - Schema 'localhostSQL2019_Second_Saad1' created/verified successfully
+2025-10-01 14:20:13,044 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:20:13,077 - INFO - Table dbo.Employees is empty, but schema ensured in PostgreSQL
+2025-10-01 14:20:13,347 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:13,556 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:13,557 - INFO - === INCREMENTAL sync completed for Saad1, 3/3 tables processed ===
+2025-10-01 14:20:13,583 - INFO - MSSQLSERVER/Saad1: processed 3 tables
+2025-10-01 14:20:13,590 - INFO - Cleaned up system table: localhostSQL2019_Second_saadtest.sys_trace_xe_event_map
+2025-10-01 14:20:13,594 - INFO - Cleaned up system table: localhostSQL2019_Second_saadtest.sys_trace_xe_action_map
+2025-10-01 14:20:13,612 - INFO - === Starting INCREMENTAL sync for database: saadtest ===
+2025-10-01 14:20:14,072 - INFO - [INCR SYNC] dbo.Employees: row_count=7, sync_col=EmployeeID, last_value=None
+2025-10-01 14:20:14,322 - INFO - Schema 'localhostSQL2019_Second_saadtest' created/verified successfully
+2025-10-01 14:20:14,353 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:20:14,387 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:20:14,641 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:14,879 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:14,880 - INFO - === INCREMENTAL sync completed for saadtest, 3/3 tables processed ===
+2025-10-01 14:20:14,904 - INFO - MSSQLSERVER/saadtest: processed 3 tables
+2025-10-01 14:20:14,909 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB.sys_trace_xe_event_map
+2025-10-01 14:20:14,912 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB.sys_trace_xe_action_map
+2025-10-01 14:20:14,923 - INFO - === Starting INCREMENTAL sync for database: SampleDB ===
+2025-10-01 14:20:15,368 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:20:15,558 - INFO - Schema 'localhostSQL2019_Second_SampleDB' created/verified successfully
+2025-10-01 14:20:15,571 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:20:15,591 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:20:15,814 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:16,068 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:16,070 - INFO - === INCREMENTAL sync completed for SampleDB, 3/3 tables processed ===
+2025-10-01 14:20:16,075 - INFO - MSSQLSERVER/SampleDB: processed 3 tables
+2025-10-01 14:20:16,082 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:20:16,084 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:20:16,101 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:20:16,558 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:20:16,802 - INFO - Schema 'localhostSQL2019_Second_SampleDB1' created/verified successfully
+2025-10-01 14:20:16,822 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:20:16,838 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:20:17,125 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:17,381 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:17,384 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:20:17,389 - INFO - MSSQLSERVER/SampleDB1: processed 3 tables
+2025-10-01 14:20:17,398 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:20:17,403 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:20:17,427 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:20:18,115 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:20:18,461 - INFO - Schema 'localhostSQL2019_Second_SampleDB2' created/verified successfully
+2025-10-01 14:20:18,559 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:20:18,588 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:20:18,960 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:19,297 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:19,298 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:20:19,300 - INFO - MSSQLSERVER/SampleDB2: processed 3 tables
+2025-10-01 14:20:19,313 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB20.sys_trace_xe_event_map
+2025-10-01 14:20:19,314 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB20.sys_trace_xe_action_map
+2025-10-01 14:20:19,320 - INFO - === Starting INCREMENTAL sync for database: SampleDB20 ===
+2025-10-01 14:20:19,852 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:20:20,148 - INFO - Schema 'localhostSQL2019_Second_SampleDB20' created/verified successfully
+2025-10-01 14:20:20,188 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:20:20,224 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:20:20,531 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:20,794 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:20,794 - INFO - === INCREMENTAL sync completed for SampleDB20, 3/3 tables processed ===
+2025-10-01 14:20:20,798 - INFO - MSSQLSERVER/SampleDB20: processed 3 tables
+2025-10-01 14:20:20,800 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB21.sys_trace_xe_event_map
+2025-10-01 14:20:20,803 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB21.sys_trace_xe_action_map
+2025-10-01 14:20:20,807 - INFO - === Starting INCREMENTAL sync for database: SampleDB21 ===
+2025-10-01 14:20:21,197 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:20:21,367 - INFO - Schema 'localhostSQL2019_Second_SampleDB21' created/verified successfully
+2025-10-01 14:20:21,385 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:20:21,409 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:20:21,625 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:21,814 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:21,815 - INFO - === INCREMENTAL sync completed for SampleDB21, 3/3 tables processed ===
+2025-10-01 14:20:21,840 - INFO - MSSQLSERVER/SampleDB21: processed 3 tables
+2025-10-01 14:20:21,847 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB3.sys_trace_xe_event_map
+2025-10-01 14:20:21,849 - INFO - Cleaned up system table: localhostSQL2019_Second_SampleDB3.sys_trace_xe_action_map
+2025-10-01 14:20:21,853 - INFO - === Starting INCREMENTAL sync for database: SampleDB3 ===
+2025-10-01 14:20:22,190 - INFO - [INCR SYNC] dbo.Employees: row_count=5, sync_col=EmployeeID, last_value=None
+2025-10-01 14:20:22,379 - INFO - Schema 'localhostSQL2019_Second_SampleDB3' created/verified successfully
+2025-10-01 14:20:22,398 - INFO - Last value is None for dbo.Employees, using hash-based deduplication
+2025-10-01 14:20:22,419 - INFO - No new rows found for dbo.Employees
+2025-10-01 14:20:22,626 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:20:22,836 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:20:22,837 - INFO - === INCREMENTAL sync completed for SampleDB3, 3/3 tables processed ===
+2025-10-01 14:20:22,862 - INFO - MSSQLSERVER/SampleDB3: processed 3 tables
+2025-10-01 14:20:22,865 - INFO - Completed MSSQLSERVER
+2025-10-01 14:20:22,948 - INFO - 127.0.0.1 - - [01/Oct/2025 14:20:22] "[32mGET /sync/MSSQLSERVER HTTP/1.1[0m" 302 -
+2025-10-01 14:20:23,280 - INFO - 127.0.0.1 - - [01/Oct/2025 14:20:23] "GET / HTTP/1.1" 200 -
+2025-10-01 14:21:12,683 - INFO - Sync tracking table created/verified
+2025-10-01 14:21:12,858 - INFO - Connected to SQL Server: localhost
+2025-10-01 14:21:12,862 - INFO - Found 3 databases on localhost
+2025-10-01 14:21:12,863 - INFO - Skipping database: SampleDB (listed in skip_databases)
+2025-10-01 14:21:12,865 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:21:12,868 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:21:12,920 - INFO - Sync tracking table created/verified
+2025-10-01 14:21:12,950 - INFO - Connected to SQL Server: localhost
+2025-10-01 14:21:12,956 - INFO - Found 3 databases on localhost
+2025-10-01 14:21:12,957 - INFO - Skipping database: SampleDB (listed in skip_databases)
+2025-10-01 14:21:12,961 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:21:12,964 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:21:12,991 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:21:12,991 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:21:13,024 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:21:13,025 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:21:13,074 - INFO - Schema 'localhost_SampleDB1' created/verified successfully
+2025-10-01 14:21:13,098 - INFO - Schema 'localhost_SampleDB1' created/verified successfully
+2025-10-01 14:21:13,161 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:21:13,188 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:21:13,196 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:21:13,200 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:21:13,204 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:21:13,206 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:21:13,236 - INFO - server1/SampleDB1: processed 3 tables
+2025-10-01 14:21:13,240 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:21:13,244 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:21:13,247 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:21:13,251 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:21:13,261 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:21:13,263 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:21:13,271 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:21:13,272 - INFO - server1/SampleDB1: processed 3 tables
+2025-10-01 14:21:13,287 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:21:13,290 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:21:13,290 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:21:13,358 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:21:13,360 - INFO - Schema 'localhost_SampleDB2' created/verified successfully
+2025-10-01 14:21:13,372 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:21:13,381 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:21:13,413 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:21:13,423 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:21:13,434 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:21:13,435 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:21:13,436 - INFO - Schema 'localhost_SampleDB2' created/verified successfully
+2025-10-01 14:21:13,439 - INFO - server1/SampleDB2: processed 3 tables
+2025-10-01 14:21:13,443 - INFO - Completed server1
+2025-10-01 14:21:13,454 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:21:13,477 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:21:13,488 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:21:13,496 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:21:13,498 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:21:13,502 - INFO - server1/SampleDB2: processed 3 tables
+2025-10-01 14:21:13,507 - INFO - Completed server1

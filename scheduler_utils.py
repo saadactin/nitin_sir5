@@ -49,12 +49,23 @@ def _job_wrapper(server_name, server_conf, job_type):
     status = "success"
     error_message = None
     timestamp = datetime.datetime.now()
+    
+    print(f"\n{'='*60}")
+    print(f"[SYNC] STARTED: {server_name} ({job_type})")
+    print(f"[TIME] {timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"[TARGET] {server_conf.get('server', 'Unknown')}:{server_conf.get('port', 'Unknown')}")
+    print(f"[DATABASE] {server_conf.get('target_postgres_db', 'Unknown')}")
+    print(f"{'='*60}\n")
 
     try:
         process_sql_server_hybrid(server_name, server_conf)
+        print(f"\n[OK] SYNC COMPLETED: {server_name} at {datetime.datetime.now().strftime('%H:%M:%S')}")
+        print(f"[STATUS] SUCCESS\n")
     except Exception as e:
         status = "failed"
         error_message = str(e)
+        print(f"\n[ERROR] SYNC FAILED: {server_name} at {datetime.datetime.now().strftime('%H:%M:%S')}")
+        print(f"[ERROR] {error_message}\n")
 
     # Update memory jobs
     for job in scheduled_jobs:
@@ -113,32 +124,56 @@ def schedule_daily_sync(server_name, hour, minute):
     _start_scheduler_thread()
 
 def delete_schedule(server_name, job_type):
+    """
+    Delete a schedule completely from memory, DB, and the schedule library.
+    This is the definitive deletion function that ensures permanent removal.
+    """
     global scheduled_jobs
+    
+    # Remove from in-memory list
     scheduled_jobs = [job for job in scheduled_jobs if not (job["server"] == server_name and job["type"] == job_type)]
+    
+    # Permanently delete from database
     conn = get_pg_connection()
     cur = conn.cursor()
-    # Mark as deleted (soft delete) to prevent re-scheduling on reload
     try:
-        cur.execute("""
-            UPDATE metrics_sync_tables.schedules
-            SET status = 'deleted'
-            WHERE server_name = %s AND job_type = %s
-        """, (server_name, job_type))
-        if cur.rowcount == 0:
-            cur.execute("""
-                DELETE FROM metrics_sync_tables.schedules
-                WHERE server_name = %s AND job_type = %s
-            """, (server_name, job_type))
-    except Exception:
+        # Hard delete - completely remove the record
         cur.execute("""
             DELETE FROM metrics_sync_tables.schedules
             WHERE server_name = %s AND job_type = %s
         """, (server_name, job_type))
+        print(f"[SCHEDULER_DELETE] Permanently deleted {cur.rowcount} schedule record(s) for {server_name}-{job_type}")
+    except Exception as e:
+        print(f"[SCHEDULER_DELETE] Error deleting from database: {e}")
+    
     conn.commit()
     cur.close()
     conn.close()
-    # Clear only this specific job's tag
-    sched.clear(f"{server_name}:{job_type}")
+    
+    # Clear scheduled jobs from schedule library with all possible tag formats
+    try:
+        tag_formats = [
+            f"{server_name}:{job_type}",
+            f"{server_name}-{job_type}", 
+            f"{server_name}-interval" if job_type.startswith("interval") else f"{server_name}-daily",
+            f"{server_name}_interval" if job_type.startswith("interval") else f"{server_name}_daily"
+        ]
+        
+        for tag in tag_formats:
+            sched.clear(tag)
+            print(f"[SCHEDULER_DELETE] Cleared tag: {tag}")
+            
+        # Also manually remove any jobs that might match
+        all_jobs = sched.jobs[:]
+        for job in all_jobs:
+            if hasattr(job, 'tags') and any(tag in job.tags for tag in tag_formats):
+                sched.cancel_job(job)
+                print(f"[SCHEDULER_DELETE] Cancelled job: {job}")
+                
+    except Exception as e:
+        print(f"[SCHEDULER_DELETE] Error clearing schedule library: {e}")
+    
+    print(f"[SCHEDULER_DELETE] Schedule {server_name}-{job_type} completely deleted from all locations")
 
 def update_schedule(server_name, job_type, **kwargs):
     delete_schedule(server_name, job_type)
@@ -168,27 +203,51 @@ def get_schedules():
     return [{"server": r[0], "type": r[1], "last_run": r[2], "status": r[3], "error": r[4]} for r in rows]
 
 def load_schedules_from_db():
+    """
+    Load only active schedules from database (exclude deleted ones)
+    """
     conn = get_pg_connection()
     cur = conn.cursor()
-    cur.execute("SELECT server_name, job_type FROM metrics_sync_tables.schedules WHERE status IS DISTINCT FROM 'deleted';")
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    for server_name, job_type in rows:
-        try:
-            # Ensure no duplicate schedule remains
-            sched.clear(f"{server_name}:{job_type}")
-            if job_type.startswith("interval_"):
-                minutes = int(job_type.replace("interval_", "").replace("m", ""))
-                schedule_interval_sync(server_name, minutes)
-            elif job_type.startswith("daily_"):
-                time_str = job_type.replace("daily_", "")
-                hour, minute = map(int, time_str.split(":"))
-                schedule_daily_sync(server_name, hour, minute)
-        except ValueError as e:
-            print(f"⚠️ Skipping schedule for {server_name}: {e}")
-            continue
+    try:
+        # Only load schedules that are not deleted - use proper exclusion
+        cur.execute("""
+            SELECT server_name, job_type 
+            FROM metrics_sync_tables.schedules 
+            WHERE status IS NULL OR status != 'deleted'
+        """)
+        rows = cur.fetchall()
+        loaded_count = 0
+        
+        for server_name, job_type in rows:
+            try:
+                # Ensure no duplicate schedule remains - clear any existing first
+                tag_formats = [
+                    f"{server_name}:{job_type}",
+                    f"{server_name}-{job_type}"
+                ]
+                for tag in tag_formats:
+                    sched.clear(tag)
+                
+                if job_type.startswith("interval_"):
+                    minutes = int(job_type.replace("interval_", "").replace("m", ""))
+                    schedule_interval_sync(server_name, minutes)
+                    loaded_count += 1
+                elif job_type.startswith("daily_"):
+                    time_str = job_type.replace("daily_", "")
+                    hour, minute = map(int, time_str.split(":"))
+                    schedule_daily_sync(server_name, hour, minute)
+                    loaded_count += 1
+            except ValueError as e:
+                print(f"⚠️ Skipping invalid schedule for {server_name}: {e}")
+                continue
+        
+        print(f"[LOAD_SCHEDULES] Successfully loaded {loaded_count} active schedules from database")
+        
+    except Exception as e:
+        print(f"[LOAD_SCHEDULES] Error loading schedules: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
 # Auto-load schedules
 load_schedules_from_db()

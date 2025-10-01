@@ -17,19 +17,17 @@ scheduled_jobs = []
 def load_schedules_from_db():
     """
     Load schedules from Postgres into memory at startup and schedule them
-    using the `schedule` library.
+    using the `schedule` library. Only loads active schedules (not deleted ones).
     """
     global scheduled_jobs
     conn = get_pg_connection()
     try:
         with conn.cursor() as cur:
-            # Select columns that should exist
+            # Only load active schedules (exclude deleted ones)
             cur.execute("""
-                SELECT server_name, job_type,
-                       (CASE WHEN column_name_exists('minutes') THEN minutes ELSE NULL END) AS minutes,
-                       (CASE WHEN column_name_exists('hour') THEN hour ELSE NULL END) AS hour,
-                       (CASE WHEN column_name_exists('minute') THEN minute ELSE NULL END) AS minute
+                SELECT server_name, job_type, minutes, hour, minute
                 FROM metrics_sync_tables.schedules
+                WHERE status IS NULL OR status != 'deleted'
             """)
             rows = cur.fetchall()
 
@@ -59,12 +57,14 @@ def see_schedule_page():
 # ------------------ Schedule Management ------------------
 def delete_schedule(server_name: str, job_type: str):
     """
-    Delete a schedule from memory, DB, and the schedule library.
+    Delete a schedule completely from memory, DB, and the schedule library.
+    This ensures the schedule will never come back.
 
     Args:
         server_name (str): The SQL server name
         job_type (str): Type of job (interval/daily)
     """
+    import schedule as sched
     global scheduled_jobs
 
     # Remove from in-memory list
@@ -73,20 +73,45 @@ def delete_schedule(server_name: str, job_type: str):
         if not (job["server"] == server_name and job["type"] == job_type)
     ]
 
-    # Remove from Postgres DB
+    # Permanently delete from Postgres DB
     conn = get_pg_connection()
     try:
         with conn.cursor() as cur:
+            # Hard delete - completely remove the record
             cur.execute("""
                 DELETE FROM metrics_sync_tables.schedules
                 WHERE server_name = %s AND job_type = %s
             """, (server_name, job_type))
+            print(f"[DELETE_SCHEDULE] Deleted {cur.rowcount} schedule record(s) for {server_name}-{job_type}")
         conn.commit()
     finally:
         conn.close()
 
-    # Clear scheduled jobs from `schedule` library
-    scheduler_utils.clear(tag=f"{server_name}-{job_type}")
+    # Clear scheduled jobs from `schedule` library with all possible tag formats
+    try:
+        # Try different tag formats that might be used
+        tag_formats = [
+            f"{server_name}-{job_type}",
+            f"{server_name}:{job_type}", 
+            f"{server_name}-interval" if job_type.startswith("interval") else f"{server_name}-daily",
+            f"{server_name}_interval" if job_type.startswith("interval") else f"{server_name}_daily"
+        ]
+        
+        for tag in tag_formats:
+            sched.clear(tag)
+            print(f"[DELETE_SCHEDULE] Cleared schedule library tag: {tag}")
+        
+        # Also clear any jobs that might match this server and job type
+        all_jobs = sched.jobs[:]
+        for job in all_jobs:
+            if hasattr(job, 'tags') and any(tag in job.tags for tag in tag_formats):
+                sched.cancel_job(job)
+                print(f"[DELETE_SCHEDULE] Cancelled job with tags: {job.tags}")
+                
+    except Exception as e:
+        print(f"[DELETE_SCHEDULE] Error clearing schedule library: {e}")
+    
+    print(f"[DELETE_SCHEDULE] Successfully deleted schedule {server_name}-{job_type} from all locations")
 
 # ------------------ Interval Scheduling ------------------
 def schedule_interval_sync(server_name, minutes):

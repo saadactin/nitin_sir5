@@ -5,15 +5,28 @@ import logging
 from sqlalchemy import create_engine, text, MetaData, inspect
 from pathlib import Path
 
-# Set up logging
+# Set up enhanced logging for terminal visibility
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('load_postgres.log'),
-        logging.StreamHandler()
-    ]
+        logging.StreamHandler()  # This sends output to terminal
+    ],
+    force=True  # Override any existing logging configuration
 )
+
+# Also configure root logger to ensure all messages show in terminal
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Add console handler if not already present
+if not any(isinstance(handler, logging.StreamHandler) for handler in logger.handlers):
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 import os
 
 # Absolute path to config

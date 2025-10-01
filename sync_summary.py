@@ -576,3 +576,253 @@ def get_sync_comparison():
             'status': 'Complete' if difference >= 0 else 'Incomplete'
         }
     }
+
+def _determine_sync_status(sql_rows, pg_rows, pg_exists):
+    """Determine sync status based on row counts"""
+    if not pg_exists:
+        return 'Incomplete'
+    elif pg_rows >= sql_rows:
+        return 'Synced'
+    else:
+        return 'Incomplete'
+
+def get_detailed_table_comparison(server_name):
+    """Get detailed table-by-table comparison between SQL Server and PostgreSQL"""
+    try:
+        config = load_config()
+        sqlservers = config.get("sqlservers", {})
+        
+        if server_name not in sqlservers:
+            return {"error": f"Server '{server_name}' not found"}
+        
+        server_config = sqlservers[server_name]
+        target_db = server_config.get('target_postgres_db')
+        
+        if not target_db:
+            return {"error": "No target PostgreSQL database configured"}
+        
+        # Get SQL Server table details
+        sql_tables = get_sqlserver_table_details(server_name, server_config)
+        
+        # Get PostgreSQL table details
+        pg_tables = get_postgres_table_details(target_db)
+        
+        # Create side-by-side comparison
+        table_comparison = []
+        
+        # Create a map of PostgreSQL tables for quick lookup
+        pg_table_map = {}
+        for pg_table in pg_tables:
+            # Use schema.table as key for PostgreSQL
+            key = f"{pg_table['schema_name']}.{pg_table['table_name']}"
+            pg_table_map[key] = pg_table
+        
+        # Also create a map by reconstructed SQL Server format for better matching
+        pg_table_by_sql_format = {}
+        for pg_table in pg_tables:
+            # Extract SQL Server database name and table name from PostgreSQL naming
+            # PostgreSQL schema format: {server}_{database} (e.g., localhost_SampleDB1)
+            # PostgreSQL table format: {schema}_{table} (e.g., dbo_Customers)
+            schema_parts = pg_table['schema_name'].split('_', 1)  # Split on first underscore
+            table_parts = pg_table['table_name'].split('_', 1)   # Split on first underscore
+            
+            if len(schema_parts) >= 2 and len(table_parts) >= 2:
+                sql_db = schema_parts[1]  # e.g., "SampleDB1" from "localhost_SampleDB1"
+                sql_table = table_parts[1]  # e.g., "Customers" from "dbo_Customers"
+                sql_key = f"{sql_db}.{sql_table}"
+                pg_table_by_sql_format[sql_key] = pg_table
+        
+        # Process SQL Server tables
+        for sql_table in sql_tables:
+            # Try multiple matching strategies:
+            sql_key = f"{sql_table['database_name']}.{sql_table['table_name']}"
+            
+            # 1. Try reconstructed SQL Server format matching
+            pg_match = pg_table_by_sql_format.get(sql_key)
+            
+            # 2. If not found, try direct schema.table format
+            if not pg_match:
+                pg_match = pg_table_map.get(sql_key)
+            
+            # 3. If still not found, try just table name matching (case-insensitive)
+            if not pg_match:
+                for pg_table in pg_tables:
+                    # Check if the table name part matches (after removing schema prefix)
+                    pg_table_name_part = pg_table['table_name'].split('_', 1)[-1] if '_' in pg_table['table_name'] else pg_table['table_name']
+                    if pg_table_name_part.lower() == sql_table['table_name'].lower():
+                        pg_match = pg_table
+                        break
+            
+            comparison_row = {
+                'sql_server': {
+                    'database': sql_table['database_name'],
+                    'table': sql_table['table_name'],
+                    'rows': sql_table['row_count'],
+                    'exists': True
+                },
+                'postgresql': {
+                    'schema': pg_match['schema_name'] if pg_match else 'N/A',
+                    'table': pg_match['table_name'] if pg_match else 'Missing',
+                    'rows': pg_match['row_count'] if pg_match else 0,
+                    'exists': pg_match is not None
+                },
+                'difference': (pg_match['row_count'] if pg_match else 0) - sql_table['row_count'],
+                'sync_status': _determine_sync_status(sql_table['row_count'], pg_match['row_count'] if pg_match else 0, pg_match is not None)
+            }
+            table_comparison.append(comparison_row)
+            
+            # Remove matched PostgreSQL table from map (find the correct key to remove)
+            if pg_match:
+                key_to_remove = None
+                for pg_key, pg_table in pg_table_map.items():
+                    if pg_table['schema_name'] == pg_match['schema_name'] and pg_table['table_name'] == pg_match['table_name']:
+                        key_to_remove = pg_key
+                        break
+                if key_to_remove:
+                    del pg_table_map[key_to_remove]
+        
+        # Add remaining PostgreSQL tables (not in SQL Server)
+        for pg_key, pg_table in pg_table_map.items():
+            comparison_row = {
+                'sql_server': {
+                    'database': 'N/A',
+                    'table': 'Not Found',
+                    'rows': 0,
+                    'exists': False
+                },
+                'postgresql': {
+                    'schema': pg_table['schema_name'],
+                    'table': pg_table['table_name'],
+                    'rows': pg_table['row_count'],
+                    'exists': True
+                },
+                'difference': pg_table['row_count'],
+                'sync_status': 'Extra Data'
+            }
+            table_comparison.append(comparison_row)
+        
+        return {
+            'server_name': server_name,
+            'target_database': target_db,
+            'sql_server_tables': len(sql_tables),
+            'postgresql_tables': len(pg_tables),
+            'table_comparison': sorted(table_comparison, key=lambda x: x['sql_server']['table']),
+            'summary': {
+                'total_comparisons': len(table_comparison),
+                'synced_tables': len([t for t in table_comparison if t['sync_status'] == 'Synced']),
+                'incomplete_tables': len([t for t in table_comparison if t['sync_status'] == 'Incomplete']),
+                'extra_pg_tables': len([t for t in table_comparison if t['sync_status'] == 'Extra Data'])
+            }
+        }
+        
+    except Exception as e:
+        return {"error": f"Error getting detailed comparison for {server_name}: {str(e)}"}
+
+def get_sqlserver_table_details(server_name, server_config):
+    """Get detailed table information from SQL Server"""
+    tables = []
+    try:
+        conn_str = build_sql_connection_string(server_config, "master")
+        conn = pyodbc.connect(conn_str)
+        cur = conn.cursor()
+        
+        # Get all databases except system databases
+        cur.execute("""
+            SELECT name FROM sys.databases 
+            WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')
+        """)
+        databases = [row[0] for row in cur.fetchall()]
+        
+        for db_name in databases:
+            if db_name in server_config.get('skip_databases', []):
+                continue
+                
+            try:
+                db_conn_str = build_sql_connection_string(server_config, db_name)
+                db_conn = pyodbc.connect(db_conn_str)
+                db_cur = db_conn.cursor()
+                
+                # Get all tables in this database with row counts
+                db_cur.execute("""
+                    SELECT t.TABLE_NAME
+                    FROM INFORMATION_SCHEMA.TABLES t
+                    WHERE t.TABLE_TYPE = 'BASE TABLE'
+                    ORDER BY t.TABLE_NAME
+                """)
+                table_names = [row[0] for row in db_cur.fetchall()]
+                
+                for table_name in table_names:
+                    try:
+                        db_cur.execute(f"SELECT COUNT(*) FROM [{table_name}]")
+                        count = db_cur.fetchone()[0]
+                        tables.append({
+                            'database_name': db_name,
+                            'table_name': table_name,
+                            'row_count': count
+                        })
+                    except Exception as e:
+                        print(f"Error counting rows in {db_name}.{table_name}: {e}")
+                        continue
+                
+                db_cur.close()
+                db_conn.close()
+                
+            except Exception as e:
+                print(f"Error processing database {db_name}: {e}")
+                continue
+        
+        cur.close()
+        conn.close()
+        
+    except Exception as e:
+        print(f"Error getting SQL Server table details for {server_name}: {e}")
+    
+    return tables
+
+def get_postgres_table_details(target_db):
+    """Get detailed table information from PostgreSQL"""
+    tables = []
+    try:
+        config = load_config()
+        pg_config = config.get('postgresql', {})
+        
+        import psycopg2
+        conn = psycopg2.connect(
+            host=pg_config.get('host', 'localhost'),
+            port=pg_config.get('port', 5432),
+            database=target_db,
+            user=pg_config.get('username', 'postgres'),
+            password=pg_config.get('password', '')
+        )
+        cur = conn.cursor()
+        
+        # Get all tables from all schemas (excluding system schemas and public schema)
+        cur.execute("""
+            SELECT table_schema, table_name 
+            FROM information_schema.tables 
+            WHERE table_type = 'BASE TABLE' 
+            AND table_schema NOT IN ('information_schema', 'pg_catalog', 'public')
+            ORDER BY table_schema, table_name
+        """)
+        
+        for schema_name, table_name in cur.fetchall():
+            try:
+                # Get row count for this table
+                cur.execute(f'SELECT COUNT(*) FROM "{schema_name}"."{table_name}"')
+                count = cur.fetchone()[0]
+                tables.append({
+                    'schema_name': schema_name,
+                    'table_name': table_name,
+                    'row_count': count
+                })
+            except Exception as e:
+                print(f"Error counting rows in {schema_name}.{table_name}: {e}")
+                continue
+        
+        cur.close()
+        conn.close()
+        
+    except Exception as e:
+        print(f"Error getting PostgreSQL table details for {target_db}: {e}")
+    
+    return tables

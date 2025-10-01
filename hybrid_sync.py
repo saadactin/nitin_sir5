@@ -11,15 +11,33 @@ import psycopg2
 from load_postgres import create_schema_if_not_exists, create_table_with_proper_types
 
 
-# Set up logging
+# Set up enhanced logging for terminal visibility
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('hybrid_sync.log'),
-        logging.StreamHandler()
-    ]
+        logging.StreamHandler()  # This sends output to terminal
+    ],
+    force=True  # Override any existing logging configuration
 )
+
+# Ensure the root logger is properly configured
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Make sure we have console output
+import sys
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+
+# Remove any existing console handlers and add our own
+for handler in logger.handlers[:]:
+    if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
+        logger.removeHandler(handler)
+logger.addHandler(console_handler)
 
 # Load DB connection info from YAML
 CONFIG_PATH = os.path.abspath(
@@ -697,6 +715,8 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
 
 def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_dir, pg_engine):
     logging.info(f"=== Starting FULL sync for database: {db_name} ===")
+    print(f"  📋 Getting table list for {db_name}...")
+    
     cursor = sql_engine.raw_connection().cursor()
     tables = []
     for row in cursor.tables(tableType='TABLE'):
@@ -704,18 +724,27 @@ def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_di
 
     if not tables:
         logging.warning(f"No tables found in {db_name}.")
+        print(f"  ⚠️ No tables found in {db_name}")
         return 0
 
+    print(f"  [INFO] Found {len(tables)} tables for FULL sync")
     processed_count = 0
-    for schema, table in tables:
+    
+    for i, (schema, table) in enumerate(tables, 1):
         try:
+            print(f"  [{i}/{len(tables)}] [SYNC] Full sync {schema}.{table}...", end="")
             logging.info(f"[FULL SYNC] Processing {schema}.{table}")
+            
             processed = full_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, cursor, schema, table)
-            # Count the table as processed even if it's empty (schema was created)
+            
+            print(f" [OK]")
             processed_count += 1
+            
         except Exception as e:
             logging.error(f"Failed to export/load {schema}.{table}: {e}")
+            print(f" ❌ Error: {str(e)[:50]}...")
     
+    print(f"  🎯 FULL sync completed: {processed_count}/{len(tables)} tables processed")
     logging.info(f"=== FULL sync completed for {db_name}, {processed_count}/{len(tables)} tables processed ===")
     return processed_count
 
@@ -723,6 +752,8 @@ def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_di
 
 def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_clean, output_dir, pg_engine):
     logging.info(f"=== Starting INCREMENTAL sync for database: {db_name} ===")
+    print(f"  📋 Getting table list for {db_name}...")
+    
     cursor = conn.cursor()
     tables = []
     for row in cursor.tables(tableType='TABLE'):
@@ -730,11 +761,16 @@ def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_cle
 
     if not tables:
         logging.warning(f"No tables found in {db_name}.")
+        print(f"  ⚠️ No tables found in {db_name}")
         return 0
 
+    print(f"  [INFO] Found {len(tables)} tables to process")
     processed_count = 0
-    for schema, table in tables:
+    
+    for i, (schema, table) in enumerate(tables, 1):
         try:
+            print(f"  [{i}/{len(tables)}] [SYNC] Syncing {schema}.{table}...", end="")
+            
             # Add debug info
             row_count = get_table_row_count(conn, schema, table)
             pk_columns = get_primary_key_info(conn, schema, table)
@@ -742,6 +778,7 @@ def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_cle
             uid_col = get_unique_identifier_column(conn, schema, table)
             sync_col = pk_columns[0] if pk_columns else (ts_col if ts_col else uid_col)
             last_value = get_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table)
+            
             logging.info(
                 f"[INCR SYNC] {schema}.{table}: row_count={row_count}, sync_col={sync_col}, last_value={last_value}"
             )
@@ -749,11 +786,15 @@ def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_cle
             processed = incremental_sync_table(
                 pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table
             )
-            # Count the table as processed even if no new rows were found (schema was ensured)
+            
+            print(f" [OK] ({row_count} rows)")
             processed_count += 1
+            
         except Exception as e:
             logging.error(f"Failed to sync/load {schema}.{table}: {e}")
+            print(f" ❌ Error: {str(e)[:50]}...")
 
+    print(f"  🎯 INCREMENTAL sync completed: {processed_count}/{len(tables)} tables processed")
     logging.info(
         f"=== INCREMENTAL sync completed for {db_name}, {processed_count}/{len(tables)} tables processed ==="
     )
@@ -781,26 +822,37 @@ def cleanup_system_tables(engine, schema_name):
 
 def process_sql_server_hybrid(server_name, server_conf):
     try:
+        print(f"🔧 Initializing sync for {server_name}...")
         pg_engine = get_pg_engine(server_conf.get("target_postgres_db"))
         create_sync_tracking_table(pg_engine)
         create_table_sync_tracking(pg_engine)
+        print(f"[OK] PostgreSQL connection established")
 
+        print(f"🔌 Connecting to SQL Server {server_conf['server']}...")
         master_conn = get_sql_connection(server_conf)
         logging.info(f"Connected to SQL Server: {server_conf['server']}")
+        print(f"[OK] SQL Server connection established")
+        
+        print(f"📋 Discovering databases...")
         databases = get_all_databases(master_conn)
         master_conn.close()
 
         if not databases:
             logging.warning(f"No user databases found on {server_conf['server']}.")
+            print(f"⚠️ No user databases found")
             return
 
         logging.info(f"Found {len(databases)} databases on {server_conf['server']}")
+        print(f"[INFO] Found {len(databases)} databases: {', '.join(databases)}")
         server_clean = ''.join(c for c in server_conf['server'] if c.isalnum() or c in '_-')
 
+        processed_dbs = 0
         for db_name in databases:
             if should_skip_database(db_name, server_conf):
+                print(f"⏭️ Skipping database: {db_name} (in skip list)")
                 continue
 
+            print(f"\n[DATABASE] Processing database: {db_name}")
             schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
             cleanup_system_tables(pg_engine, schema_name)
 
@@ -811,21 +863,32 @@ def process_sql_server_hybrid(server_name, server_conf):
             try:
                 if sync_status is None:
                     # First time → full sync
+                    print(f"🆕 First sync - performing FULL sync for {db_name}")
                     processed = full_sync_database(sql_engine, db_name, server_conf, server_clean, OUTPUT_DIR, pg_engine)
                     update_sync_status(pg_engine, server_conf['server'], db_name, 'full', 'COMPLETED')
+                    print(f"[OK] FULL sync completed for {db_name}")
                 else:
                     # Later runs → incremental
+                    print(f"[SYNC] Performing INCREMENTAL sync for {db_name}")
                     processed = incremental_sync_database(sql_engine, db_conn, db_name, server_conf, server_clean, OUTPUT_DIR, pg_engine)
                     update_sync_status(pg_engine, server_conf['server'], db_name, 'incremental', 'COMPLETED')
+                    print(f"[OK] INCREMENTAL sync completed for {db_name}")
 
                 logging.info(f"{server_name}/{db_name}: processed {processed} tables")
+                print(f"[STATS] {db_name}: {processed} tables processed")
+                processed_dbs += 1
+                
             finally:
                 db_conn.close()
                 sql_engine.dispose()
 
+        print(f"\n[COMPLETE] ALL DATABASES COMPLETED: {processed_dbs}/{len(databases)} databases synced")
         logging.info(f"Completed {server_name}")
+        
     except Exception as e:
         logging.error(f"Error processing {server_name}: {e}")
+        print(f"❌ CRITICAL ERROR in {server_name}: {e}")
+        raise
 def main():
     sqlservers = config.get('sqlservers', {})
     if not sqlservers:

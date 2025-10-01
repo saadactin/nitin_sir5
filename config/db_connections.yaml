@@ -6,14 +6,14 @@ postgresql:
   schema: CompanyDB
   username: migration_user
 sqlservers:
-  'MSSQLSERVER ':
+  MSSQLSERVER:
     check_new_databases: true
     password: root
-    port: 1433
-    server: localhost
+    port: 14344
+    server: localhost\SQL2019_Second
     skip_databases: []
     sync_mode: hybrid
-    target_postgres_db: NewSaad6
+    target_postgres_db: final4
     username: sa
   server1:
     check_new_databases: true
