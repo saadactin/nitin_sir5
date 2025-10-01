@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -49,67 +49,93 @@
       <div class="max-w-3xl mx-auto">
         <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
           <!-- Header -->
-          <div class="p-4 bg-success text-white rounded-t-lg flex items-center gap-2">
-            <span class="material-icons">database</span>
-            <h2 class="text-xl font-semibold">Add SQL Server</h2>
+          <div class="p-4 bg-primary text-white rounded-t-lg flex items-center gap-2">
+            <span class="material-icons">add_circle</span>
+            <h2 class="text-xl font-semibold">Add New SQL Server</h2>
           </div>
 
           <!-- Form Body -->
           <div class="p-6">
             <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <!-- Server Name -->
               <div>
                 <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Server Name</label>
-                <input type="text" name="server_name" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none" placeholder="e.g. ProductionDB" required>
-              </div>
-              <div>
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Host</label>
-                <input type="text" name="server" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none" placeholder="e.g. 192.168.1.100" required>
-              </div>
-              <div>
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Username</label>
-                <input type="text" name="username" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none" placeholder="e.g. sa" required>
-              </div>
-              <div>
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Password</label>
-                <input type="password" name="password" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none" placeholder="Enter password" required>
-              </div>
-              <div>
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Port</label>
-                <input type="number" name="port" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none" value="1433">
+                <input type="text" name="server_name" placeholder="e.g., server1" 
+                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Unique identifier for this server</p>
               </div>
 
-              <!-- 🔹 New Dropdown for PostgreSQL DB -->
+              <div>
+                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Host/Server Address</label>
+                <input type="text" name="server" placeholder="localhost or IP address" 
+                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
+              </div>
+
+              <div>
+                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Username</label>
+                <input type="text" name="username" placeholder="sa or windows" 
+                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Use 'windows' for Windows Authentication</p>
+              </div>
+
+              <div>
+                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Password</label>
+                <input type="password" name="password" placeholder="Password or 'windows'" 
+                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Use 'windows' for Windows Authentication</p>
+              </div>
+
+              <div>
+                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Port</label>
+                <input type="number" name="port" value="1433" 
+                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none">
+              </div>
+
+              <!-- Target PostgreSQL DB -->
               <div class="md:col-span-2">
                 <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Target PostgreSQL Database</label>
-                <select name="pg_database" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-success-dark focus:outline-none">
+                <select name="pg_database" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
+                  <option value="">Select target PostgreSQL database</option>
                   {% if postgres_dbs %}
                     {% for db in postgres_dbs %}
                       <option value="{{ db }}">{{ db }}</option>
                     {% endfor %}
                   {% else %}
-                    <option value="">⚠️ No PostgreSQL databases found</option>
+                    <option value="">No PostgreSQL databases found</option>
                   {% endif %}
                 </select>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">SQL Server data will be synced to this PostgreSQL database</p>
               </div>
 
-              <!-- Buttons -->
-              <div class="flex items-end justify-between mt-2 md:col-span-2">
-                <!-- Edit Button that redirects to edit page if server_name exists -->
-                {% if server_name and server_config %}
-                <a href="{{ url_for('edit_server', server_name=server_name) }}" class="flex items-center gap-1 px-4 py-2 bg-warning text-white rounded-md hover:bg-warning-dark transition-colors">
-                  <span class="material-icons">edit</span> Edit Server
-                </a>
-                {% else %}
-                <a href="{{ url_for('index') }}" class="flex items-center gap-1 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
-                  <span class="material-icons">arrow_back</span> Back to List
-                </a>
-                {% endif %}
-               
-                <button type="submit" class="flex items-center gap-1 px-4 py-2 bg-success text-white rounded-md hover:bg-success-dark transition-colors">
-                  <span class="material-icons">check_circle</span> Add Server
+              <!-- Action Buttons -->
+              <div class="md:col-span-2 flex gap-3 pt-4">
+                <button type="submit" 
+                        class="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-md font-medium transition-colors flex items-center gap-2">
+                  <span class="material-icons text-sm">add</span>
+                  Add SQL Server
                 </button>
+                <a href="{{ url_for('index') }}" 
+                   class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-medium transition-colors flex items-center gap-2">
+                  <span class="material-icons text-sm">arrow_back</span>
+                  Cancel
+                </a>
               </div>
             </form>
+          </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="material-icons text-blue-600 dark:text-blue-400 mt-0.5">info</span>
+            <div>
+              <h3 class="font-medium text-blue-900 dark:text-blue-100 mb-2">Authentication Options</h3>
+              <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                <li><strong>SQL Server Authentication:</strong> Use actual username and password</li>
+                <li><strong>Windows Authentication:</strong> Set both username and password to 'windows'</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

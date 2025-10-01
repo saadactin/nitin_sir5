@@ -19,7 +19,8 @@ from scheduler_utils import (
     get_schedules
 )
 from analytics import compare_table_rows, delta_tracking, top_changed_tables
-from metrics import get_server_metrics, get_database_metrics, get_sync_summary
+from metrics import get_server_metrics, get_database_metrics
+from sync_summary import get_sync_comparison, get_all_server_comparisons, get_individual_server_comparison
 from analytics_advanced import (
     fetch_database_history,
     fetch_table_history,
@@ -651,28 +652,57 @@ def database_metrics_json(server, db):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/sync-summary")
 @require_role(["admin", "operator", "viewer"])
 def sync_summary():
-    """Show overall sync summary across all servers"""
+    """Show sync summary page with individual server comparisons"""
     try:
-        summary = get_sync_summary()
+        all_comparisons = get_all_server_comparisons()
         return render_template("sync_summary.html", 
-                             summary=summary,
+                             servers=all_comparisons['servers'],
+                             total_servers=all_comparisons['total_servers'],
                              role=session.get("role"))
     except Exception as e:
         flash(f"❌ Error getting sync summary: {e}", "danger")
         return redirect(url_for("index"))
 
+@app.route("/sync-summary/<server_name>")
+@require_role(["admin", "operator", "viewer"])
+def sync_summary_detail(server_name):
+    """Show detailed comparison for a specific server"""
+    try:
+        comparison_data = get_individual_server_comparison(server_name)
+        if 'error' in comparison_data:
+            flash(f"❌ Error: {comparison_data['error']}", "danger")
+            return redirect(url_for("sync_summary"))
+        
+        # Get server info from config
+        config = load_config()
+        sqlservers = config.get("sqlservers", {})
+        server_config = sqlservers.get(server_name, {})
+        
+        server_info = {
+            'server_name': server_name,
+            'host': server_config.get('host', 'localhost'),
+            'port': server_config.get('port', 1433),
+            'target_postgres_db': server_config.get('target_postgres_db', 'unknown')
+        }
+        
+        return render_template("sync_summary_detail.html", 
+                             server_info=server_info,
+                             comparison=comparison_data['comparison'],
+                             role=session.get("role"))
+    except Exception as e:
+        flash(f"❌ Error getting detailed comparison for {server_name}: {e}", "danger")
+        return redirect(url_for("sync_summary"))
 
 @app.route("/sync-summary.json")
 @require_role(["admin", "operator", "viewer"])
 def sync_summary_json():
     """Return sync summary as JSON"""
     try:
-        summary = get_sync_summary()
-        payload = json.dumps(summary, indent=2)
+        comparison_data = get_sync_comparison()
+        payload = json.dumps(comparison_data, indent=2)
         return Response(payload, mimetype='application/json', headers={
             'Content-Disposition': 'attachment; filename=sync_summary.json'
         })

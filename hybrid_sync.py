@@ -43,6 +43,7 @@ def get_sql_connection(conf, database=None):
     """
     Get a pyodbc connection to SQL Server.
     Handles named instances, optional port, and escapes backslashes.
+    Supports both SQL Server authentication and Windows authentication.
     """
     server = conf['server'].replace("\\", "\\\\")  # Escape backslash for pyodbc
     port = conf.get('port')
@@ -50,14 +51,22 @@ def get_sql_connection(conf, database=None):
         # For TCP/IP connection, append port
         server = f"{server},{port}"
 
-    conn_str = (
-        f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-        f"SERVER={server};"
-        f"UID={conf['username']};PWD={conf['password']}"
-    )
+    conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};"
+    
+    # Check if Windows Authentication should be used
+    username = conf.get('username', '')
+    password = conf.get('password', '')
+    
+    if username.lower() in ['windows', 'trusted', ''] or password.lower() in ['windows', 'trusted', '']:
+        # Use Windows Authentication
+        conn_str += "Trusted_Connection=yes;"
+    else:
+        # Use SQL Server Authentication
+        conn_str += f"UID={username};PWD={password};"
+    
     if database:
-        conn_str += f";DATABASE={database}"
-    conn_str += ";MARS_Connection=Yes;Timeout=30"
+        conn_str += f"DATABASE={database};"
+    conn_str += "MARS_Connection=Yes;Timeout=30"
 
     return pyodbc.connect(conn_str)
 
@@ -66,9 +75,10 @@ def get_sqlalchemy_engine(conf, database=None):
     """
     Get a SQLAlchemy engine for SQL Server using pyodbc.
     Handles named instances, optional port, and escaping.
+    Supports both SQL Server authentication and Windows authentication.
     """
-    username = conf['username']
-    password = conf['password']
+    username = conf.get('username', '')
+    password = conf.get('password', '')
     server = conf['server'].replace("\\", "\\\\")
     port = conf.get('port')
     if port:
@@ -76,12 +86,18 @@ def get_sqlalchemy_engine(conf, database=None):
 
     db = database if database else "master"
 
-    # URL-encode driver and password
+    # URL-encode driver
     from urllib.parse import quote_plus
     driver = quote_plus("ODBC Driver 17 for SQL Server")
-    password_enc = quote_plus(password)
-
-    conn_url = f"mssql+pyodbc://{username}:{password_enc}@{server}/{db}?driver={driver}"
+    
+    # Check if Windows Authentication should be used
+    if username.lower() in ['windows', 'trusted', ''] or password.lower() in ['windows', 'trusted', '']:
+        # Use Windows Authentication
+        conn_url = f"mssql+pyodbc://@{server}/{db}?driver={driver}&Trusted_Connection=yes"
+    else:
+        # Use SQL Server Authentication
+        password_enc = quote_plus(password)
+        conn_url = f"mssql+pyodbc://{username}:{password_enc}@{server}/{db}?driver={driver}"
 
     return create_engine(conn_url, fast_executemany=True)
 

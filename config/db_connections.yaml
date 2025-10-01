@@ -6,7 +6,7 @@ postgresql:
   schema: CompanyDB
   username: migration_user
 sqlservers:
-  server1:
+  'MSSQLSERVER ':
     check_new_databases: true
     password: root
     port: 1433
@@ -15,3 +15,13 @@ sqlservers:
     sync_mode: hybrid
     target_postgres_db: NewSaad6
     username: sa
+  server1:
+    check_new_databases: true
+    password: windows
+    port: 1433
+    server: localhost
+    skip_databases:
+    - SampleDB
+    sync_mode: hybrid
+    target_postgres_db: final3
+    username: windows

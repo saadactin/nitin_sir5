@@ -59,10 +59,6 @@
             <span class="material-icons">dns</span> Server Metrics - {{ server }}
           </h1>
           <div class="flex gap-2">
-            <a href="{{ url_for('sync_summary') }}"
-              class="px-4 py-2 rounded-md border border-info text-info hover:bg-info hover:text-white transition">
-              📈 Sync Summary
-            </a>
             <a href="{{ url_for('index') }}"
               class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
               ← Back to Home
@@ -177,9 +173,6 @@
             <a href="{{ url_for('server_metrics', server=server) }}.json" target="_blank"
               class="px-4 py-2 border border-info text-info rounded-lg text-center hover:bg-info hover:text-white transition">
               📄 Export JSON</a>
-            <a href="{{ url_for('sync_summary') }}"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-center hover:bg-gray-100 dark:hover:bg-gray-700">📈
-              All Servers</a>
           </div>
         </div>
 
