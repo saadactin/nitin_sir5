@@ -59,7 +59,17 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # required for flash + sessions
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production-2025')
+
+# Session configuration for security
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+
+# Server restart detection - invalidate old sessions
+SERVER_START_TIME = datetime.now().timestamp()
 
 # Enable Flask request logging
 app.logger.setLevel(logging.INFO)
@@ -68,26 +78,55 @@ logging.getLogger('werkzeug').setLevel(logging.INFO)
 # Add request logging middleware
 @app.before_request
 def log_request_info():
-    app.logger.info(f'📥 {request.method} {request.path} - {request.remote_addr}')
+    app.logger.info(f'[REQ] {request.method} {request.path} - {request.remote_addr}')
+
+@app.before_request
+def check_authentication():
+    """Global authentication check for all requests - CANNOT BE BYPASSED"""
+    # List of endpoints that don't require authentication
+    public_endpoints = ['login', 'static']
+    
+    # Skip authentication check for public endpoints and static files
+    if request.endpoint in public_endpoints or request.path.startswith('/static/'):
+        return
+    
+    # Debug logging
+    app.logger.info(f'[DEBUG] Checking auth for {request.path} - Session: {dict(session)}')
+    
+    # Check if session is valid and not from previous server instance
+    session_start_time = session.get('session_start_time')
+    if session_start_time and session_start_time < SERVER_START_TIME:
+        # Session is from previous server instance, clear it
+        session.clear()
+        app.logger.info('[AUTH] Cleared old session from previous server instance')
+    
+    # MANDATORY authentication check - NO BYPASS ALLOWED
+    if 'role' not in session or 'username' not in session:
+        app.logger.warning(f'[AUTH] BLOCKED unauthenticated access to {request.path} from {request.remote_addr}')
+        app.logger.warning(f'[AUTH] Session contents: {dict(session)}')
+        # Clear any existing session data to be safe
+        session.clear()
+        flash('Please log in to access this page', 'warning')
+        return redirect(url_for('login'), code=302)
+    
+    # Additional validation - check if session values are actually valid
+    username = session.get('username')
+    role = session.get('role')
+    if not username or not role or role not in ['admin', 'operator', 'viewer']:
+        app.logger.warning(f'[AUTH] Invalid session data - username: {username}, role: {role}')
+        session.clear()
+        flash('Invalid session. Please log in again.', 'warning')
+        return redirect(url_for('login'), code=302)
+    
+    # Log successful authentication
+    app.logger.info(f'[AUTH] Authenticated access: {username} ({role}) to {request.path}')
 
 @app.after_request
 def log_response_info(response):
-    app.logger.info(f'📤 {request.method} {request.path} - {response.status_code}')
+    app.logger.info(f'[RESP] {request.method} {request.path} - {response.status_code}')
     return response
 
 init_admin_user()
-
-def require_role(allowed_roles):
-    def decorator(f):
-        def wrapper(*args, **kwargs):
-            role = session.get("role")
-            if role not in allowed_roles:
-                flash("❌ Access denied", "danger")
-                return redirect(url_for("view_schedules"))
-            return f(*args, **kwargs)
-        wrapper.__name__ = f.__name__
-        return wrapper
-    return decorator
 
 
 
@@ -99,18 +138,36 @@ def login():
         password = request.form["password"]
         role = authenticate_user(username, password)
         if role:
-            login_user(username, role)
-            flash(f"✅ Logged in as {role}", "success")
+            # Set session data with timestamp and IP
+            session["username"] = username
+            session["role"] = role
+            session["session_start_time"] = datetime.now().timestamp()
+            session["session_ip"] = request.remote_addr
+            session.permanent = True
+            flash(f"Welcome, {username}!", "success")
+            app.logger.info(f"[LOGIN] Successful login: {username} ({role}) from {request.remote_addr}")
             return redirect(url_for("index"))
         else:
-            flash("❌ Invalid credentials", "danger")
+            flash("Invalid credentials", "danger")
+            app.logger.warning(f"[LOGIN] Failed login attempt: {username} from {request.remote_addr}")
     return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
-    logout_user()
-    flash("✅ Logged out", "info")
+    username = session.get('username', 'Unknown')
+    session.clear()  # Clear all session data
+    flash("You have been logged out successfully.", "info")
+    app.logger.info(f"[LOGOUT] User logged out: {username}")
+    return redirect(url_for("login"))
+
+@app.route("/force-logout")
+def force_logout():
+    """Force logout - clears ALL session data"""
+    app.logger.info(f"[FORCE-LOGOUT] Clearing session: {dict(session)}")
+    session.clear()
+    session.modified = True
+    flash("Session forcefully cleared. Please log in.", "warning")
     return redirect(url_for("login"))
 
 
@@ -136,11 +193,11 @@ def create_user_route():
 @require_role(["admin", "operator", "viewer"])
 def index():
     """Homepage → show available servers and sync option"""
-    app.logger.info(f"🏠 Homepage accessed by user: {session.get('username', 'Unknown')}")
+    app.logger.info(f"[HOME] Homepage accessed by user: {session.get('username', 'Unknown')}")
     config = load_config()
     sqlservers = config.get("sqlservers", {})
     role = session.get("role")  # make sure this is aligned with the above line
-    app.logger.info(f"📊 Loaded {len(sqlservers)} SQL servers for display")
+    app.logger.info(f"[INFO] Loaded {len(sqlservers)} SQL servers for display")
     return render_template("sync_servers.html", sqlservers=sqlservers, role=role)
 
 

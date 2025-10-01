@@ -481,3 +481,978 @@
 2025-10-01 14:21:13,498 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
 2025-10-01 14:21:13,502 - INFO - server1/SampleDB2: processed 3 tables
 2025-10-01 14:21:13,507 - INFO - Completed server1
+2025-10-01 14:22:41,082 - INFO - 127.0.0.1 - - [01/Oct/2025 14:22:41] "GET /sync-summary HTTP/1.1" 200 -
+2025-10-01 14:22:41,224 - INFO - 127.0.0.1 - - [01/Oct/2025 14:22:41] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:24:43,410 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\auth.py', reloading
+2025-10-01 14:24:45,146 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:24:45,147 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:24:45,147 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:24:45,148 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:24:45,148 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:24:45,149 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:24:45,183 - WARNING -  * Debugger is active!
+2025-10-01 14:24:45,187 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:24:54,460 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:24:56,401 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:24:56,402 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:24:56,403 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:24:56,403 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:24:56,403 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:24:56,404 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:24:56,431 - WARNING -  * Debugger is active!
+2025-10-01 14:24:56,434 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:25:23,211 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:25:24,451 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:25:24,451 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:25:24,452 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:25:24,452 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:25:24,452 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:25:24,453 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:25:24,472 - WARNING -  * Debugger is active!
+2025-10-01 14:25:24,476 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:26:30,486 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\test_auth_routing.py', reloading
+2025-10-01 14:26:32,015 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:26:32,015 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:26:32,016 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:26:32,016 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:26:32,017 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:26:32,017 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:26:32,035 - WARNING -  * Debugger is active!
+2025-10-01 14:26:32,038 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:28:44,410 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:28:45,829 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:28:45,829 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:28:45,829 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:28:45,830 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:28:45,830 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:28:45,830 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:28:45,849 - WARNING -  * Debugger is active!
+2025-10-01 14:28:45,852 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:29:01,174 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:29:02,700 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:29:02,701 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:29:02,701 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:29:02,702 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:29:02,702 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:29:02,702 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:29:02,719 - WARNING -  * Debugger is active!
+2025-10-01 14:29:02,722 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:29:21,067 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:29:22,414 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:29:22,414 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:29:22,415 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:29:22,415 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:29:22,416 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:29:22,416 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:29:22,437 - WARNING -  * Debugger is active!
+2025-10-01 14:29:22,440 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:29:57,125 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:29:58,382 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:29:58,383 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:29:58,384 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:29:58,385 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:29:58,385 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:29:58,385 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:29:58,396 - WARNING -  * Debugger is active!
+2025-10-01 14:29:58,399 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:32:28,465 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:32:28,465 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:32:28,465 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:32:28,466 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:32:28,466 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:32:28,466 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:32:28,488 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-10-01 14:32:28,488 - INFO - [33mPress CTRL+C to quit[0m
+2025-10-01 14:32:28,489 - INFO -  * Restarting with stat
+2025-10-01 14:32:29,710 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:32:29,711 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:32:29,711 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:32:29,711 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:32:29,712 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:32:29,712 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:32:29,722 - WARNING -  * Debugger is active!
+2025-10-01 14:32:29,725 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:32:37,355 - INFO - [REQ] GET /sync-summary - 127.0.0.1
+2025-10-01 14:32:37,356 - INFO - [AUTH] Unauthenticated access attempt to /sync-summary
+2025-10-01 14:32:37,357 - INFO - [RESP] GET /sync-summary - 302
+2025-10-01 14:32:37,359 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:37] "[32mGET /sync-summary HTTP/1.1[0m" 302 -
+2025-10-01 14:32:37,363 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:32:37,366 - INFO - [RESP] GET /login - 200
+2025-10-01 14:32:37,368 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:37] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:32:44,492 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:32:44,816 - INFO - [LOGIN] Successful login: admin (admin) from 127.0.0.1
+2025-10-01 14:32:44,817 - INFO - [RESP] POST /login - 302
+2025-10-01 14:32:44,818 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:44] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-10-01 14:32:44,821 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:32:44,821 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:32:44,823 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:32:44,848 - INFO - [RESP] GET / - 200
+2025-10-01 14:32:44,849 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:44] "GET / HTTP/1.1" 200 -
+2025-10-01 14:32:45,183 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:32:45,226 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:32:45,227 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:45] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:32:50,849 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:32:50,849 - INFO - [RESP] GET /login - 200
+2025-10-01 14:32:50,850 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:50] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:32:58,130 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:32:58,574 - INFO - [LOGIN] Successful login: admin (admin) from 127.0.0.1
+2025-10-01 14:32:58,576 - INFO - [RESP] POST /login - 302
+2025-10-01 14:32:58,577 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:58] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-10-01 14:32:58,583 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:32:58,584 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:32:58,589 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:32:58,591 - INFO - [RESP] GET / - 200
+2025-10-01 14:32:58,593 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:58] "GET / HTTP/1.1" 200 -
+2025-10-01 14:32:58,918 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:32:58,921 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:32:58,923 - INFO - 127.0.0.1 - - [01/Oct/2025 14:32:58] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:33:07,517 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:33:07,517 - INFO - [RESP] GET /login - 200
+2025-10-01 14:33:07,519 - INFO - 127.0.0.1 - - [01/Oct/2025 14:33:07] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:33:13,941 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:33:14,065 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:33:14,066 - INFO - 127.0.0.1 - - [01/Oct/2025 14:33:14] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:33:14,248 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:33:14,250 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:33:14,251 - INFO - 127.0.0.1 - - [01/Oct/2025 14:33:14] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:33:14,583 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:33:14,585 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:33:14,588 - INFO - 127.0.0.1 - - [01/Oct/2025 14:33:14] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:33:16,673 - INFO - [REQ] GET /sync-summary - 127.0.0.1
+2025-10-01 14:33:17,275 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:33:17,276 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:33:17,277 - INFO - 127.0.0.1 - - [01/Oct/2025 14:33:17] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:33:17,935 - INFO - [RESP] GET /sync-summary - 200
+2025-10-01 14:33:17,937 - INFO - 127.0.0.1 - - [01/Oct/2025 14:33:17] "GET /sync-summary HTTP/1.1" 200 -
+2025-10-01 14:33:18,279 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:33:18,280 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:33:18,283 - INFO - 127.0.0.1 - - [01/Oct/2025 14:33:18] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:34:58,399 - INFO - Sync tracking table created/verified
+2025-10-01 14:34:58,450 - INFO - Connected to SQL Server: localhost
+2025-10-01 14:34:58,502 - INFO - Found 3 databases on localhost
+2025-10-01 14:34:58,503 - INFO - Skipping database: SampleDB (listed in skip_databases)
+2025-10-01 14:34:58,505 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:34:58,507 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:34:58,574 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:34:58,898 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:34:59,063 - INFO - Schema 'localhost_SampleDB1' created/verified successfully
+2025-10-01 14:34:59,100 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:34:59,110 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:34:59,292 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:34:59,433 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:34:59,434 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:34:59,437 - INFO - server1/SampleDB1: processed 3 tables
+2025-10-01 14:34:59,440 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:34:59,440 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:34:59,475 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:34:59,802 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:34:59,938 - INFO - Schema 'localhost_SampleDB2' created/verified successfully
+2025-10-01 14:34:59,949 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:34:59,957 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:35:00,150 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:35:00,332 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:35:00,334 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:35:00,340 - INFO - server1/SampleDB2: processed 3 tables
+2025-10-01 14:35:00,343 - INFO - Completed server1
+2025-10-01 14:35:36,184 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:35:36,230 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:35:36,378 - INFO -  * Restarting with stat
+2025-10-01 14:35:37,769 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:35:37,769 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:35:37,770 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:35:37,770 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:35:37,770 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:35:37,771 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:35:37,789 - WARNING -  * Debugger is active!
+2025-10-01 14:35:37,793 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:35:37,918 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:35:37,918 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:35:37,918 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:35:37,919 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:35:37,919 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:35:37,920 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:35:37,938 - WARNING -  * Debugger is active!
+2025-10-01 14:35:37,941 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:37:13,999 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:37:14,000 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:37:14,000 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:37:14,000 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:37:14,001 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:37:14,001 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:37:14,030 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-10-01 14:37:14,030 - INFO - [33mPress CTRL+C to quit[0m
+2025-10-01 14:37:14,032 - INFO -  * Restarting with stat
+2025-10-01 14:37:15,447 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:37:15,447 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:37:15,448 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:37:15,448 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:37:15,448 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:37:15,449 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:37:15,459 - WARNING -  * Debugger is active!
+2025-10-01 14:37:15,464 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:37:18,857 - INFO - [REQ] GET /sync-summary - 127.0.0.1
+2025-10-01 14:37:18,859 - INFO - [AUTH] Cleared old session from previous server instance
+2025-10-01 14:37:18,860 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync-summary from 127.0.0.1
+2025-10-01 14:37:18,860 - INFO - [RESP] GET /sync-summary - 302
+2025-10-01 14:37:18,861 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:18] "[32mGET /sync-summary HTTP/1.1[0m" 302 -
+2025-10-01 14:37:18,866 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:37:18,870 - INFO - [RESP] GET /login - 200
+2025-10-01 14:37:18,870 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:18] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:37:24,841 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:37:25,134 - WARNING - [LOGIN] Failed login attempt: admin from 127.0.0.1
+2025-10-01 14:37:25,136 - INFO - [RESP] POST /login - 200
+2025-10-01 14:37:25,136 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:25] "POST /login HTTP/1.1" 200 -
+2025-10-01 14:37:28,489 - INFO - Sync tracking table created/verified
+2025-10-01 14:37:28,555 - INFO - Connected to SQL Server: localhost
+2025-10-01 14:37:28,592 - INFO - Found 3 databases on localhost
+2025-10-01 14:37:28,593 - INFO - Skipping database: SampleDB (listed in skip_databases)
+2025-10-01 14:37:28,594 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_event_map
+2025-10-01 14:37:28,595 - INFO - Cleaned up system table: localhost_SampleDB1.sys_trace_xe_action_map
+2025-10-01 14:37:28,643 - INFO - === Starting INCREMENTAL sync for database: SampleDB1 ===
+2025-10-01 14:37:28,854 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:37:28,959 - INFO - Schema 'localhost_SampleDB1' created/verified successfully
+2025-10-01 14:37:28,985 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:37:29,000 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:37:29,128 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:37:29,276 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:37:29,276 - INFO - === INCREMENTAL sync completed for SampleDB1, 3/3 tables processed ===
+2025-10-01 14:37:29,280 - INFO - server1/SampleDB1: processed 3 tables
+2025-10-01 14:37:29,282 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_event_map
+2025-10-01 14:37:29,283 - INFO - Cleaned up system table: localhost_SampleDB2.sys_trace_xe_action_map
+2025-10-01 14:37:29,311 - INFO - === Starting INCREMENTAL sync for database: SampleDB2 ===
+2025-10-01 14:37:29,561 - INFO - [INCR SYNC] dbo.Customers: row_count=5, sync_col=CustomerID, last_value=None
+2025-10-01 14:37:29,688 - INFO - Schema 'localhost_SampleDB2' created/verified successfully
+2025-10-01 14:37:29,702 - INFO - Last value is None for dbo.Customers, using hash-based deduplication
+2025-10-01 14:37:29,712 - INFO - No new rows found for dbo.Customers
+2025-10-01 14:37:29,907 - INFO - [INCR SYNC] sys.trace_xe_action_map: row_count=22, sync_col=None, last_value=None
+2025-10-01 14:37:30,071 - INFO - [INCR SYNC] sys.trace_xe_event_map: row_count=139, sync_col=None, last_value=None
+2025-10-01 14:37:30,072 - INFO - === INCREMENTAL sync completed for SampleDB2, 3/3 tables processed ===
+2025-10-01 14:37:30,075 - INFO - server1/SampleDB2: processed 3 tables
+2025-10-01 14:37:30,076 - INFO - Completed server1
+2025-10-01 14:37:34,089 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:37:34,392 - INFO - [LOGIN] Successful login: admin (admin) from 127.0.0.1
+2025-10-01 14:37:34,392 - INFO - [RESP] POST /login - 302
+2025-10-01 14:37:34,393 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:34] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-10-01 14:37:34,397 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:37:34,397 - INFO - [AUTH] Authenticated access: admin (admin) to /
+2025-10-01 14:37:34,398 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:37:34,400 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:37:34,427 - INFO - [RESP] GET / - 200
+2025-10-01 14:37:34,428 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:34] "GET / HTTP/1.1" 200 -
+2025-10-01 14:37:34,748 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:37:34,802 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:37:34,803 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:34] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:37:45,495 - INFO - [REQ] GET /logout - 127.0.0.1
+2025-10-01 14:37:45,497 - INFO - [AUTH] Authenticated access: admin (admin) to /logout
+2025-10-01 14:37:45,498 - INFO - [LOGOUT] User logged out: admin
+2025-10-01 14:37:45,499 - INFO - [RESP] GET /logout - 302
+2025-10-01 14:37:45,500 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:45] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-10-01 14:37:45,801 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:37:45,802 - INFO - [RESP] GET /login - 200
+2025-10-01 14:37:45,803 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:45] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:37:51,594 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:37:51,595 - WARNING - [AUTH] BLOCKED unauthenticated access to /view-schedules from 127.0.0.1
+2025-10-01 14:37:51,597 - INFO - [RESP] GET /view-schedules - 302
+2025-10-01 14:37:51,599 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:51] "[32mGET /view-schedules HTTP/1.1[0m" 302 -
+2025-10-01 14:37:51,609 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:37:51,611 - INFO - [RESP] GET /login - 200
+2025-10-01 14:37:51,613 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:51] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:37:58,304 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:37:58,307 - INFO - [RESP] GET /login - 200
+2025-10-01 14:37:58,309 - INFO - 127.0.0.1 - - [01/Oct/2025 14:37:58] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:38:05,219 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:38:05,685 - INFO - [LOGIN] Successful login: admin (admin) from 127.0.0.1
+2025-10-01 14:38:05,686 - INFO - [RESP] POST /login - 302
+2025-10-01 14:38:05,688 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:05] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-10-01 14:38:05,694 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:38:05,695 - INFO - [AUTH] Authenticated access: admin (admin) to /
+2025-10-01 14:38:05,695 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:38:05,702 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:38:05,704 - INFO - [RESP] GET / - 200
+2025-10-01 14:38:05,707 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:05] "GET / HTTP/1.1" 200 -
+2025-10-01 14:38:06,034 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:38:06,036 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:38:06,037 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:06] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:38:09,980 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:38:09,981 - INFO - [AUTH] Authenticated access: admin (admin) to /view-schedules
+2025-10-01 14:38:10,053 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:38:10,054 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:10] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:38:10,294 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:10,295 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:10,297 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:10,299 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:10] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:10,544 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:38:10,545 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:38:10,547 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:10] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:38:11,444 - INFO - [REQ] GET /dashboard - 127.0.0.1
+2025-10-01 14:38:11,444 - INFO - [AUTH] Authenticated access: admin (admin) to /dashboard
+2025-10-01 14:38:11,713 - INFO - [RESP] GET /dashboard - 200
+2025-10-01 14:38:11,715 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:11] "GET /dashboard HTTP/1.1" 200 -
+2025-10-01 14:38:11,741 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:38:11,742 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:38:11,745 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:11] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:38:14,010 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:38:14,010 - INFO - [AUTH] Authenticated access: admin (admin) to /view-schedules
+2025-10-01 14:38:14,076 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:38:14,077 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:14] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:38:14,319 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:14,321 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:14,322 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:14,325 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:14] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:14,589 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:38:14,591 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:38:14,593 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:14] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:38:17,598 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:17,600 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:17,601 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:17,603 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:17] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:20,277 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:20,278 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:20,278 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:20,279 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:20] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:22,712 - INFO - [REQ] GET /dashboard - 127.0.0.1
+2025-10-01 14:38:22,714 - INFO - [AUTH] Authenticated access: admin (admin) to /dashboard
+2025-10-01 14:38:22,894 - INFO - [RESP] GET /dashboard - 200
+2025-10-01 14:38:22,895 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:22] "GET /dashboard HTTP/1.1" 200 -
+2025-10-01 14:38:22,934 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:38:22,937 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:38:22,937 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:22] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:38:26,494 - INFO - [REQ] GET /logout - 127.0.0.1
+2025-10-01 14:38:26,496 - INFO - [AUTH] Authenticated access: admin (admin) to /logout
+2025-10-01 14:38:26,499 - INFO - [LOGOUT] User logged out: admin
+2025-10-01 14:38:26,502 - INFO - [RESP] GET /logout - 302
+2025-10-01 14:38:26,504 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:26] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-10-01 14:38:26,801 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:38:26,802 - INFO - [RESP] GET /login - 200
+2025-10-01 14:38:26,803 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:26] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:38:29,418 - INFO - [REQ] GET /dashboard - 127.0.0.1
+2025-10-01 14:38:29,420 - WARNING - [AUTH] BLOCKED unauthenticated access to /dashboard from 127.0.0.1
+2025-10-01 14:38:29,422 - INFO - [RESP] GET /dashboard - 302
+2025-10-01 14:38:29,424 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:29] "[32mGET /dashboard HTTP/1.1[0m" 302 -
+2025-10-01 14:38:29,435 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:38:29,437 - INFO - [RESP] GET /login - 200
+2025-10-01 14:38:29,438 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:38:36,568 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:38:36,979 - INFO - [LOGIN] Successful login: admin (admin) from 127.0.0.1
+2025-10-01 14:38:36,980 - INFO - [RESP] POST /login - 302
+2025-10-01 14:38:36,981 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:36] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-10-01 14:38:36,987 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:38:36,987 - INFO - [AUTH] Authenticated access: admin (admin) to /
+2025-10-01 14:38:36,989 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:38:36,992 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:38:36,996 - INFO - [RESP] GET / - 200
+2025-10-01 14:38:36,997 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:36] "GET / HTTP/1.1" 200 -
+2025-10-01 14:38:37,329 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:38:37,333 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:38:37,336 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:37] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:38:39,721 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:38:39,722 - INFO - [AUTH] Authenticated access: admin (admin) to /view-schedules
+2025-10-01 14:38:39,771 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:38:39,772 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:39] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:38:40,027 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:40,029 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:40,030 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:40,031 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:40] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:40,229 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:38:40,233 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:38:40,241 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:40] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:38:43,236 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:43,238 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:43,239 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:43,242 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:43] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:45,915 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:45,916 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:45,916 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:45,917 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:45] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:49,245 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:49,246 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:49,247 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:49,249 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:49] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:52,549 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:52,550 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:52,551 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:52,552 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:52] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:55,849 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:55,850 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:55,852 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:55,854 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:55] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:38:58,552 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:38:58,553 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:38:58,554 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:38:58,554 - INFO - 127.0.0.1 - - [01/Oct/2025 14:38:58] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:01,857 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:01,859 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:01,860 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:01,862 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:01] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:04,538 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:04,538 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:04,540 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:04,541 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:04] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:07,846 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:07,846 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:07,848 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:07,849 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:07] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:10,543 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:10,543 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:10,545 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:10,545 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:10] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:13,850 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:13,850 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:13,850 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:13,851 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:13] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:16,550 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:16,550 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:16,551 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:16,552 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:16] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:19,853 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:19,854 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:19,855 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:19,857 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:19] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:22,549 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:22,551 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:22,552 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:22,554 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:22] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:25,843 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:25,844 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:25,844 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:25,845 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:25] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:28,541 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:28,543 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:28,544 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:28,547 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:28] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:31,856 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:31,857 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:31,858 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:31,860 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:31] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:34,541 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:34,542 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:34,543 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:34,545 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:34] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:37,859 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:37,861 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:39:37,862 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:39:37,863 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:37] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:39:39,653 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:39:39,969 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:39:40,074 - INFO -  * Restarting with stat
+2025-10-01 14:39:41,276 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:39:41,276 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:39:41,277 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:39:41,277 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:39:41,277 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:39:41,278 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:39:41,296 - WARNING -  * Debugger is active!
+2025-10-01 14:39:41,298 - INFO -  * Debugger PIN: 149-313-464
+2025-10-01 14:39:41,321 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:41,322 - INFO - [AUTH] Cleared old session from previous server instance
+2025-10-01 14:39:41,322 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:39:41,323 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:39:41,324 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:41] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:39:41,328 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:39:41,330 - INFO - [RESP] GET /login - 200
+2025-10-01 14:39:41,330 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:41] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:39:41,414 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:39:41,415 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:39:41,415 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:39:41,415 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:39:41,415 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:39:41,416 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:39:41,428 - WARNING -  * Debugger is active!
+2025-10-01 14:39:41,431 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:39:43,852 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:43,853 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:39:43,855 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:39:43,856 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:43] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:39:44,115 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:39:44,117 - INFO - [RESP] GET /login - 200
+2025-10-01 14:39:44,118 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:44] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:39:46,544 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:46,546 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:39:46,547 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:39:46,548 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:46] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:39:46,867 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:39:46,867 - INFO - [RESP] GET /login - 200
+2025-10-01 14:39:46,869 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:46] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:39:49,540 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:39:49,542 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:39:49,543 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:39:49,544 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:49] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:39:49,854 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:39:49,855 - INFO - [RESP] GET /login - 200
+2025-10-01 14:39:49,856 - INFO - 127.0.0.1 - - [01/Oct/2025 14:39:49] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:40:15,634 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:40:15,786 - INFO -  * Restarting with stat
+2025-10-01 14:40:15,888 - INFO -  * Detected change in 'C:\\Users\\SaadSayyed\\Desktop\\nitin_sir_7\\nitin_sir5\\app.py', reloading
+2025-10-01 14:44:18,831 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:44:18,832 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:44:18,832 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:44:18,832 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:44:18,832 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:44:18,833 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:44:18,854 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-10-01 14:44:18,854 - INFO - [33mPress CTRL+C to quit[0m
+2025-10-01 14:44:18,856 - INFO -  * Restarting with stat
+2025-10-01 14:44:20,280 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:44:20,280 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:44:20,281 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:44:20,281 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:44:20,285 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:44:20,286 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:44:20,316 - WARNING -  * Debugger is active!
+2025-10-01 14:44:20,320 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:44:20,340 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:20,341 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:44:20,342 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:44:20,343 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:44:20,343 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:44:20,345 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:20] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:44:20,406 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:44:20,410 - INFO - [RESP] GET /login - 200
+2025-10-01 14:44:20,411 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:20] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:44:21,600 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:44:21,602 - INFO - [DEBUG] Checking auth for /view-schedules - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:44:21,603 - WARNING - [AUTH] BLOCKED unauthenticated access to /view-schedules from 127.0.0.1
+2025-10-01 14:44:21,603 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:44:21,604 - INFO - [RESP] GET /view-schedules - 302
+2025-10-01 14:44:21,605 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:21] "[32mGET /view-schedules HTTP/1.1[0m" 302 -
+2025-10-01 14:44:21,914 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:44:21,915 - INFO - [RESP] GET /login - 200
+2025-10-01 14:44:21,916 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:21] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:44:28,898 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:44:29,388 - INFO - [LOGIN] Successful login: admin (admin) from 127.0.0.1
+2025-10-01 14:44:29,391 - INFO - [RESP] POST /login - 302
+2025-10-01 14:44:29,395 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:29] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-10-01 14:44:29,406 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:44:29,408 - INFO - [DEBUG] Checking auth for / - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310069.388528, 'username': 'admin'}
+2025-10-01 14:44:29,408 - INFO - [AUTH] Authenticated access: admin (admin) to /
+2025-10-01 14:44:29,410 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:44:29,416 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:44:29,450 - INFO - [RESP] GET / - 200
+2025-10-01 14:44:29,452 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:29] "GET / HTTP/1.1" 200 -
+2025-10-01 14:44:29,472 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:44:29,615 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:44:29,616 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:29] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:44:32,935 - INFO - [REQ] GET /dashboard - 127.0.0.1
+2025-10-01 14:44:32,936 - INFO - [DEBUG] Checking auth for /dashboard - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310069.388528, 'username': 'admin'}
+2025-10-01 14:44:32,938 - INFO - [AUTH] Authenticated access: admin (admin) to /dashboard
+2025-10-01 14:44:33,123 - INFO - [RESP] GET /dashboard - 200
+2025-10-01 14:44:33,124 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:33] "GET /dashboard HTTP/1.1" 200 -
+2025-10-01 14:44:33,167 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:44:33,169 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:44:33,170 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:33] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:44:35,037 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:44:35,039 - INFO - [DEBUG] Checking auth for /view-schedules - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310069.388528, 'username': 'admin'}
+2025-10-01 14:44:35,040 - INFO - [AUTH] Authenticated access: admin (admin) to /view-schedules
+2025-10-01 14:44:35,116 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:44:35,118 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:35] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:44:35,352 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:35,353 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310069.388528, 'username': 'admin'}
+2025-10-01 14:44:35,354 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:35,355 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:35,358 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:35] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:44:35,617 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:44:35,619 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:44:35,622 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:35] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:44:38,577 - INFO - [REQ] POST /delete-schedule/server1/interval_5m - 127.0.0.1
+2025-10-01 14:44:38,578 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:38,580 - INFO - [DEBUG] Checking auth for /delete-schedule/server1/interval_5m - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310069.388528, 'username': 'admin'}
+2025-10-01 14:44:38,581 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310069.388528, 'username': 'admin'}
+2025-10-01 14:44:38,582 - INFO - [AUTH] Authenticated access: admin (admin) to /delete-schedule/server1/interval_5m
+2025-10-01 14:44:38,582 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:38,588 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:38,591 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:38] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:44:38,664 - INFO - [RESP] POST /delete-schedule/server1/interval_5m - 302
+2025-10-01 14:44:38,665 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:38] "[32mPOST /delete-schedule/server1/interval_5m HTTP/1.1[0m" 302 -
+2025-10-01 14:44:38,825 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:44:38,963 - INFO - [AUTH] Authenticated access: admin (admin) to /view-schedules
+2025-10-01 14:44:39,035 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:44:39,037 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:39] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:44:39,055 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:44:39,058 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:44:39,060 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:39] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:44:39,450 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:39,465 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:39,466 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:39,467 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:39] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:44:41,721 - INFO - [REQ] POST /delete-schedule/server1/interval_20m - 127.0.0.1
+2025-10-01 14:44:41,735 - INFO - [AUTH] Authenticated access: admin (admin) to /delete-schedule/server1/interval_20m
+2025-10-01 14:44:41,808 - INFO - [RESP] POST /delete-schedule/server1/interval_20m - 302
+2025-10-01 14:44:41,810 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:41] "[32mPOST /delete-schedule/server1/interval_20m HTTP/1.1[0m" 302 -
+2025-10-01 14:44:42,033 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:44:42,046 - INFO - [AUTH] Authenticated access: admin (admin) to /view-schedules
+2025-10-01 14:44:42,114 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:44:42,115 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:42] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:44:42,448 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:42,453 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:42,455 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:42,456 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:42] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:44:42,529 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:44:42,531 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:44:42,540 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:42] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:44:45,216 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:45,229 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:45,230 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:45,232 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:45] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:44:48,535 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:48,542 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:48,543 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:48,545 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:48] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:44:51,224 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:51,233 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:51,238 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:51,239 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:51] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:44:54,527 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:54,536 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:54,538 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:54,540 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:54] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:44:57,226 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:44:57,234 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:44:57,235 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:44:57,238 - INFO - 127.0.0.1 - - [01/Oct/2025 14:44:57] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:00,526 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:00,534 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:00,538 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:00,544 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:00] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:03,229 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:03,238 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:03,240 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:03,241 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:03] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:06,534 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:06,541 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:06,542 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:06,543 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:06] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:09,225 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:09,233 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:09,235 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:09,239 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:09] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:12,536 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:12,543 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:12,544 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:12,545 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:12] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:15,227 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:15,233 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:15,234 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:15,236 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:15] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:18,529 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:18,541 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:18,543 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:18,545 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:18] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:21,227 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:21,232 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:21,233 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:21,235 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:21] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:24,538 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:24,545 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:24,545 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:24,547 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:24] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:27,225 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:27,232 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:27,233 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:27,234 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:27] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:30,530 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:30,537 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:30,538 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:30,540 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:30] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:33,226 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:33,235 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:33,235 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:33,238 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:33] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:36,535 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:36,570 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:36,571 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:36,575 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:36] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:39,220 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:39,226 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:39,226 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:39,227 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:39] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:42,540 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:42,551 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:42,552 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:42,554 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:42] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:45,219 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:45,224 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:45,225 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:45,227 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:45] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:48,546 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:48,565 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:48,566 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:48,567 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:48] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:51,219 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:51,226 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:51,227 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:51,231 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:51] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:54,534 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:54,539 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:54,539 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:54,540 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:54] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:45:57,229 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:45:57,247 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:45:57,249 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:45:57,251 - INFO - 127.0.0.1 - - [01/Oct/2025 14:45:57] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:00,528 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:00,543 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:00,545 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:00,548 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:00] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:03,220 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:03,224 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:03,224 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:03,225 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:03] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:06,535 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:06,540 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:06,542 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:06,543 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:06] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:09,229 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:09,234 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:09,236 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:09,237 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:09] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:12,535 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:12,542 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:12,543 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:12,544 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:12] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:15,217 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:15,226 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:15,228 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:15,232 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:15] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:18,532 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:18,537 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:18,539 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:18,539 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:18] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:21,217 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:21,224 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:21,225 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:21,226 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:21] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:24,541 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:24,553 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:24,555 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:24,556 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:24] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:27,221 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:27,239 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:27,241 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:27,244 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:27] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:30,537 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:30,557 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:30,558 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:30,560 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:30] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:33,220 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:33,238 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:33,240 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:33,241 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:33] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:36,532 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:36,539 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:36,540 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:36,541 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:36] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:39,227 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:39,236 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:39,237 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:39,239 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:39] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:42,534 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:42,542 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:42,543 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:42,544 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:42] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:45,218 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:45,233 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:45,237 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:45,239 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:45] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:48,539 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:48,548 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:48,551 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:48,553 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:48] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:51,222 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:51,227 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:51,228 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:51,229 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:51] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:54,542 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:54,552 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:54,555 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:54,557 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:54] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:46:57,222 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:46:57,239 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:46:57,240 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:46:57,242 - INFO - 127.0.0.1 - - [01/Oct/2025 14:46:57] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:00,539 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:00,546 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:00,548 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:00,550 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:00] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:03,223 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:03,230 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:03,231 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:03,234 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:03] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:06,532 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:06,538 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:06,539 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:06,540 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:06] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:09,229 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:09,235 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:09,236 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:09,238 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:09] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:12,546 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:12,565 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:12,565 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:12,567 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:12] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:15,225 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:15,245 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:15,250 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:15,265 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:15] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:18,543 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:18,556 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:18,558 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:18,559 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:18] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:21,228 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:21,242 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:21,243 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:21,245 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:21] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:24,529 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:24,545 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:24,546 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:24,547 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:24] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:27,228 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:27,237 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:27,238 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:27,239 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:27] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:30,531 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:30,536 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:30,538 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:30,539 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:30] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:33,225 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:33,232 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:33,233 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:33,235 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:33] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:36,548 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:36,556 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:36,556 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:36,557 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:36] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:39,232 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:39,240 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:39,241 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:39,241 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:39] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:42,540 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:42,546 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:42,548 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:42,549 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:42] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:45,231 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:45,250 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:45,252 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:45,254 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:45] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:48,527 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:48,533 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:48,534 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:48,536 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:48] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:51,224 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:51,229 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:51,230 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:51,231 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:51] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:54,537 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:54,544 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:54,545 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:54,546 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:54] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:57,217 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:57,226 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:57,230 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:57,233 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:57] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:47:59,595 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:47:59,602 - INFO - [AUTH] Authenticated access: admin (admin) to /view-schedules
+2025-10-01 14:47:59,720 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:47:59,722 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:59] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:47:59,739 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:47:59,742 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:47:59,743 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:59] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:47:59,930 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:47:59,935 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:47:59,936 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:47:59,937 - INFO - 127.0.0.1 - - [01/Oct/2025 14:47:59] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:48:01,354 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:48:01,365 - INFO - [AUTH] Authenticated access: admin (admin) to /
+2025-10-01 14:48:01,366 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:48:01,372 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:48:01,375 - INFO - [RESP] GET / - 200
+2025-10-01 14:48:01,377 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:01] "GET / HTTP/1.1" 200 -
+2025-10-01 14:48:01,572 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:48:01,574 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:48:01,575 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:01] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:48:02,397 - INFO - [REQ] GET /schedule - 127.0.0.1
+2025-10-01 14:48:02,409 - INFO - [AUTH] Authenticated access: admin (admin) to /schedule
+2025-10-01 14:48:02,535 - INFO - [RESP] GET /schedule - 200
+2025-10-01 14:48:02,537 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:02] "GET /schedule HTTP/1.1" 200 -
+2025-10-01 14:48:02,699 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:48:02,700 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:48:02,701 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:02] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:48:03,509 - INFO - [REQ] GET /dashboard - 127.0.0.1
+2025-10-01 14:48:03,516 - INFO - [AUTH] Authenticated access: admin (admin) to /dashboard
+2025-10-01 14:48:03,761 - INFO - [RESP] GET /dashboard - 200
+2025-10-01 14:48:03,763 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:03] "GET /dashboard HTTP/1.1" 200 -
+2025-10-01 14:48:03,789 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:48:03,792 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:48:03,795 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:03] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:48:05,477 - INFO - [REQ] GET /logout - 127.0.0.1
+2025-10-01 14:48:05,489 - INFO - [AUTH] Authenticated access: admin (admin) to /logout
+2025-10-01 14:48:05,491 - INFO - [LOGOUT] User logged out: admin
+2025-10-01 14:48:05,492 - INFO - [RESP] GET /logout - 302
+2025-10-01 14:48:05,494 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:05] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-10-01 14:48:05,783 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:48:05,784 - INFO - [RESP] GET /login - 200
+2025-10-01 14:48:05,785 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:05] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:48:12,821 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:48:13,437 - INFO - [LOGIN] Successful login: admin (admin) from 127.0.0.1
+2025-10-01 14:48:13,438 - INFO - [RESP] POST /login - 302
+2025-10-01 14:48:13,439 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:13] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-10-01 14:48:13,445 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:48:13,446 - INFO - [DEBUG] Checking auth for / - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:13,447 - INFO - [AUTH] Authenticated access: admin (admin) to /
+2025-10-01 14:48:13,448 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:48:13,453 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:48:13,455 - INFO - [RESP] GET / - 200
+2025-10-01 14:48:13,455 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:13] "GET / HTTP/1.1" 200 -
+2025-10-01 14:48:13,476 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:48:13,479 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:48:13,481 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:13] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:48:15,207 - INFO - [REQ] GET /view-schedules - 127.0.0.1
+2025-10-01 14:48:15,208 - INFO - [DEBUG] Checking auth for /view-schedules - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:15,208 - INFO - [AUTH] Authenticated access: admin (admin) to /view-schedules
+2025-10-01 14:48:15,285 - INFO - [RESP] GET /view-schedules - 200
+2025-10-01 14:48:15,286 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:15] "GET /view-schedules HTTP/1.1" 200 -
+2025-10-01 14:48:15,425 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:48:15,426 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:48:15,428 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:15] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:48:15,498 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:48:15,499 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:15,500 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:48:15,500 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:48:15,502 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:15] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:48:18,826 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:48:18,831 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:18,834 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:48:18,835 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:48:18,840 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:18] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:48:21,512 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:48:21,513 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:21,514 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:48:21,515 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:48:21,516 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:21] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:48:24,811 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:48:24,812 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:24,813 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:48:24,813 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:48:24,816 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:24] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:48:27,503 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:48:27,504 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:27,505 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:48:27,507 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:48:27,509 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:27] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:48:30,799 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:48:30,801 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:30,801 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:48:30,803 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:48:30,804 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:30] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:48:33,578 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:48:33,579 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:33,580 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:48:33,581 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:48:33,583 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:33] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:48:36,879 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:48:36,880 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:48:36,882 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
+2025-10-01 14:48:36,883 - INFO - [RESP] GET /api/job-statuses - 404
+2025-10-01 14:48:36,885 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:36] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -

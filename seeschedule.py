@@ -27,7 +27,7 @@ def load_schedules_from_db():
             cur.execute("""
                 SELECT server_name, job_type, minutes, hour, minute
                 FROM metrics_sync_tables.schedules
-                WHERE status IS NULL OR status != 'deleted'
+                WHERE status != 'deleted' OR status IS NULL
             """)
             rows = cur.fetchall()
 

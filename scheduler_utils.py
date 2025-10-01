@@ -133,18 +133,30 @@ def delete_schedule(server_name, job_type):
     # Remove from in-memory list
     scheduled_jobs = [job for job in scheduled_jobs if not (job["server"] == server_name and job["type"] == job_type)]
     
-    # Permanently delete from database
+    # Mark as DELETED in database (instead of hard delete)
     conn = get_pg_connection()
     cur = conn.cursor()
     try:
-        # Hard delete - completely remove the record
+        # Soft delete - mark as deleted to prevent reloading
         cur.execute("""
-            DELETE FROM metrics_sync_tables.schedules
+            UPDATE metrics_sync_tables.schedules 
+            SET status = 'deleted', error = 'Schedule permanently deleted by user'
             WHERE server_name = %s AND job_type = %s
         """, (server_name, job_type))
-        print(f"[SCHEDULER_DELETE] Permanently deleted {cur.rowcount} schedule record(s) for {server_name}-{job_type}")
+        
+        # If no rows updated, insert a deleted record to prevent future creation
+        if cur.rowcount == 0:
+            cur.execute("""
+                INSERT INTO metrics_sync_tables.schedules 
+                (server_name, job_type, status, error, last_run)
+                VALUES (%s, %s, 'deleted', 'Schedule permanently deleted by user', NOW())
+                ON CONFLICT (server_name, job_type) DO UPDATE SET
+                status = 'deleted', error = 'Schedule permanently deleted by user'
+            """, (server_name, job_type))
+        
+        print(f"[SCHEDULER_DELETE] Permanently marked {cur.rowcount} schedule record(s) as deleted for {server_name}-{job_type}")
     except Exception as e:
-        print(f"[SCHEDULER_DELETE] Error deleting from database: {e}")
+        print(f"[SCHEDULER_DELETE] Error updating database: {e}")
     
     conn.commit()
     cur.close()
@@ -175,6 +187,23 @@ def delete_schedule(server_name, job_type):
     
     print(f"[SCHEDULER_DELETE] Schedule {server_name}-{job_type} completely deleted from all locations")
 
+def clean_deleted_schedules():
+    """Utility function to permanently remove schedules marked as deleted from database"""
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("DELETE FROM metrics_sync_tables.schedules WHERE status = 'deleted'")
+        deleted_count = cur.rowcount
+        conn.commit()
+        print(f"[CLEAN_DELETED] Permanently removed {deleted_count} deleted schedule records")
+        return deleted_count
+    except Exception as e:
+        print(f"[CLEAN_DELETED] Error cleaning deleted schedules: {e}")
+        return 0
+    finally:
+        cur.close()
+        conn.close()
+
 def update_schedule(server_name, job_type, **kwargs):
     delete_schedule(server_name, job_type)
     if job_type.startswith("interval"):
@@ -194,7 +223,7 @@ def get_schedules():
                status,
                COALESCE(error, '-') AS error
         FROM metrics_sync_tables.schedules
-        WHERE status IS DISTINCT FROM 'deleted'
+        WHERE status != 'deleted' OR status IS NULL
         ORDER BY created_at DESC
     """)
     rows = cur.fetchall()
@@ -209,11 +238,11 @@ def load_schedules_from_db():
     conn = get_pg_connection()
     cur = conn.cursor()
     try:
-        # Only load schedules that are not deleted - use proper exclusion
+        # IMPORTANT: Exclude schedules marked as 'deleted'
         cur.execute("""
             SELECT server_name, job_type 
             FROM metrics_sync_tables.schedules 
-            WHERE status IS NULL OR status != 'deleted'
+            WHERE status != 'deleted' OR status IS NULL
         """)
         rows = cur.fetchall()
         loaded_count = 0

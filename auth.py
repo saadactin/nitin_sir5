@@ -75,8 +75,8 @@ def require_role(allowed_roles):
     def wrapper(fn):
         def wrapped(*args, **kwargs):
             if "role" not in session or session["role"] not in allowed_roles:
-                flash("❌ Access denied!", "danger")
-                return redirect(url_for("index"))
+                flash("Please log in to access this page", "warning")
+                return redirect(url_for("login"))
             return fn(*args, **kwargs)
         wrapped.__name__ = fn.__name__
         return wrapped
