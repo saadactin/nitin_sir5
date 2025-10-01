@@ -1456,3 +1456,367 @@
 2025-10-01 14:48:36,882 - INFO - [AUTH] Authenticated access: admin (admin) to /api/job-statuses
 2025-10-01 14:48:36,883 - INFO - [RESP] GET /api/job-statuses - 404
 2025-10-01 14:48:36,885 - INFO - 127.0.0.1 - - [01/Oct/2025 14:48:36] "[33mGET /api/job-statuses HTTP/1.1[0m" 404 -
+2025-10-01 14:49:33,020 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:49:33,020 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:49:33,021 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:49:33,021 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:49:33,021 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:49:33,021 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:49:33,047 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-10-01 14:49:33,047 - INFO - [33mPress CTRL+C to quit[0m
+2025-10-01 14:49:33,049 - INFO -  * Restarting with stat
+2025-10-01 14:49:34,088 - INFO - [INIT] Initializing Flask application...
+2025-10-01 14:49:34,088 - INFO - [CONFIG] Loading configuration...
+2025-10-01 14:49:34,089 - INFO - [AUTH] Authentication system ready
+2025-10-01 14:49:34,089 - INFO - [DATABASE] Database connections configured
+2025-10-01 14:49:34,089 - INFO - [SCHEDULER] Scheduler system active
+2025-10-01 14:49:34,089 - INFO - [STARTUP] Application startup complete!
+2025-10-01 14:49:34,100 - WARNING -  * Debugger is active!
+2025-10-01 14:49:34,103 - INFO -  * Debugger PIN: 597-331-673
+2025-10-01 14:50:18,226 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:18,227 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('info', 'You have been logged out successfully.'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310293.437485, 'username': 'admin'}
+2025-10-01 14:50:18,227 - INFO - [AUTH] Cleared old session from previous server instance
+2025-10-01 14:50:18,228 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:18,228 - WARNING - [AUTH] Session contents: {}
+2025-10-01 14:50:18,229 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:18,232 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:18] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:18,572 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:18,576 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:18,577 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:18] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:18,820 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:18,821 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:18,822 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:18,823 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:18,824 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:18,826 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:18] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:18,839 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:18,840 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:18,842 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:18] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:21,856 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:21,857 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:21,859 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:21,860 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:21,863 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:21,865 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:21] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:22,120 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:22,121 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:22,122 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:22] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:24,546 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:24,547 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:24,547 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:24,548 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:24,548 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:24,549 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:24] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:24,855 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:24,857 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:24,857 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:24] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:27,549 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:27,550 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:27,550 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:27,551 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:27,551 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:27,552 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:27] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:27,859 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:27,860 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:27,861 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:27] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:30,536 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:30,537 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:30,537 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:30,537 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:30,539 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:30,540 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:30] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:30,848 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:30,850 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:30,851 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:30] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:33,547 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:33,547 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:33,548 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:33,548 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:33,549 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:33,549 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:33] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:33,856 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:33,856 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:33,857 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:33] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:36,550 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:36,551 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:36,551 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:36,553 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:36,554 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:36,555 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:36] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:36,874 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:36,875 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:36,876 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:36] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:39,545 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:39,547 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:39,548 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:39,549 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:39,550 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:39,552 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:39] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:39,869 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:39,871 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:39,872 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:39] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:42,544 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:42,547 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:42,547 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:42,548 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:42,549 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:42,549 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:42] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:42,869 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:42,870 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:42,871 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:42] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:45,551 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:45,552 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:45,553 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:45,554 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:45,555 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:45,556 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:45] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:45,873 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:45,875 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:45,875 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:45] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:48,549 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:48,550 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:48,550 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:48,551 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:48,551 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:48,552 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:48] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:48,860 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:48,860 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:48,862 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:48] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:51,538 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:51,539 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:51,539 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:51,539 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:51,539 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:51,539 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:51] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:51,862 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:51,863 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:51,864 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:51] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:54,549 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:54,549 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:54,550 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:54,551 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:54,551 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:54,552 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:54] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:54,872 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:54,874 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:54,875 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:54] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:50:57,543 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:50:57,544 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:57,545 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:50:57,545 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:50:57,545 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:50:57,547 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:57] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:50:57,866 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:50:57,866 - INFO - [RESP] GET /login - 200
+2025-10-01 14:50:57,867 - INFO - 127.0.0.1 - - [01/Oct/2025 14:50:57] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:51:00,547 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:51:00,547 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:00,548 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:51:00,548 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:00,548 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:51:00,549 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:00] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:51:00,859 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:51:00,862 - INFO - [RESP] GET /login - 200
+2025-10-01 14:51:00,863 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:00] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:51:03,547 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:51:03,549 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:03,550 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:51:03,550 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:03,551 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:51:03,552 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:03] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:51:03,867 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:51:03,868 - INFO - [RESP] GET /login - 200
+2025-10-01 14:51:03,870 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:03] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:51:06,551 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:51:06,552 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:06,553 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:51:06,553 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:06,553 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:51:06,554 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:06] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:51:06,874 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:51:06,874 - INFO - [RESP] GET /login - 200
+2025-10-01 14:51:06,876 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:06] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:51:09,547 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:51:09,547 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:09,549 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:51:09,550 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:09,551 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:51:09,552 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:09] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:51:09,868 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:51:09,868 - INFO - [RESP] GET /login - 200
+2025-10-01 14:51:09,869 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:09] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:51:12,551 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:51:12,553 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:12,554 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:51:12,555 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:12,556 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:51:12,557 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:12] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:51:12,877 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:51:12,879 - INFO - [RESP] GET /login - 200
+2025-10-01 14:51:12,880 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:12] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:51:15,542 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:51:15,543 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:15,543 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:51:15,544 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:15,544 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:51:15,545 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:15] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:51:15,852 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:51:15,854 - INFO - [RESP] GET /login - 200
+2025-10-01 14:51:15,855 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:15] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:51:18,549 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:51:18,550 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:18,550 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:51:18,551 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:18,552 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:51:18,554 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:18] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:51:18,872 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:51:18,873 - INFO - [RESP] GET /login - 200
+2025-10-01 14:51:18,874 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:18] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:51:29,545 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:51:29,545 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:29,546 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:51:29,546 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:51:29,547 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:51:29,547 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:29] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:51:29,853 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:51:29,855 - INFO - [RESP] GET /login - 200
+2025-10-01 14:51:29,856 - INFO - 127.0.0.1 - - [01/Oct/2025 14:51:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:52:29,547 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:52:29,548 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:52:29,549 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:52:29,550 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:52:29,551 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:52:29,553 - INFO - 127.0.0.1 - - [01/Oct/2025 14:52:29] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:52:29,867 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:52:29,868 - INFO - [RESP] GET /login - 200
+2025-10-01 14:52:29,869 - INFO - 127.0.0.1 - - [01/Oct/2025 14:52:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:53:29,540 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:53:29,541 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:53:29,542 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:53:29,543 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:53:29,544 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:53:29,547 - INFO - 127.0.0.1 - - [01/Oct/2025 14:53:29] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:53:29,865 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:53:29,866 - INFO - [RESP] GET /login - 200
+2025-10-01 14:53:29,867 - INFO - 127.0.0.1 - - [01/Oct/2025 14:53:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:54:29,550 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:54:29,550 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:54:29,550 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:54:29,551 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:54:29,551 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:54:29,553 - INFO - 127.0.0.1 - - [01/Oct/2025 14:54:29] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:54:29,869 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:54:29,870 - INFO - [RESP] GET /login - 200
+2025-10-01 14:54:29,871 - INFO - 127.0.0.1 - - [01/Oct/2025 14:54:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:55:29,553 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:55:29,554 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:55:29,554 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:55:29,556 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:55:29,557 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:55:29,559 - INFO - 127.0.0.1 - - [01/Oct/2025 14:55:29] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:55:29,875 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:55:29,876 - INFO - [RESP] GET /login - 200
+2025-10-01 14:55:29,877 - INFO - 127.0.0.1 - - [01/Oct/2025 14:55:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:56:29,540 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:56:29,541 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:56:29,542 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:56:29,542 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:56:29,543 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:56:29,543 - INFO - 127.0.0.1 - - [01/Oct/2025 14:56:29] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:56:29,860 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:56:29,862 - INFO - [RESP] GET /login - 200
+2025-10-01 14:56:29,862 - INFO - 127.0.0.1 - - [01/Oct/2025 14:56:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:57:29,540 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:57:29,541 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:57:29,542 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:57:29,543 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:57:29,544 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:57:29,545 - INFO - 127.0.0.1 - - [01/Oct/2025 14:57:29] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:57:29,866 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:57:29,867 - INFO - [RESP] GET /login - 200
+2025-10-01 14:57:29,868 - INFO - 127.0.0.1 - - [01/Oct/2025 14:57:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:58:29,550 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:58:29,551 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:58:29,552 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:58:29,554 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:58:29,555 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:58:29,556 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:29] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:58:29,874 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:58:29,876 - INFO - [RESP] GET /login - 200
+2025-10-01 14:58:29,877 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:29] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:58:34,501 - INFO - [REQ] GET /sync-summary - 127.0.0.1
+2025-10-01 14:58:34,501 - INFO - [DEBUG] Checking auth for /sync-summary - Session: {}
+2025-10-01 14:58:34,502 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync-summary from 127.0.0.1
+2025-10-01 14:58:34,502 - WARNING - [AUTH] Session contents: {}
+2025-10-01 14:58:34,502 - INFO - [RESP] GET /sync-summary - 302
+2025-10-01 14:58:34,503 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:34] "[32mGET /sync-summary HTTP/1.1[0m" 302 -
+2025-10-01 14:58:34,510 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:58:34,511 - INFO - [RESP] GET /login - 200
+2025-10-01 14:58:34,512 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:34] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:58:36,156 - INFO - [REQ] POST /login - 127.0.0.1
+2025-10-01 14:58:36,409 - INFO - [LOGIN] Successful login: admin (admin) from 127.0.0.1
+2025-10-01 14:58:36,409 - INFO - [RESP] POST /login - 302
+2025-10-01 14:58:36,410 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:36] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-10-01 14:58:36,414 - INFO - [REQ] GET / - 127.0.0.1
+2025-10-01 14:58:36,414 - INFO - [DEBUG] Checking auth for / - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310916.409789, 'username': 'admin'}
+2025-10-01 14:58:36,416 - INFO - [AUTH] Authenticated access: admin (admin) to /
+2025-10-01 14:58:36,416 - INFO - [HOME] Homepage accessed by user: admin
+2025-10-01 14:58:36,418 - INFO - [INFO] Loaded 2 SQL servers for display
+2025-10-01 14:58:36,431 - INFO - [RESP] GET / - 200
+2025-10-01 14:58:36,432 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:36] "GET / HTTP/1.1" 200 -
+2025-10-01 14:58:36,451 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:58:36,488 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:58:36,489 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:36] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:58:38,310 - INFO - [REQ] GET /sync-summary - 127.0.0.1
+2025-10-01 14:58:38,313 - INFO - [DEBUG] Checking auth for /sync-summary - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310916.409789, 'username': 'admin'}
+2025-10-01 14:58:38,314 - INFO - [AUTH] Authenticated access: admin (admin) to /sync-summary
+2025-10-01 14:58:39,816 - INFO - [RESP] GET /sync-summary - 200
+2025-10-01 14:58:39,818 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:39] "GET /sync-summary HTTP/1.1" 200 -
+2025-10-01 14:58:39,833 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:58:39,835 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:58:39,836 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:39] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:58:43,111 - INFO - [REQ] GET /sync-summary/MSSQLSERVER - 127.0.0.1
+2025-10-01 14:58:43,111 - INFO - [DEBUG] Checking auth for /sync-summary/MSSQLSERVER - Session: {'_flashes': [('warning', 'Please log in to access this page'), ('success', 'Welcome, admin!')], '_permanent': True, 'role': 'admin', 'session_ip': '127.0.0.1', 'session_start_time': 1759310916.409789, 'username': 'admin'}
+2025-10-01 14:58:43,112 - INFO - [AUTH] Authenticated access: admin (admin) to /sync-summary/MSSQLSERVER
+2025-10-01 14:58:47,372 - INFO - [RESP] GET /sync-summary/MSSQLSERVER - 200
+2025-10-01 14:58:47,374 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:47] "GET /sync-summary/MSSQLSERVER HTTP/1.1" 200 -
+2025-10-01 14:58:47,398 - INFO - [REQ] GET /static/actin-logo.png - 127.0.0.1
+2025-10-01 14:58:47,400 - INFO - [RESP] GET /static/actin-logo.png - 304
+2025-10-01 14:58:47,401 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:47] "[36mGET /static/actin-logo.png HTTP/1.1[0m" 304 -
+2025-10-01 14:58:56,355 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:58:56,356 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:58:56,357 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:58:56,357 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:58:56,359 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:58:56,360 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:56] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:58:56,681 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:58:56,683 - INFO - [RESP] GET /login - 200
+2025-10-01 14:58:56,688 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:56] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:58:57,543 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:58:57,544 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:58:57,545 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:58:57,547 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:58:57,548 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:58:57,550 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:57] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:58:57,870 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:58:57,872 - INFO - [RESP] GET /login - 200
+2025-10-01 14:58:57,873 - INFO - 127.0.0.1 - - [01/Oct/2025 14:58:57] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:59:00,536 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:59:00,537 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:59:00,537 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:59:00,538 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:59:00,539 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:59:00,542 - INFO - 127.0.0.1 - - [01/Oct/2025 14:59:00] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:59:00,862 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:59:00,864 - INFO - [RESP] GET /login - 200
+2025-10-01 14:59:00,865 - INFO - 127.0.0.1 - - [01/Oct/2025 14:59:00] "GET /login HTTP/1.1" 200 -
+2025-10-01 14:59:03,538 - INFO - [REQ] GET /api/job-statuses - 127.0.0.1
+2025-10-01 14:59:03,539 - INFO - [DEBUG] Checking auth for /api/job-statuses - Session: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:59:03,540 - WARNING - [AUTH] BLOCKED unauthenticated access to /api/job-statuses from 127.0.0.1
+2025-10-01 14:59:03,541 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-01 14:59:03,542 - INFO - [RESP] GET /api/job-statuses - 302
+2025-10-01 14:59:03,544 - INFO - 127.0.0.1 - - [01/Oct/2025 14:59:03] "[32mGET /api/job-statuses HTTP/1.1[0m" 302 -
+2025-10-01 14:59:03,865 - INFO - [REQ] GET /login - 127.0.0.1
+2025-10-01 14:59:03,871 - INFO - [RESP] GET /login - 200
+2025-10-01 14:59:03,877 - INFO - 127.0.0.1 - - [01/Oct/2025 14:59:03] "GET /login HTTP/1.1" 200 -
