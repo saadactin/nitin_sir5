@@ -93,16 +93,16 @@
                     <span class="material-icons">analytics</span> Database Metrics - {{ server }}.{{ db }}
                 </h2>
                 <div class="flex gap-2">
-                    <a href="{{ url_for('server_metrics', server=server) }}"
-                        class="btn-outline px-4 py-2 rounded flex items-center gap-1">🖥️ Server View</a>
-                    <a href="{{ url_for('index') }}" class="btn-light px-4 py-2 rounded">← Back to Home</a>
+                      <a href="{{ url_for('server_metrics', server=server) }}"
+                              class="btn-outline px-4 py-2 rounded flex items-center gap-1">Server View</a>
+                                  <a href="{{ url_for('index') }}" class="btn-light px-4 py-2 rounded">Back to Home</a>
                 </div>
             </div>
 
             <!-- Database Info -->
             <div
                 class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-6">
-                <h3 class="text-xl font-semibold mb-4 text-primary">📋 Database Information</h3>
+                <h3 class="text-xl font-semibold mb-4 text-primary">Database Information</h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div><strong>Server:</strong> {{ metrics.server_name }}</div>
                     <div><strong>Database:</strong> {{ metrics.database_name }}</div>
@@ -116,21 +116,21 @@
                 <div
                     class="bg-white dark:bg-surface-dark text-black dark:text-white rounded-lg shadow metric-card p-6 text-center border border-border-light dark:border-border-dark">
                     <h3 class="text-2xl font-bold">{{ metrics.total_tables }}</h3>
-                    <p class="mt-1">📋 Tables</p>
+                    <p class="mt-1">Tables</p>
                 </div>
 
                 <div class="bg-yellow-500 text-gray-900 rounded-lg shadow metric-card p-6 text-center">
                     <h3 class="text-2xl font-bold">{{ "{:,}".format(metrics.total_source_rows) }}</h3>
-                    <p class="mt-1">📥 Source Rows</p>
+                    <p class="mt-1">Source Rows</p>
                 </div>
                 <div class="bg-blue-500 text-white rounded-lg shadow metric-card p-6 text-center">
                     <h3 class="text-2xl font-bold">{{ "{:,}".format(metrics.total_destination_rows) }}</h3>
-                    <p class="mt-1">📤 Destination Rows</p>
+                    <p class="mt-1">Destination Rows</p>
                 </div>
                 <div class="bg-green-600 text-white rounded-lg shadow metric-card p-6 text-center">
                     <h3 class="text-2xl font-bold">{{ "{:,}".format(metrics.total_source_rows -
                         metrics.total_destination_rows) }}</h3>
-                    <p class="mt-1">📊 Row Difference</p>
+                    <p class="mt-1">Row Difference</p>
                 </div>
             </div>
 
@@ -138,7 +138,7 @@
             <div
                 class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
                 <div class="px-6 py-4 border-b border-border-light dark:border-border-dark">
-                    <h4 class="text-lg font-semibold text-primary mb-1">📋 Table Details</h4>
+                    <h4 class="text-lg font-semibold text-primary mb-1">Table Details</h4>
                     <small>Click on a table to compare source vs destination</small>
                 </div>
                 <div class="overflow-x-auto">
@@ -183,15 +183,15 @@
                                 </td>
                                 <td class="px-4 py-2 text-center">
                                     {% if table_data.sync_status == 'synced' %}
-                                    <span class="badge badge-success">✅ Synced</span>
+                                    <span class="badge badge-success">Synced</span>
                                     {% else %}
-                                    <span class="badge badge-danger">❌ Never</span>
+                                    <span class="badge badge-danger">Never</span>
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-2 text-center">
                                     {% if 'error' not in table_data %}
                                     <a href="{{ url_for('compare_table', server=server, db=db, table=table_name) }}"
-                                        class="btn-outline px-3 py-1 rounded">🔍 Compare</a>
+                                        class="btn-outline px-3 py-1 rounded">Compare</a>
                                     {% else %}
                                     <span class="text-gray-400">Error</span>
                                     {% endif %}
@@ -215,13 +215,13 @@
             <div
                 class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <a href="{{ url_for('top_changed', server=server, db=db) }}"
-                    class="bg-yellow-500 text-gray-900 text-center p-3 rounded hover:bg-yellow-600">📈 Top Changed</a>
+                    class="bg-yellow-500 text-gray-900 text-center p-3 rounded hover:bg-yellow-600">Top Changed</a>
                 <a href="{{ url_for('sync_background', server_name=server) }}"
-                    class="bg-green-600 text-white text-center p-3 rounded hover:bg-green-700">🔄 Sync Server</a>
+                    class="bg-green-600 text-white text-center p-3 rounded hover:bg-green-700">Sync Server</a>
                 <a href="{{ url_for('database_metrics', server=server, db=db) }}.json" target="_blank"
-                    class="bg-blue-500 text-white text-center p-3 rounded hover:bg-blue-600">📄 Export JSON</a>
+                    class="bg-blue-500 text-white text-center p-3 rounded hover:bg-blue-600">Export JSON</a>
                 <a href="{{ url_for('server_metrics', server=server) }}"
-                    class="bg-gray-200 text-gray-900 text-center p-3 rounded hover:bg-gray-300">🖥️ Server View</a>
+                    class="bg-gray-200 text-gray-900 text-center p-3 rounded hover:bg-gray-300">Server View</a>
             </div>
 
             <!-- Legend -->
@@ -231,9 +231,9 @@
                         source</small></div>
                 <div><span class="badge badge-success">-Delta</span> <small class="text-muted">More rows in
                         destination</small></div>
-                <div><span class="badge badge-success">✅ Synced</span> <small class="text-muted">Table has been
+                <div><span class="badge badge-success">Synced</span> <small class="text-muted">Table has been
                         synced</small></div>
-                <div><span class="badge badge-danger">❌ Never</span> <small class="text-muted">Table never
+                <div><span class="badge badge-danger">Never</span> <small class="text-muted">Table never
                         synced</small></div>
             </div>
 

@@ -12,7 +12,7 @@ import threading
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config, save_config
-from dashboard import get_last_10_syncs, get_last_sync_details, log_sync
+from dashboard import get_last_10_syncs, get_last_sync_details, log_sync, get_last_sync_for_server
 from seeschedule import see_schedule_page , delete_schedule 
 from scheduler_utils import (
     schedule_interval_sync,
@@ -244,7 +244,7 @@ def sync_selected_databases(server_name):
             existing_dbs = set(hs_get_all_databases(test_conn))
             test_conn.close()
         except Exception as e:
-            flash(f"❌ Could not read databases from server: {e}", "danger")
+            flash(f"Could not read databases from server: {e}", "danger")
             return redirect(url_for("view_server_databases", server_name=server_name))
 
         selected = [d for d in selected if d in existing_dbs]
@@ -376,6 +376,20 @@ def sync_background(server_name):
     # Return immediately to the client. Client JS already expects a successful response.
     return jsonify({"started": True}), 202
 
+
+@app.route('/sync_status/<server_name>', methods=['GET'])
+@require_role(["admin", "operator", "viewer"])
+def sync_status(server_name):
+    """Return the most recent sync status for a server as JSON."""
+    try:
+        last = get_last_sync_for_server(server_name)
+        if not last:
+            return jsonify({"server": server_name, "status": "none"}), 200
+        return jsonify({"server": last["server"], "status": last["status"], "time": last["time"], "details": last["details"]}), 200
+    except Exception as e:
+        app.logger.exception(f"Error fetching sync status for {server_name}: {e}")
+        return jsonify({"error": str(e)}), 500
+
 CONFIG_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "config/db_connections.yaml")
 )
@@ -422,7 +436,7 @@ def add_server():
         config.setdefault("sqlservers", {})
 
         if server_name in config["sqlservers"]:
-            flash(f"❌ Server {server_name} already exists!", "error")
+            flash(f"Server {server_name} already exists!", "error")
             return redirect(url_for("add_server"))
 
         config["sqlservers"][server_name] = {
@@ -437,7 +451,7 @@ def add_server():
         }
         save_config(config)
 
-        flash(f"✅ Server {server_name} added with Postgres target {pg_database}", "success")
+        flash(f"Server {server_name} added with Postgres target {pg_database}", "success")
         return redirect(url_for("index"))
 
     # GET request
@@ -457,7 +471,7 @@ def edit_server(server_name):
         pg_database = request.form.get("pg_database")
 
         if server_name not in servers:
-            flash(f"❌ Server {server_name} does not exist!", "error")
+            flash(f"Server {server_name} does not exist!", "error")
             return redirect(url_for("index"))
 
         servers[server_name] = {
@@ -472,18 +486,18 @@ def edit_server(server_name):
         }
         save_config(config)
 
-        flash(f"✅ Server {server_name} updated successfully!", "success")
+        flash(f"Server {server_name} updated successfully!", "success")
         return redirect(url_for("index"))
 
     # GET request → pre-fill form
     server_config = servers.get(server_name)
     if not server_config:
-        flash(f"❌ Server {server_name} not found!", "error")
+        flash(f"Server {server_name} not found!", "error")
         return redirect(url_for("index"))
 
     postgres_dbs = load_pg_databases()
     return render_template(
-        "edit_sources.html",   # ✅ now points to your edit page
+        "edit_sources.html",   # now points to your edit page
         postgres_dbs=postgres_dbs,
         server_name=server_name,
         server_config=server_config
@@ -497,9 +511,9 @@ def delete_server_route(server_name):
 
     try:
         delete_server(server_name)
-        flash(f"✅ Server {server_name} deleted!", "success")
+        flash(f"Server {server_name} deleted!", "success")
     except Exception as e:
-        flash(f"❌ Failed to delete server: {e}", "danger")
+        flash(f"Failed to delete server: {e}", "danger")
     return redirect(url_for("index"))
 
 
@@ -549,9 +563,9 @@ def schedule_page():
                 hour = int(request.form.get("hour"))
                 minute = int(request.form.get("minute"))
                 schedule_daily_sync(server_name, hour, minute)
-            flash(f"✅ Schedule set for {server_name}", "success")
+            flash(f"Schedule set for {server_name}", "success")
         except Exception as e:
-            flash(f"❌ Failed to set schedule: {e}", "danger")
+            flash(f"Failed to set schedule: {e}", "danger")
         return redirect(url_for("schedule_page"))
 
     jobs = get_schedules()
@@ -571,7 +585,7 @@ def edit_schedule_page(server_name, job_type):
     jobs = get_schedules()
     job = next((j for j in jobs if j["server"] == server_name and j["type"] == job_type), None)
     if not job:
-        flash(f"❌ Schedule not found", "danger")
+        flash(f"Schedule not found", "danger")
         return redirect(url_for("view_schedules"))
 
     if request.method == "POST":
@@ -583,10 +597,10 @@ def edit_schedule_page(server_name, job_type):
                 hour = int(request.form.get("hour"))
                 minute = int(request.form.get("minute"))
                 update_schedule(server_name, job_type, hour=hour, minute=minute)
-            flash(f"✅ Schedule updated for {server_name}", "success")
+            flash(f"Schedule updated for {server_name}", "success")
             return redirect(url_for("view_schedules"))
         except Exception as e:
-            flash(f"❌ Failed to update schedule: {e}", "danger")
+            flash(f"Failed to update schedule: {e}", "danger")
 
     return render_template("edit_schedule.html", job=job)
 
@@ -596,9 +610,9 @@ def delete_schedule_route(server_name, job_type):
     """Delete a schedule"""
     try:
         delete_schedule(server_name, job_type)
-        flash(f"✅ Schedule deleted for {server_name}", "success")
+        flash(f"Schedule deleted for {server_name}", "success")
     except Exception as e:
-        flash(f"❌ Failed to delete schedule: {e}", "danger")
+        flash(f"Failed to delete schedule: {e}", "danger")
     return redirect(url_for("view_schedules"))
 
 # ------------------ ANALYTICS ROUTES ------------------
@@ -619,7 +633,7 @@ def compare_table(server, db, table):
                              delta_info=delta_info,
                              role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error comparing table {table}: {e}", "danger")
+        flash(f"Error comparing table {table}: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -636,7 +650,7 @@ def top_changed(server, db):
                              changed_tables=changed_tables,
                              role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error getting top changed tables: {e}", "danger")
+        flash(f"Error getting top changed tables: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -654,7 +668,7 @@ def alerts():
                              infos=alert_data.get("infos", []),
                              role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error loading alerts: {e}", "danger")
+        flash(f"Error loading alerts: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -666,7 +680,7 @@ def view_logs():
     """View and analyze log files with pagination"""
     log_file = 'load_postgres.log'
     if not os.path.exists(log_file):
-        flash(f"❌ Log file '{log_file}' not found", "danger")
+        flash(f"Log file '{log_file}' not found", "danger")
         return render_template(
             "logs.html",
             alerts=[],
@@ -723,16 +737,16 @@ def generate_log_report():
     """Generate HTML report from logs"""
     log_file = 'load_postgres.log'
     if not os.path.exists(log_file):
-        flash(f"❌ Log file '{log_file}' not found", "danger")
+        flash(f"Log file '{log_file}' not found", "danger")
         return redirect(url_for("view_logs"))
     
     try:
         analyzer = LogAnalyzer(log_file)
         output_file = f"alerts_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         analyzer.generate_html_report(output_file)
-        flash(f"✅ HTML report generated: {output_file}", "success")
+        flash(f"HTML report generated: {output_file}", "success")
     except Exception as e:
-        flash(f"❌ Error generating report: {e}", "danger")
+        flash(f"Error generating report: {e}", "danger")
     
     return redirect(url_for("view_logs"))
 
@@ -742,7 +756,7 @@ def download_logs():
     """Download raw log file"""
     log_file = 'load_postgres.log'
     if not os.path.exists(log_file):
-        flash(f"❌ Log file '{log_file}' not found", "danger")
+        flash(f"Log file '{log_file}' not found", "danger")
         return redirect(url_for("view_logs"))
     
     from flask import send_file
@@ -763,7 +777,7 @@ def server_metrics(server):
                              metrics=metrics,
                              role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error getting server metrics: {e}", "danger")
+        flash(f"Error getting server metrics: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -790,7 +804,7 @@ def database_metrics(server, db):
                              metrics=metrics,
                              role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error getting database metrics: {e}", "danger")
+        flash(f"Error getting database metrics: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -815,7 +829,7 @@ def sync_summary():
                              total_servers=all_comparisons['total_servers'],
                              role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error getting sync summary: {e}", "danger")
+        flash(f"Error getting sync summary: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -849,7 +863,7 @@ def sync_summary_detail(server_name):
     try:
         comparison_data = get_individual_server_comparison(server_name)
         if 'error' in comparison_data:
-            flash(f"❌ Error: {comparison_data['error']}", "danger")
+            flash(f"Error: {comparison_data['error']}", "danger")
             return redirect(url_for("sync_summary"))
         
         # Get detailed table comparison
@@ -873,7 +887,7 @@ def sync_summary_detail(server_name):
                              table_comparison=table_comparison,
                              role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error getting detailed comparison for {server_name}: {e}", "danger")
+        flash(f"Error getting detailed comparison for {server_name}: {e}", "danger")
         return redirect(url_for("sync_summary"))
 
 @app.route("/sync-summary.json")
@@ -908,7 +922,7 @@ def sync_history(server, db):
 
         return render_template("sync_history.html", server=server, db=db, db_hist=db_hist, tbl_hist=tbl_hist, failed=failed, role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error loading sync history: {e}", "danger")
+        flash(f"Error loading sync history: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -939,11 +953,11 @@ def resume_sync(server, db, table):
                 preview = partial_sync_preview(server, db, table, columns_list, filter_sql)
             else:
                 info = resume_sync_table(server, db, table)
-                flash("✅ Resume requested. The next incremental run will continue from last PK.", "success")
+                flash("Resume requested. The next incremental run will continue from last PK.", "success")
 
         return render_template("resume_sync.html", server=server, db=db, table=table, info=info, preview=preview, role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error preparing resume: {e}", "danger")
+        flash(f"Error preparing resume: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -955,7 +969,7 @@ def schema_changes(server, db):
         events = parse_schema_changes_from_log()
         return render_template("schema_changes.html", server=server, db=db, events=events, role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error loading schema changes: {e}", "danger")
+        flash(f"Error loading schema changes: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -1001,7 +1015,7 @@ def explore():
 
         return render_template("explore.html", servers=servers, dbs=dbs, selected_server=selected_server, role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Error loading explorer: {e}", "danger")
+        flash(f"Error loading explorer: {e}", "danger")
         return redirect(url_for("index"))
 
 # ------------------ MAIN ------------------

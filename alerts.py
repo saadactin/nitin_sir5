@@ -34,7 +34,7 @@ class LogAnalyzer:
                     except ValueError:
                         timestamp = datetime.now()
 
-                    # ✅ Only include entries from the last 7 days
+                    # Only include entries from the last 7 days
                     if timestamp < seven_days_ago:
                         continue
 
@@ -196,7 +196,7 @@ class LogAnalyzer:
         if self.alerts:
             html_content += """
                 <div class="section">
-                    <div class="section-header alert-header">🚨 ALERTS/ERRORS</div>
+                    <div class="section-header alert-header">ALERTS/ERRORS</div>
             """
             for entry in self.alerts:
                 html_content += f"""
@@ -210,7 +210,7 @@ class LogAnalyzer:
         else:
             html_content += """
                 <div class="section">
-                    <div class="section-header alert-header">✅ No Alerts/Errors Found</div>
+                    <div class="section-header alert-header">No Alerts/Errors Found</div>
                     <div class="log-entry">No error-level messages detected in the logs.</div>
                 </div>
             """
@@ -219,7 +219,7 @@ class LogAnalyzer:
         if self.warnings:
             html_content += """
                 <div class="section">
-                    <div class="section-header warning-header">⚠️ WARNINGS</div>
+                    <div class="section-header warning-header">WARNINGS</div>
             """
             for entry in self.warnings:
                 html_content += f"""
@@ -233,7 +233,7 @@ class LogAnalyzer:
         else:
             html_content += """
                 <div class="section">
-                    <div class="section-header warning-header">✅ No Warnings Found</div>
+                    <div class="section-header warning-header">No Warnings Found</div>
                     <div class="log-entry">No warning-level messages detected in the logs.</div>
                 </div>
             """
@@ -241,7 +241,7 @@ class LogAnalyzer:
         # Info section (limited to last 50 entries to avoid huge file)
         html_content += """
                 <div class="section">
-                    <div class="section-header info-header">ℹ️ RECENT INFO MESSAGES (Last 50)</div>
+                    <div class="section-header info-header">RECENT INFO MESSAGES (Last 50)</div>
         """
         for entry in self.infos[-50:]:
             html_content += f"""

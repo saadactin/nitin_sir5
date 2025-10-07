@@ -1,5 +1,5 @@
 postgresql:
-  database: NewSaad2
+  database: test1
   host: localhost
   password: StrongPassword123
   port: 5432
@@ -13,5 +13,5 @@ sqlservers:
     server: localhost
     skip_databases: []
     sync_mode: hybrid
-    target_postgres_db: saadfinal1
+    target_postgres_db: test1
     username: sa

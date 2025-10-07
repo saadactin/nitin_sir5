@@ -48,7 +48,7 @@ def check_authentication():
 
 ## Security Features
 
-### ✅ Implemented Features
+### Implemented Features
 1. **Server Restart Protection**: Old sessions automatically invalidated when server restarts
 2. **Global Authentication**: All routes checked for authentication before processing
 3. **Session Timestamp Validation**: Sessions validated against server start time
@@ -58,7 +58,7 @@ def check_authentication():
 7. **Route Protection**: All protected routes require valid authentication
 8. **Session Security**: HTTP-only cookies, proper expiration, and refresh settings
 
-### 🔒 Authentication Flow
+### Authentication Flow
 1. **Initial Access**: Unauthenticated users redirected to `/login`
 2. **Login Process**: 
    - Validates credentials
@@ -122,9 +122,9 @@ export SECRET_KEY="your-production-secret-key"
 
 ## Security Checklist
 
-- ✅ All routes protected with authentication
-- ✅ Sessions invalidated on server restart
-- ✅ Global authentication middleware implemented
+ - All routes protected with authentication
+ - Sessions invalidated on server restart
+ - Global authentication middleware implemented
 - ✅ Enhanced session security configuration
 - ✅ Proper login/logout flow
 - ✅ IP address tracking and logging

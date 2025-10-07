@@ -41,7 +41,7 @@ def init_admin_user():
     cur.execute("SELECT id FROM metrics_sync_tables.users WHERE username = 'admin';")
     if not cur.fetchone():
         create_user("admin", "admin123", "admin")
-        print("✅ Default admin created (admin / admin123)")
+        print("Default admin created (admin / admin123)")
     cur.close()
     conn.close()
 

@@ -74,3 +74,31 @@ def get_last_sync_details():
         "status": row[2],
         "details": row[3]
     }
+
+
+def get_last_sync_for_server(server_name: str):
+    """Return the most recent sync entry for a specific server, or None."""
+    conn = get_pg_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT server_name, sync_time, status, details
+        FROM metrics_sync_tables.sync_history
+        WHERE server_name = %s
+        ORDER BY sync_time DESC
+        LIMIT 1
+    """, (server_name,))
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "server": row[0],
+        "time": row[1].strftime("%Y-%m-%d %H:%M:%S"),
+        "status": row[2],
+        "details": row[3]
+    }
