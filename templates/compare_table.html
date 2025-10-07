@@ -97,7 +97,7 @@
         {% if comparison.missing_rows|length > 0 %}
         <div class="bg-danger text-white rounded-lg shadow border border-border-light dark:border-border-dark overflow-x-auto">
           <div class="p-4">
-            <h2 class="text-lg font-semibold mb-2">❌ Missing Rows ({{ comparison.missing_rows|length }})</h2>
+            <h2 class="text-lg font-semibold mb-2">Missing Rows ({{ comparison.missing_rows|length }})</h2>
             <p class="mb-2 text-sm">Rows present in source but not in destination</p>
             <table class="min-w-full table-auto border-collapse border border-border-light dark:border-border-dark">
               <thead class="bg-red-700 text-white">
@@ -207,7 +207,7 @@
 
         {% if comparison.missing_rows|length == 0 and comparison.extra_rows|length == 0 %}
         <div class="bg-success text-white rounded-lg p-4 text-center">
-          <h2 class="text-lg font-semibold">✅ Tables are in sync!</h2>
+          <h2 class="text-lg font-semibold">Tables are in sync! (OK)</h2>
           <p>No missing or extra rows found. Source and destination tables have identical data.</p>
         </div>
         {% endif %}

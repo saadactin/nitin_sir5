@@ -216,7 +216,7 @@
                 class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <a href="{{ url_for('top_changed', server=server, db=db) }}"
                     class="bg-yellow-500 text-gray-900 text-center p-3 rounded hover:bg-yellow-600">📈 Top Changed</a>
-                <a href="{{ url_for('sync_server', server_name=server) }}"
+                <a href="{{ url_for('sync_background', server_name=server) }}"
                     class="bg-green-600 text-white text-center p-3 rounded hover:bg-green-700">🔄 Sync Server</a>
                 <a href="{{ url_for('database_metrics', server=server, db=db) }}.json" target="_blank"
                     class="bg-blue-500 text-white text-center p-3 rounded hover:bg-blue-600">📄 Export JSON</a>

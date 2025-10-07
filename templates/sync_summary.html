@@ -71,95 +71,89 @@
           Individual server-to-PostgreSQL database comparisons. Click on a card for detailed breakdown.
         </p>
 
-        <!-- Individual Server Comparison Cards -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {% for server in servers %}
-            <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
-                 onclick="window.location.href='{{ url_for('sync_summary_detail', server_name=server.server_name) }}'">
-              
-              <!-- Server Header -->
-              <div class="p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-xl font-bold">{{ server.server_name }}</h3>
-                    <p class="text-blue-100 text-sm">{{ server.sql_server.host }}:{{ server.sql_server.port }}</p>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-2xl font-bold">{{ "{:,}".format(server.comparison.sync_percentage) }}%</div>
-                    <div class="text-xs text-blue-100">Sync Status</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Comparison Metrics -->
-              <div class="p-6">
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                  <!-- SQL Server Section -->
-                  <div class="text-center">
-                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">SQL Server</div>
-                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {{ "{:,}".format(server.comparison.sql_total_rows) }}
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                      {{ server.sql_server.database_count }} database(s)
-                    </div>
-                  </div>
-
-                  <!-- PostgreSQL Section -->
-                  <div class="text-center">
-                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">PostgreSQL</div>
-                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {{ "{:,}".format(server.comparison.postgres_total_rows) }}
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                      {{ server.postgresql.database }}
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Target Database Mapping -->
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mb-4">
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Target Mapping</div>
-                  <div class="flex items-center justify-between text-sm">
-                    <span class="font-medium">{{ server.sql_server.host }}</span>
-                    <span class="material-icons text-gray-400">arrow_forward</span>
-                    <span class="font-medium text-green-600 dark:text-green-400">{{ server.sql_server.target_postgres_db }}</span>
-                  </div>
-                </div>
-
-                <!-- Status Badge -->
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    {% if server.comparison.status == 'Complete' %}
-                      <span class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
-                        ✓ {{ server.comparison.status }}
-                      </span>
-                    {% else %}
-                      <span class="px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium">
-                        ⚠ {{ server.comparison.status }}
-                      </span>
-                    {% endif %}
-                  </div>
-                  
-                  <div class="text-right">
-                    <div class="text-xs text-gray-500 dark:text-gray-400">Difference</div>
-                    <div class="text-sm font-bold {% if server.comparison.difference >= 0 %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}">
-                      {% if server.comparison.difference >= 0 %}+{% endif %}{{ "{:,}".format(server.comparison.difference) }}
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Click hint -->
-                <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <div class="text-center text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">
-                    <span class="material-icons text-xs">visibility</span>
-                    Click for detailed breakdown
-                  </div>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
+        <!-- Individual Server Comparison Cards (rendered by JS for fast load) -->
+        <div id="server-cards" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Loading placeholder -->
+          <div id="loading-placeholder" class="col-span-1 lg:col-span-2 text-center py-12 text-subtext-light">
+            Loading server summaries...
+          </div>
         </div>
+
+        <script>
+          async function renderServerCards(){
+            const container = document.getElementById('server-cards');
+            const placeholder = document.getElementById('loading-placeholder');
+            try{
+              const resp = await fetch('/sync-summary/quick.json');
+              const data = await resp.json();
+              placeholder?.remove();
+              if(data.error){
+                container.innerHTML = `<div class="col-span-1 lg:col-span-2 p-6 bg-red-50 text-red-700 rounded">Error: ${data.error}</div>`;
+                return;
+              }
+              const servers = data.servers || [];
+              if(servers.length === 0){
+                container.innerHTML = `<div class="col-span-1 lg:col-span-2 p-6 bg-surface-light dark:bg-surface-dark rounded shadow text-center">No servers configured</div>`;
+                return;
+              }
+
+              container.innerHTML = '';
+              servers.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark overflow-hidden hover:shadow-xl transition-shadow cursor-pointer';
+                div.onclick = () => { window.location.href = `/sync-summary/${encodeURIComponent(s.server_name)}`; };
+
+                const pct = s.comparison?.sync_percentage ? `${s.comparison.sync_percentage.toFixed(2)}%` : '0%';
+                const sqlTotal = s.comparison?.sql_total_rows || (s.sql_server?.total_rows || 0);
+                const pgTotal = s.comparison?.postgres_total_rows || (s.postgresql?.total_rows || 0);
+                const diff = (pgTotal - sqlTotal) || 0;
+
+                div.innerHTML = `
+                  <div class="p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h3 class="text-xl font-bold">${s.server_name}</h3>
+                        <p class="text-blue-100 text-sm">${s.sql_server?.host || ''}</p>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-2xl font-bold">${pct}</div>
+                        <div class="text-xs text-blue-100">Sync Status</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="p-6">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                      <div class="text-center">
+                        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">SQL Server</div>
+                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">${sqlTotal.toLocaleString()}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">N/A databases</div>
+                      </div>
+                      <div class="text-center">
+                        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">PostgreSQL</div>
+                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">${pgTotal.toLocaleString()}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Target DB</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <span class="px-2 py-1 ${diff >= 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'} rounded-full text-xs font-medium">${diff >= 0 ? '✓ Complete' : '⚠ Incomplete'}</span>
+                      </div>
+                      <div class="text-right text-sm font-bold ${diff >=0 ? 'text-green-600' : 'text-red-600'}">${diff >=0 ? '+' : ''}${diff.toLocaleString()}</div>
+                    </div>
+                  </div>
+                `;
+
+                container.appendChild(div);
+              });
+
+            }catch(err){
+              placeholder?.remove();
+              container.innerHTML = `<div class="col-span-1 lg:col-span-2 p-6 bg-red-50 text-red-700 rounded">Fetch error: ${err}</div>`;
+            }
+          }
+          // load on DOM ready
+          document.addEventListener('DOMContentLoaded', renderServerCards);
+        </script>
 
         {% if not servers %}
           <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-8 text-center">

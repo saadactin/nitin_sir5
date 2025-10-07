@@ -24,7 +24,7 @@ def list_servers():
     config = load_config()
     servers = config.get('sqlservers', {})
     if not servers:
-        print("⚠️ No servers configured yet.")
+        print("WARNING: No servers configured yet.")
         return
     for name, conf in servers.items():
         print(f"{name} -> {conf['server']}:{conf['port']} (user: {conf['username']})")
@@ -34,7 +34,7 @@ def add_server(name, host, username, password, port=1433, pg_database=None):
     config.setdefault('sqlservers', {})
 
     if name in config['sqlservers']:
-        print(f"❌ Server name '{name}' already exists! Use a different name.")
+        print(f"ERROR: Server name '{name}' already exists! Use a different name.")
         return
 
     config['sqlservers'][name] = {
@@ -48,16 +48,16 @@ def add_server(name, host, username, password, port=1433, pg_database=None):
         'target_postgres_db': pg_database  # <---- NEW FIELD
     }
     save_config(config)
-    print(f"✅ Server '{name}' added! Target Postgres DB: {pg_database}")
+    print(f"Server '{name}' added. Target Postgres DB: {pg_database}")
 
 def delete_server(name):
     config = load_config()
     if name in config.get('sqlservers', {}):
         del config['sqlservers'][name]
         save_config(config)
-        print(f"✅ Server '{name}' deleted!")
+        print(f"Server '{name}' deleted!")
     else:
-        print(f"❌ Server '{name}' not found!")
+        print(f"ERROR: Server '{name}' not found!")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

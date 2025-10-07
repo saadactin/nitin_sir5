@@ -1,7 +1,29 @@
 ﻿import pyodbc
 import yaml
 import os
+import time
+import logging
 from db_utils import get_pg_connection
+
+# Simple in-memory TTL cache to avoid repeated expensive DB scans
+LOG = logging.getLogger(__name__)
+CACHE_TTL = int(os.environ.get('SYNC_SUMMARY_CACHE_TTL', '60'))  # seconds
+_cache = {}
+
+def _cache_get(key):
+    entry = _cache.get(key)
+    if not entry:
+        return None
+    ts, value = entry
+    if time.time() - ts > CACHE_TTL:
+        LOG.info(f"Cache expired for {key}")
+        del _cache[key]
+        return None
+    LOG.info(f"Cache hit for {key}")
+    return value
+
+def _cache_set(key, value):
+    _cache[key] = (time.time(), value)
 
 def load_config():
     """Load database configuration from YAML file"""
@@ -37,6 +59,10 @@ def build_sql_connection_string(server_config, database=None):
 def get_individual_server_comparison(server_name):
     """Get detailed comparison for a specific SQL Server"""
     try:
+        cache_key = f"individual:{server_name}"
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            return cached
         config = load_config()
         sqlservers = config.get("sqlservers", {})
         
@@ -59,7 +85,7 @@ def get_individual_server_comparison(server_name):
         difference = pg_total - sql_total
         sync_percentage = (pg_total / sql_total * 100) if sql_total > 0 else 0
         
-        return {
+        result = {
             'server_name': server_name,
             'sql_server': sql_data,
             'postgresql': pg_data,
@@ -71,6 +97,8 @@ def get_individual_server_comparison(server_name):
                 'status': 'Complete' if difference >= 0 else 'Incomplete'
             }
         }
+        _cache_set(cache_key, result)
+        return result
     except Exception as e:
         return {"error": f"Error getting comparison for {server_name}: {str(e)}"}
 
@@ -179,6 +207,10 @@ def get_postgres_total_rows_for_db(target_db):
         }
     
     try:
+        cache_key = f"pgdb:{target_db}"
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            return cached
         config = load_config()
         pg_config = config.get('postgresql', {})
         
@@ -236,13 +268,15 @@ def get_postgres_total_rows_for_db(target_db):
         cur.close()
         conn.close()
         
-        return {
+        result = {
             'total_rows': total_rows,
             'database': target_db,
             'schema_count': len(schema_details),
             'schemas': schema_details,
             'tables': table_details
         }
+        _cache_set(cache_key, result)
+        return result
         
     except Exception as e:
         print(f"Error getting PostgreSQL total rows for database {target_db}: {e}")
@@ -258,6 +292,11 @@ def get_postgres_total_rows_for_db(target_db):
 def get_all_server_comparisons():
     """Get comparison data for all SQL Servers individually"""
     try:
+        cache_key = 'all_servers'
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         config = load_config()
         sqlservers = config.get("sqlservers", {})
         
@@ -267,10 +306,12 @@ def get_all_server_comparisons():
             comparison = get_individual_server_comparison(server_name)
             server_comparisons.append(comparison)
         
-        return {
+        result = {
             'servers': server_comparisons,
             'total_servers': len(server_comparisons)
         }
+        _cache_set(cache_key, result)
+        return result
     except Exception as e:
         print(f"Error getting all server comparisons: {e}")
         return {

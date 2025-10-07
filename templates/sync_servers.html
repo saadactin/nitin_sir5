@@ -34,6 +34,21 @@
     };
   </script>
   <style>.material-icons { font-size: 20px; }</style>
+  <style>
+    /* Simple inline spinner for sync buttons */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+      vertical-align: middle;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: currentColor; /* uses the button text color */
+      animation: spin 0.9s linear infinite;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
 <div class="flex h-screen">
@@ -94,7 +109,7 @@
           </a>
 
           <!-- Sync -->
-          <a href="{{ url_for('sync_server', server_name=name) }}"
+       <a href="{{ url_for('sync_background', server_name=name) }}"
              id="sync-button-{{ loop.index }}"
              class="sync-button flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors"
           >
@@ -142,34 +157,51 @@
 <!-- JavaScript for Sync Button -->
 <script>
 document.querySelectorAll('.sync-button').forEach(button => {
-    button.addEventListener('click', function(e) {
-        e.preventDefault(); // Stop normal navigation
+  button.addEventListener('click', async function(e) {
+    e.preventDefault(); // Stop normal navigation
 
-        // Change to red while syncing
-        button.classList.remove('bg-primary', 'hover:bg-primary-hover');
-        button.classList.add('bg-danger');
+    // prevent double-clicks
+    if (button.dataset.running === 'true') return;
+    button.dataset.running = 'true';
 
-        fetch(button.href)
-            .then(response => {
-                if (!response.ok) throw new Error("Sync failed");
-                return response.text();
-            })
-            .then(() => {
-                // Turn green for 5 seconds
-                button.classList.remove('bg-danger');
-                button.classList.add('bg-accent');
+    // save original state
+    button.dataset.origHtml = button.innerHTML;
+    button.dataset.origClasses = button.className;
 
-                setTimeout(() => {
-                    button.classList.remove('bg-accent');
-                    button.classList.add('bg-primary');
-                }, 5000);
-            })
-            .catch(() => {
-                // If error, revert to blue
-                button.classList.remove('bg-danger');
-                button.classList.add('bg-primary');
-            });
-    });
+  // Change to red while syncing and show running text (spinner)
+  button.classList.remove('bg-primary', 'hover:bg-primary-hover');
+  button.classList.add('bg-danger');
+  button.innerHTML = '<span class="spinner"></span> Running...';
+    button.style.pointerEvents = 'none';
+
+    try {
+      const response = await fetch(button.href);
+      if (!response.ok) throw new Error('Sync failed');
+
+      // show success briefly
+      button.classList.remove('bg-danger');
+      button.classList.add('bg-accent');
+      button.innerHTML = '<span class="material-icons">check_circle</span> Done';
+
+      setTimeout(() => {
+        // restore original
+        button.innerHTML = button.dataset.origHtml;
+        button.className = button.dataset.origClasses;
+        button.style.pointerEvents = '';
+        button.dataset.running = 'false';
+      }, 3000);
+    } catch (err) {
+      // show failure briefly then restore
+      button.className = button.dataset.origClasses; // revert colors
+      button.innerHTML = '<span class="material-icons">error</span> Failed';
+      setTimeout(() => {
+        button.innerHTML = button.dataset.origHtml;
+        button.className = button.dataset.origClasses;
+        button.style.pointerEvents = '';
+        button.dataset.running = 'false';
+      }, 3000);
+    }
+  });
 });
 </script>
 </body>

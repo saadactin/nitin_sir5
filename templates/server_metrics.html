@@ -88,7 +88,7 @@
           </div>
           <div class="bg-success text-white rounded-lg p-4 text-center shadow">
             <h3 class="text-2xl font-semibold">{{ metrics.total_tables }}</h3>
-            <p>📋 Tables</p>
+            <p>Tables</p>
           </div>
           <div class="bg-warning text-dark rounded-lg p-4 text-center shadow">
             <h3 class="text-2xl font-semibold">{{ "{:,}".format(metrics.total_source_rows) }}</h3>
@@ -134,11 +134,11 @@
                       }}</span></td>
                   <td class="px-4 py-2">
                     {% if db_data.total_source_rows == db_data.total_destination_rows %}
-                    <span class="px-2 py-1 text-xs bg-success text-white rounded">✅ Synced</span>
+                    <span class="px-2 py-1 text-xs bg-success text-white rounded">Synced</span>
                     {% elif db_data.total_destination_rows == 0 %}
-                    <span class="px-2 py-1 text-xs bg-danger text-white rounded">❌ Not Synced</span>
+                    <span class="px-2 py-1 text-xs bg-danger text-white rounded">Not Synced</span>
                     {% else %}
-                    <span class="px-2 py-1 text-xs bg-warning text-dark rounded">⚠️ Partial</span>
+                    <span class="px-2 py-1 text-xs bg-warning text-dark rounded">Partial</span>
                     {% endif %}
                   </td>
                   <td class="px-4 py-2">
@@ -168,8 +168,8 @@
             <h6 class="font-semibold">⚡ Quick Actions</h6>
           </div>
           <div class="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <a href="{{ url_for('sync_server', server_name=server) }}"
-              class="px-4 py-2 bg-success text-white rounded-lg text-center hover:bg-green-700">🔄 Sync Server</a>
+            <a href="{{ url_for('sync_background', server_name=server) }}"
+              class="px-4 py-2 bg-success text-white rounded-lg text-center hover:bg-green-700">Sync Server</a>
             <a href="{{ url_for('server_metrics', server=server) }}.json" target="_blank"
               class="px-4 py-2 border border-info text-info rounded-lg text-center hover:bg-info hover:text-white transition">
               📄 Export JSON</a>

@@ -8,6 +8,7 @@ import sys
 from flask import Flask, render_template, request, redirect, url_for, flash
 from alerts import LogAnalyzer
 from datetime import datetime
+import threading
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config, save_config
@@ -90,8 +91,9 @@ def check_authentication():
     if request.endpoint in public_endpoints or request.path.startswith('/static/'):
         return
     
-    # Debug logging
-    app.logger.info(f'[DEBUG] Checking auth for {request.path} - Session: {dict(session)}')
+    # Debug logging - avoid logging flash contents (may contain Unicode/emoji)
+    # Log only key session attributes to prevent UnicodeEncodeError when console encoding is limited
+    app.logger.info(f'[DEBUG] Checking auth for {request.path} - username={session.get("username")}, role={session.get("role")}, ip={session.get("session_ip")}')
     
     # Check if session is valid and not from previous server instance
     session_start_time = session.get('session_start_time')
@@ -216,7 +218,7 @@ def view_server_databases(server_name):
         conn.close()
         return render_template("server_databases.html", server_name=server_name, databases=dbs, role=session.get("role"))
     except Exception as e:
-        flash(f"❌ Failed to load databases: {e}", "danger")
+        flash(f"Failed to load databases: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -285,11 +287,11 @@ def sync_selected_databases(server_name):
             finally:
                 db_conn.close()
                 sql_engine.dispose()
-
-        flash(f"✅ Sync completed: {'; '.join(processed_summary)}", "success")
+        # outer try completed successfully
+        flash(f"Sync completed: {'; '.join(processed_summary)}", "success")
         return redirect(url_for("view_server_databases", server_name=server_name))
     except Exception as e:
-        flash(f"❌ Failed to sync selected: {e}", "danger")
+        flash(f"Failed to sync selected: {e}", "danger")
         return redirect(url_for("view_server_databases", server_name=server_name))
 
 
@@ -297,28 +299,82 @@ def sync_selected_databases(server_name):
 @require_role(["admin", "operator"])
 def sync_server(server_name):
     """Run sync for the selected server"""
-    app.logger.info(f"🔄 Starting sync operation for server: {server_name}")
-    print(f"🔄 SYNC STARTED: {server_name} at {datetime.now().strftime('%H:%M:%S')}")
+    app.logger.info(f"[SYNC START] Starting sync operation for server: {server_name}")
+    print(f"[SYNC STARTED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
     
+    # Log an in-progress entry so manual/stuck runs can be detected later
+    try:
+        log_sync(server_name, 'in-progress', f'Started manual sync at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+    except Exception:
+        pass
     config = load_config()
     server_conf = config["sqlservers"].get(server_name)
     if server_conf:
         try:
-            app.logger.info(f"⚡ Processing hybrid sync for {server_name}")
+            app.logger.info(f"[PROCESS] Processing hybrid sync for {server_name}")
             process_sql_server_hybrid(server_name, server_conf)
-            app.logger.info(f"✅ Sync completed successfully for {server_name}")
-            print(f"✅ SYNC COMPLETED: {server_name} at {datetime.now().strftime('%H:%M:%S')}")
-            flash(f"✅ Sync completed for {server_name}", "success")
+            app.logger.info(f"Sync completed successfully for {server_name}")
+            print(f"[SYNC COMPLETED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
+            flash(f"Sync completed for {server_name}", "success")
             log_sync(server_name, "success")
         except Exception as e:
-            app.logger.error(f"❌ Sync failed for {server_name}: {e}")
-            print(f"❌ SYNC FAILED: {server_name} - {e}")
-            flash(f"❌ Sync failed for {server_name}: {e}", "danger")
+            app.logger.error(f"Sync failed for {server_name}: {e}")
+            print(f"[SYNC FAILED] {server_name} - {e}")
+            flash(f"Sync failed for {server_name}: {e}", "danger")
             log_sync(server_name, "failed", str(e))
     else:
-        app.logger.warning(f"⚠️ Server {server_name} not found in configuration")
+        app.logger.warning(f"Server {server_name} not found in configuration")
         flash(f"Server {server_name} not found!", "danger")
     return redirect(url_for("index"))
+
+
+@app.route('/sync_background/<server_name>', methods=['GET'])
+@require_role(["admin", "operator"])
+def sync_background(server_name):
+    """Start the sync in a background thread and return immediately.
+    This re-uses the same core sync logic (process_sql_server_hybrid) but
+    launches it in a daemon thread so the HTTP request can finish and the
+    sync will continue even if the user navigates away.
+    """
+    app.logger.info(f"[SYNC-ASYNC START] Request to start background sync for: {server_name}")
+
+    def _worker():
+        app.logger.info(f"[SYNC-ASYNC WORKER] Background worker started for: {server_name}")
+        try:
+            try:
+                log_sync(server_name, 'in-progress', f'Started manual background sync at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+            except Exception:
+                pass
+
+            config = load_config()
+            server_conf = config.get("sqlservers", {}).get(server_name)
+            if server_conf:
+                try:
+                    app.logger.info(f"[PROCESS] Background processing hybrid sync for {server_name}")
+                    process_sql_server_hybrid(server_name, server_conf)
+                    app.logger.info(f"[SYNC-ASYNC COMPLETE] Background sync completed for {server_name}")
+                    try:
+                        log_sync(server_name, "success")
+                    except Exception:
+                        pass
+                except Exception as e:
+                    app.logger.exception(f"[SYNC-ASYNC FAILED] Background sync failed for {server_name}: {e}")
+                    try:
+                        log_sync(server_name, "failed", str(e))
+                    except Exception:
+                        pass
+            else:
+                app.logger.warning(f"[SYNC-ASYNC] Server {server_name} not found in configuration (background)")
+
+        except Exception:
+            app.logger.exception(f"[SYNC-ASYNC] Unexpected error in background worker for {server_name}")
+
+    # Start daemon thread so it doesn't block server shutdown and runs independently
+    thread = threading.Thread(target=_worker, daemon=True, name=f"sync-{server_name}")
+    thread.start()
+
+    # Return immediately to the client. Client JS already expects a successful response.
+    return jsonify({"started": True}), 202
 
 CONFIG_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "config/db_connections.yaml")
@@ -347,7 +403,7 @@ def load_pg_databases():
         conn.close()
         return dbs
     except Exception as e:
-        print(f"⚠️ Could not load Postgres DBs: {e}")
+        print(f"WARNING: Could not load Postgres DBs: {e}")
         return []
 
 
@@ -761,6 +817,30 @@ def sync_summary():
     except Exception as e:
         flash(f"❌ Error getting sync summary: {e}", "danger")
         return redirect(url_for("index"))
+
+
+@app.route("/sync-summary/quick.json")
+@require_role(["admin", "operator", "viewer"])
+def sync_summary_quick_json():
+    """Return a lightweight cached summary suitable for fast page loads"""
+    try:
+        all_comparisons = get_all_server_comparisons()
+        # Build lightweight payload: server_name and low-cost totals only
+        servers = []
+        for s in all_comparisons.get('servers', []):
+            servers.append({
+                'server_name': s.get('server_name'),
+                'comparison': s.get('comparison', {}),
+                'sql_server': {
+                    'total_rows': s.get('sql_server', {}).get('total_rows', 0)
+                },
+                'postgresql': {
+                    'total_rows': s.get('postgresql', {}).get('total_rows', 0)
+                }
+            })
+        return jsonify({'servers': servers, 'total_servers': all_comparisons.get('total_servers', 0)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route("/sync-summary/<server_name>")
 @require_role(["admin", "operator", "viewer"])

@@ -58,6 +58,9 @@ def _job_wrapper(server_name, server_conf, job_type):
     print(f"{'='*60}\n")
 
     try:
+        # Record that this sync has started so we can detect stuck runs later
+        log_sync(server_name, 'in-progress', f'Started {job_type} at {timestamp.strftime("%Y-%m-%d %H:%M:%S")}')
+
         process_sql_server_hybrid(server_name, server_conf)
         print(f"\n[OK] SYNC COMPLETED: {server_name} at {datetime.datetime.now().strftime('%H:%M:%S')}")
         print(f"[STATUS] SUCCESS\n")
@@ -204,6 +207,32 @@ def clean_deleted_schedules():
         cur.close()
         conn.close()
 
+def mark_stale_in_progress(threshold_minutes=60):
+    """
+    Mark any 'in-progress' sync_history rows older than threshold_minutes as 'failed'.
+    This helps detect runs that were started but never completed (process killed, crash).
+    """
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            UPDATE metrics_sync_tables.sync_history
+            SET status = 'failed',
+                details = COALESCE(details, '') || ' | Marked failed by watchdog: no completion observed'
+            WHERE status = 'in-progress'
+              AND sync_time < NOW() - (%s || ' minutes')::interval
+        """, (str(threshold_minutes),))
+        updated = cur.rowcount
+        conn.commit()
+        print(f"[WATCHDOG] Marked {updated} stale 'in-progress' sync(s) as failed (threshold: {threshold_minutes}m)")
+        return updated
+    except Exception as e:
+        print(f"[WATCHDOG] Error marking stale in-progress syncs: {e}")
+        return 0
+    finally:
+        cur.close()
+        conn.close()
+
 def update_schedule(server_name, job_type, **kwargs):
     delete_schedule(server_name, job_type)
     if job_type.startswith("interval"):
@@ -280,3 +309,11 @@ def load_schedules_from_db():
 
 # Auto-load schedules
 load_schedules_from_db()
+
+# Schedule periodic watchdog to mark stale in-progress syncs (runs every 30 minutes)
+try:
+    sched.every(30).minutes.do(mark_stale_in_progress, 60).tag('watchdog')
+    # run once at startup to catch any existing stale records
+    mark_stale_in_progress(60)
+except Exception as e:
+    print(f"[WATCHDOG] Failed to schedule watchdog: {e}")
