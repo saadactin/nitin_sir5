@@ -4,6 +4,7 @@ import os
 import time
 import logging
 from db_utils import get_pg_connection
+from table_filters import is_excluded_schema
 
 # Simple in-memory TTL cache to avoid repeated expensive DB scans
 LOG = logging.getLogger(__name__)
@@ -150,7 +151,7 @@ def get_single_sqlserver_rows(server_name, server_config):
                             'row_count': count
                         })
                     except Exception as e:
-                        print(f"Error counting rows in SQL Server table {db_name}.{table_name}: {e}")
+                        LOG.exception(f"Error counting rows in SQL Server table {db_name}.{table_name}: {e}")
                         continue
                 
                 server_row_count += db_total_rows
@@ -165,7 +166,7 @@ def get_single_sqlserver_rows(server_name, server_config):
                 db_conn.close()
                 
             except Exception as e:
-                print(f"Error processing database {db_name}: {e}")
+                LOG.exception(f"Error processing database {db_name}: {e}")
                 continue
         
         cur.close()
@@ -182,7 +183,7 @@ def get_single_sqlserver_rows(server_name, server_config):
         }
         
     except Exception as e:
-        print(f"Error getting SQL Server total rows for {server_name}: {e}")
+        LOG.exception(f"Error getting SQL Server total rows for {server_name}: {e}")
         return {
             'server_name': server_name,
             'host': server_config.get('server', 'Unknown'),
@@ -225,14 +226,15 @@ def get_postgres_total_rows_for_db(target_db):
         )
         cur = conn.cursor()
         
-        # Get all tables from ALL schemas (excluding system schemas and public schema)
+        # Get all tables from ALL schemas (excluding system schemas). We'll
+        # filter out 'public' and metric-sync schemas using is_excluded_schema.
         cur.execute("""
             SELECT table_schema, table_name 
             FROM information_schema.tables 
             WHERE table_type = 'BASE TABLE' 
-            AND table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast', 'public')
+            AND table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
         """)
-        all_tables = cur.fetchall()
+        all_tables = [r for r in cur.fetchall() if not is_excluded_schema(r[0])]
         
         total_rows = 0
         schema_details = {}
@@ -256,7 +258,7 @@ def get_postgres_total_rows_for_db(target_db):
                     'row_count': count
                 })
             except Exception as e:
-                print(f"Error counting rows in PostgreSQL table {schema_name}.{table_name}: {e}")
+                LOG.exception(f"Error counting rows in PostgreSQL table {schema_name}.{table_name}: {e}")
                 table_details.append({
                     'schema_name': schema_name,
                     'table_name': table_name,
@@ -279,7 +281,7 @@ def get_postgres_total_rows_for_db(target_db):
         return result
         
     except Exception as e:
-        print(f"Error getting PostgreSQL total rows for database {target_db}: {e}")
+        LOG.exception(f"Error getting PostgreSQL total rows for database {target_db}: {e}")
         return {
             'total_rows': 0,
             'database': target_db or 'Unknown',
@@ -313,112 +315,10 @@ def get_all_server_comparisons():
         _cache_set(cache_key, result)
         return result
     except Exception as e:
-        print(f"Error getting all server comparisons: {e}")
+        LOG.exception(f"Error getting all server comparisons: {e}")
         return {
             'servers': [],
             'total_servers': 0,
-            'error': str(e)
-        }
-    """Get total row count from all SQL Server databases"""
-    try:
-        config = load_config()
-        sqlservers = config.get("sqlservers", {})
-        
-        total_rows = 0
-        server_details = []
-        
-        for server_name, server_config in sqlservers.items():
-            try:
-                # Connect to SQL Server using the helper function
-                conn_str = build_sql_connection_string(server_config, "master")
-                conn = pyodbc.connect(conn_str)
-                cur = conn.cursor()
-                
-                # Get all databases except system databases
-                cur.execute("""
-                    SELECT name FROM sys.databases 
-                    WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')
-                """)
-                databases = [row[0] for row in cur.fetchall()]
-                
-                server_row_count = 0
-                for db_name in databases:
-                    if db_name in server_config.get('skip_databases', []):
-                        continue
-                        
-                    try:
-                        # Connect to specific database using helper function
-                        db_conn_str = build_sql_connection_string(server_config, db_name)
-                        db_conn = pyodbc.connect(db_conn_str)
-                        db_cur = db_conn.cursor()
-                        
-                        # Get all tables in this database
-                        db_cur.execute("""
-                            SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES 
-                            WHERE TABLE_TYPE = 'BASE TABLE'
-                        """)
-                        tables = [row[0] for row in db_cur.fetchall()]
-                        
-                        db_row_count = 0
-                        for table in tables:
-                            try:
-                                db_cur.execute(f'SELECT COUNT(*) FROM [{table}]')
-                                count = db_cur.fetchone()[0]
-                                db_row_count += count
-                            except Exception as e:
-                                print(f"Error counting rows in {db_name}.{table}: {e}")
-                                continue
-                        
-                        server_row_count += db_row_count
-                        db_cur.close()
-                        db_conn.close()
-                        
-                    except Exception as e:
-                        print(f"Error processing database {db_name}: {e}")
-                        continue
-                
-                server_details.append({
-                    'server_name': server_name,
-                    'host': server_config['server'],
-                    'port': server_config['port'],
-                    'total_rows': server_row_count,
-                    'target_postgres_db': server_config.get('target_postgres_db', 'Not specified')
-                })
-                
-                total_rows += server_row_count
-                cur.close()
-                conn.close()
-                
-            except Exception as e:
-                print(f"Error connecting to SQL Server {server_name}: {e}")
-                server_details.append({
-                    'server_name': server_name,
-                    'host': server_config.get('server', 'Unknown'),
-                    'port': server_config.get('port', 'Unknown'),
-                    'total_rows': 0,
-                    'target_postgres_db': server_config.get('target_postgres_db', 'Not specified'),
-                    'error': str(e)
-                })
-                continue
-        
-        # Get target database name from first server for display
-        target_db_name = None
-        for server_detail in server_details:
-            if 'target_postgres_db' in server_detail:
-                target_db_name = server_detail['target_postgres_db']
-                break
-        
-        return {
-            'total_rows': total_rows,
-            'servers': server_details,
-            'target_postgres_db': target_db_name
-        }
-        
-    except Exception as e:
-        print(f"Error getting SQL Server total rows: {e}")
-        return {
-            'total_rows': 0,
-            'servers': [],
             'error': str(e)
         }
 
@@ -472,14 +372,15 @@ def get_postgres_total_rows():
             )
             cur = conn.cursor()
         
-        # Get all tables from ALL schemas (excluding system schemas and public schema)
+        # Get all tables from ALL schemas (excluding system schemas). We'll
+        # filter out 'public' and metric-sync schemas using is_excluded_schema.
         cur.execute("""
             SELECT table_schema, table_name 
             FROM information_schema.tables 
             WHERE table_type = 'BASE TABLE' 
-            AND table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast', 'public')
+            AND table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
         """)
-        all_tables = cur.fetchall()
+        all_tables = [r for r in cur.fetchall() if not is_excluded_schema(r[0])]
         
         total_rows = 0
         schema_details = {}
@@ -503,7 +404,7 @@ def get_postgres_total_rows():
                     'row_count': count
                 })
             except Exception as e:
-                print(f"Error counting rows in PostgreSQL table {schema_name}.{table_name}: {e}")
+                LOG.exception(f"Error counting rows in PostgreSQL table {schema_name}.{table_name}: {e}")
                 table_details.append({
                     'schema_name': schema_name,
                     'table_name': table_name,
@@ -524,7 +425,7 @@ def get_postgres_total_rows():
         }
         
     except Exception as e:
-        print(f"Error getting PostgreSQL total rows: {e}")
+        LOG.exception(f"Error getting PostgreSQL total rows: {e}")
         return {
             'total_rows': 0,
             'database': 'Unknown',
@@ -560,7 +461,7 @@ def get_sqlserver_total_rows():
         }
         
     except Exception as e:
-        print(f"Error getting SQL Server total rows: {e}")
+        LOG.exception(f"Error getting SQL Server total rows: {e}")
         return {
             'total_rows': 0,
             'servers': [],
@@ -584,7 +485,7 @@ def get_postgres_total_rows():
         return get_postgres_total_rows_for_db(target_db)
         
     except Exception as e:
-        print(f"Error getting PostgreSQL total rows: {e}")
+        LOG.exception(f"Error getting PostgreSQL total rows: {e}")
         return {
             'total_rows': 0,
             'database': 'Unknown',
@@ -802,21 +703,21 @@ def get_sqlserver_table_details(server_name, server_config):
                             'row_count': count
                         })
                     except Exception as e:
-                        print(f"Error counting rows in {db_name}.{table_name}: {e}")
+                        LOG.exception(f"Error counting rows in {db_name}.{table_name}: {e}")
                         continue
                 
                 db_cur.close()
                 db_conn.close()
                 
             except Exception as e:
-                print(f"Error processing database {db_name}: {e}")
+                LOG.exception(f"Error processing database {db_name}: {e}")
                 continue
         
         cur.close()
         conn.close()
         
     except Exception as e:
-        print(f"Error getting SQL Server table details for {server_name}: {e}")
+        LOG.exception(f"Error getting SQL Server table details for {server_name}: {e}")
     
     return tables
 
@@ -837,16 +738,19 @@ def get_postgres_table_details(target_db):
         )
         cur = conn.cursor()
         
-        # Get all tables from all schemas (excluding system schemas and public schema)
+        # Get all tables from all schemas (excluding system schemas). We'll
+        # filter out 'public' and metric-sync schemas using is_excluded_schema.
         cur.execute("""
             SELECT table_schema, table_name 
             FROM information_schema.tables 
             WHERE table_type = 'BASE TABLE' 
-            AND table_schema NOT IN ('information_schema', 'pg_catalog', 'public')
+            AND table_schema NOT IN ('information_schema', 'pg_catalog')
             ORDER BY table_schema, table_name
         """)
         
         for schema_name, table_name in cur.fetchall():
+            if is_excluded_schema(schema_name):
+                continue
             try:
                 # Get row count for this table
                 cur.execute(f'SELECT COUNT(*) FROM "{schema_name}"."{table_name}"')
@@ -857,13 +761,13 @@ def get_postgres_table_details(target_db):
                     'row_count': count
                 })
             except Exception as e:
-                print(f"Error counting rows in {schema_name}.{table_name}: {e}")
+                LOG.exception(f"Error counting rows in {schema_name}.{table_name}: {e}")
                 continue
         
         cur.close()
         conn.close()
         
     except Exception as e:
-        print(f"Error getting PostgreSQL table details for {target_db}: {e}")
+        LOG.exception(f"Error getting PostgreSQL table details for {target_db}: {e}")
     
     return tables

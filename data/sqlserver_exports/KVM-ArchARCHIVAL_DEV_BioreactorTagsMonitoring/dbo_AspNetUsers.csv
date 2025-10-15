@@ -1,0 +1,1 @@
+UserId,Email,UserName,IsActive,FullName,OrganizationId,PlantId,DepartmentId,RoleId,CreatedBy,UpdatedBy,CreatedDate,UpdatedDate,ExpiryDate,AccessFailedCount,ConcurrencyStamp,EmailConfirmed,Id,LockoutEnabled,LockoutEnd,NormalizedEmail,NormalizedUserName,PasswordHash,PhoneNumber,PhoneNumberConfirmed,SecurityStamp,TwoFactorEnabled

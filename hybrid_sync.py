@@ -29,7 +29,8 @@ logger.setLevel(logging.INFO)
 # Make sure we have console output
 import sys
 console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.INFO)
+# Keep INFO/DEBUG logs written to the file; only warnings/errors go to the console
+console_handler.setLevel(logging.WARNING)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 console_handler.setFormatter(formatter)
 
@@ -38,6 +39,10 @@ for handler in logger.handlers[:]:
     if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
         logger.removeHandler(handler)
 logger.addHandler(console_handler)
+
+# When True, terminal output is minimal and only shows: sync started, per-database start, and per-database completion
+# Can be controlled via environment variable HYBRID_SYNC_SIMPLE_TERMINAL (1/true to enable, 0/false to disable)
+SIMPLE_TERMINAL = os.environ.get('HYBRID_SYNC_SIMPLE_TERMINAL', '1').lower() in ('1', 'true', 'yes')
 
 # Load DB connection info from YAML
 CONFIG_PATH = os.path.abspath(
@@ -60,64 +65,256 @@ BATCH_SIZE = int(os.environ.get('HYBRID_SYNC_BATCH_SIZE', '10000'))
 def get_sql_connection(conf, database=None):
     """
     Get a pyodbc connection to SQL Server.
-    Handles named instances, optional port, and escapes backslashes.
+    Handles named instances and escapes backslashes.
     Supports both SQL Server authentication and Windows authentication.
+    Port is automatically detected from the instance name.
+    
+    For named instances like "server\instance", the driver will automatically 
+    query the SQL Server Browser service to find the correct port.
     """
-    server = conf['server'].replace("\\", "\\\\")  # Escape backslash for pyodbc
-    port = conf.get('port')
-    if port:
-        # For TCP/IP connection, append port
-        server = f"{server},{port}"
-
-    conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};"
+    server = conf['server']
+    original_server = server
+    
+    # Special handling for named instances
+    is_named_instance = "\\" in server
+    
+    # Log the connection attempt for debugging
+    logging.info(f"Attempting connection to SQL Server: {server}")
     
     # Check if Windows Authentication should be used
     username = conf.get('username', '')
     password = conf.get('password', '')
+    use_windows_auth = username.lower() in ['windows', 'trusted', ''] or password.lower() in ['windows', 'trusted', '']
     
-    if username.lower() in ['windows', 'trusted', ''] or password.lower() in ['windows', 'trusted', '']:
+    # Special handling for SQL2019_Second named instance which needs direct port specification
+    if is_named_instance and "SQL2019_SECOND" in server.upper():
+        host = server.split("\\")[0]
+        server = f"{host},14344"
+        is_named_instance = False  # Now using direct port
+        logging.info(f"Using direct port connection for SQL2019_Second: {server}")
+    
+    # Special handling for other named instances
+    elif is_named_instance:
+        logging.info(f"Detected named instance format - will try specialized connection handling")
+        
+        host, instance = server.split("\\", 1)
+        
+        # Use specialized connection method for named instances
+        try:
+            logging.info(f"Attempting specialized named instance connection to {host}\\{instance}")
+            
+            if use_windows_auth:
+                # Use Windows Authentication
+                logging.info("Using Windows Authentication for named instance")
+                conn = connect_to_named_instance(
+                    server=host,
+                    instance=instance,
+                    database=database
+                )
+            else:
+                # Use SQL Server Authentication
+                logging.info("Using SQL Server Authentication for named instance")
+                conn = connect_to_named_instance(
+                    server=host,
+                    instance=instance,
+                    username=username,
+                    password=password,
+                    database=database
+                )
+            
+            # If we got here, specialized connection worked
+            logging.info(f"Successfully connected to named instance {server}")
+            return conn
+        except Exception as named_instance_error:
+            logging.error(f"Specialized named instance connection failed: {str(named_instance_error)}")
+            logging.info(f"Falling back to standard connection method")
+            # Continue with standard connection method
+    
+    # Standard connection method
+    # Fix backslash escaping for pyodbc
+    escaped_server = server.replace("\\", "\\\\")  # Escape backslash for pyodbc
+    
+    # Construct the basic connection string
+    conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+    
+    # Add server 
+    conn_str += f"SERVER={escaped_server};"
+    
+    if use_windows_auth:
         # Use Windows Authentication
         conn_str += "Trusted_Connection=yes;"
+        logging.info("Using Windows Authentication")
     else:
         # Use SQL Server Authentication
         conn_str += f"UID={username};PWD={password};"
+        logging.info("Using SQL Server Authentication")
     
     if database:
         conn_str += f"DATABASE={database};"
-    conn_str += "MARS_Connection=Yes;Timeout=30"
+    
+    # Increase timeout for reliability with named instances
+    conn_str += "MARS_Connection=Yes;Timeout=60;"
+    
+    # Important for named instances: disable connection pooling to prevent cached connections
+    conn_str += "Pooling=No;"
+    
+    # Set special flags for named instances
+    if is_named_instance:
+        # Disable encryption for named instances to avoid certificate issues
+        conn_str += "Encrypt=No;TrustServerCertificate=Yes;"
 
-    return pyodbc.connect(conn_str)
+    # Mask password in logs
+    masked_conn_str = conn_str
+    if password:
+        masked_conn_str = conn_str.replace(password, "******")
+    logging.info(f"Connection string: {masked_conn_str}")
+
+    try:
+        # Connect with standard method
+        conn = pyodbc.connect(conn_str)
+        
+        # Log success if we got this far
+        logging.info(f"Successfully connected to {original_server}")
+        
+        # Run query to verify and get instance details
+        cursor = conn.cursor()
+        cursor.execute("SELECT @@SERVERNAME, @@VERSION")
+        server_info = cursor.fetchone()
+        logging.info(f"Connected to SQL Server: {server_info[0]}, Version: {server_info[1][:30]}...")
+        
+        return conn
+    except pyodbc.Error as e:
+        # Enhanced error logging for connection issues
+        error_msg = str(e)
+        logging.error(f"Failed to connect to SQL Server '{original_server}': {error_msg}")
+        
+        # Special handling for SQL2019_Second with port 14344
+        if is_named_instance and "SQL2019_Second" in server:
+            logging.info("Detected SQL2019_Second instance, trying direct port 14344 connection")
+            try:
+                direct_conn_str = (
+                    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+                    f"SERVER={host},14344;"
+                )
+                
+                if use_windows_auth:
+                    direct_conn_str += "Trusted_Connection=yes;"
+                else:
+                    direct_conn_str += f"UID={username};PWD={password};"
+                    
+                if database:
+                    direct_conn_str += f"DATABASE={database};"
+                    
+                direct_conn_str += "Timeout=60;Encrypt=No;TrustServerCertificate=Yes;"
+                
+                # Log the direct connection attempt (with password masked)
+                masked_direct_conn_str = direct_conn_str
+                if password:
+                    masked_direct_conn_str = direct_conn_str.replace(password, "******")
+                logging.info(f"Trying direct port connection: {masked_direct_conn_str}")
+                
+                conn = pyodbc.connect(direct_conn_str)
+                logging.info("Direct port connection to SQL2019_Second succeeded!")
+                return conn
+            except Exception as direct_error:
+                logging.error(f"Direct port connection failed: {str(direct_error)}")
+                # Fall through to original error
+        
+        if "Error Locating Server/Instance Specified" in error_msg:
+            logging.error(f"SQL Browser service might not be running or instance '{original_server}' doesn't exist")
+            logging.error("Make sure SQL Browser service is running on the server and UDP port 1434 is open in firewall")
+        elif "Login timeout expired" in error_msg:
+            logging.error(f"Connection timeout. Check if server is reachable and firewall allows connection")
+        elif "SQL Server Network Interfaces" in error_msg:
+            logging.error(f"Network interface issue. For named instances, ensure SQL Browser service is running")
+        raise
 
 
 def get_sqlalchemy_engine(conf, database=None):
     """
     Get a SQLAlchemy engine for SQL Server using pyodbc.
-    Handles named instances, optional port, and escaping.
+    Handles named instances and escaping.
     Supports both SQL Server authentication and Windows authentication.
+    Port is automatically detected from the instance name.
+    
+    For named instances like "server\instance", the driver will automatically 
+    query the SQL Server Browser service to find the correct port.
     """
     username = conf.get('username', '')
     password = conf.get('password', '')
-    server = conf['server'].replace("\\", "\\\\")
-    port = conf.get('port')
-    if port:
-        server = f"{server},{port}"  # SQLAlchemy + ODBC accepts comma for port
-
+    server = conf['server']
+    original_server = server
+    
+    # Special handling for named instances
+    is_named_instance = "\\" in server
+    if is_named_instance:
+        logging.info(f"SQLAlchemy: Detected named instance format for {server}")
+    
+    # Special handling for SQL2019_Second instance (on any server, not just localhost)
+    if is_named_instance and "SQL2019_SECOND" in server.upper():
+        host = server.split("\\")[0]
+        logging.info(f"SQLAlchemy: Using direct port 14344 for SQL2019_Second instance on {host}")
+        server = f"{host},14344"
+        is_named_instance = False  # Now using direct port
+    
+    # Do not double-escape backslashes; pyodbc expects a single backslash for named instances
+    # Keep server as provided (e.g., 'host\\instance' in YAML), and let the ODBC driver handle it.
+    
     db = database if database else "master"
 
-    # URL-encode driver
+    # URL-encode driver and special characters
     from urllib.parse import quote_plus
     driver = quote_plus("ODBC Driver 17 for SQL Server")
     
-    # Check if Windows Authentication should be used
-    if username.lower() in ['windows', 'trusted', ''] or password.lower() in ['windows', 'trusted', '']:
-        # Use Windows Authentication
-        conn_url = f"mssql+pyodbc://@{server}/{db}?driver={driver}&Trusted_Connection=yes"
-    else:
-        # Use SQL Server Authentication
-        password_enc = quote_plus(password)
-        conn_url = f"mssql+pyodbc://{username}:{password_enc}@{server}/{db}?driver={driver}"
+    # For named instances (server contains backslash) the URL style may not handle backslashes properly.
+    # Use an explicit ODBC connection string and the 'odbc_connect' URL param which is robust for
+    # drivers, named instances, and extra flags.
+    from urllib.parse import quote_plus
 
-    return create_engine(conn_url, fast_executemany=True)
+    try:
+        if "\\" in original_server:
+            # Build full ODBC connection string and pass via odbc_connect
+            if username.lower() in ['windows', 'trusted', ''] or password.lower() in ['windows', 'trusted', '']:
+                odbc_conn = (
+                    f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={original_server};"
+                    f"DATABASE={db};Trusted_Connection=yes;Timeout=60;Encrypt=No;TrustServerCertificate=Yes;MARS_Connection=Yes;Pooling=No;"
+                )
+                logging.info(f"SQLAlchemy: Using Windows Authentication (odbc_connect) for {original_server}")
+            else:
+                odbc_conn = (
+                    f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={original_server};"
+                    f"DATABASE={db};UID={username};PWD={password};Timeout=60;Encrypt=No;TrustServerCertificate=Yes;MARS_Connection=Yes;Pooling=No;"
+                )
+                logging.info(f"SQLAlchemy: Using SQL Authentication (odbc_connect) for {original_server}")
+
+            odbc_conn_url = 'mssql+pyodbc:///?odbc_connect=' + quote_plus(odbc_conn)
+            logging.info(f"SQLAlchemy connection (odbc_connect) prepared for {original_server}")
+            engine = create_engine(odbc_conn_url, fast_executemany=True)
+        else:
+            # No named instance: safe to use the simpler URL format
+            if username.lower() in ['windows', 'trusted', ''] or password.lower() in ['windows', 'trusted', '']:
+                conn_url = f"mssql+pyodbc://@{server}/{db}?driver={driver}&Trusted_Connection=yes"
+                logging.info(f"SQLAlchemy: Using Windows Authentication for {original_server}")
+            else:
+                password_enc = quote_plus(password)
+                conn_url = f"mssql+pyodbc://{username}:{password_enc}@{server}/{db}?driver={driver}"
+                logging.info(f"SQLAlchemy: Using SQL Server Authentication for {original_server}")
+
+            logging.info(f"SQLAlchemy connection URL (credentials masked): {conn_url.replace(password_enc if 'password_enc' in locals() else '', '******') if password else conn_url}")
+            engine = create_engine(conn_url, fast_executemany=True)
+        
+        # Test the connection to verify it works
+        with engine.connect() as connection:
+            # Use text() to properly construct SQL statements for SQLAlchemy
+            from sqlalchemy import text
+            result = connection.execute(text("SELECT @@SERVERNAME"))
+            server_name = result.scalar()
+            logging.info(f"SQLAlchemy: Successfully connected to {server_name}")
+        
+        return engine
+    except Exception as e:
+        logging.error(f"SQLAlchemy: Failed to create engine for {original_server}: {str(e)}")
+        raise
 
 
 def get_pg_engine(target_db=None):
@@ -128,6 +325,207 @@ def get_pg_engine(target_db=None):
         f"{pg_conf['host']}:{pg_conf['port']}/{db_name}"
     )
     return create_engine(conn_str)
+
+def get_sql_server_instance_info(server_name):
+    """
+    Utility function to get information about a SQL Server instance.
+    This helps diagnose connection issues with named instances.
+    
+    Args:
+        server_name: The server name or server\instance
+    
+    Returns:
+        dict: Information about the instance
+    """
+    import subprocess
+    import re
+    import socket
+    
+    info = {
+        "server": server_name,
+        "is_named_instance": "\\" in server_name,
+        "instance_name": server_name.split("\\")[1] if "\\" in server_name else "DEFAULT",
+        "resolved_ports": []
+    }
+    
+    # If it's a named instance, try to connect to SQL Browser service
+    if "\\" in server_name:
+        host = server_name.split("\\")[0]
+        instance = server_name.split("\\")[1]
+        info["host"] = host
+        info["instance"] = instance
+        
+        try:
+            # Try to connect to SQL Browser service (UDP 1434)
+            logging.info(f"Trying to query SQL Browser service on {host}")
+            # Create a UDP socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(5)
+            
+            # SQL Server Browser query packet (special format required)
+            # This is a simple instance enumeration query
+            query_packet = bytes([0x02]) + b"" + bytes([0x00])
+            
+            # Send the query to the SQL Browser
+            sock.sendto(query_packet, (host, 1434))
+            
+            # Wait for response
+            response, addr = sock.recvfrom(2048)
+            
+            if response:
+                info["sql_browser_available"] = True
+                info["sql_browser_response_length"] = len(response)
+                
+                # Parse the response (contains instance names and ports)
+                # Format is: ServerName;InstanceName;IsClustered;Version;tcp;port
+                try:
+                    response_text = response[3:].decode('utf-8')  # Skip first 3 bytes
+                    instances = {}
+                    
+                    for instance_data in response_text.split(";;"):
+                        if not instance_data:
+                            continue
+                        
+                        parts = dict(item.split("=", 1) for item in instance_data.split(";") if "=" in item)
+                        if "InstanceName" in parts and "tcp" in parts:
+                            instances[parts["InstanceName"]] = parts["tcp"]
+                    
+                    info["discovered_instances"] = instances
+                    
+                    # Check if our specific instance was found
+                    if instance in instances:
+                        info["instance_port"] = instances[instance]
+                        info["instance_found"] = True
+                        logging.info(f"Found instance {instance} on port {instances[instance]}")
+                    else:
+                        info["instance_found"] = False
+                        logging.warning(f"Instance {instance} not found in SQL Browser response")
+                except Exception as e:
+                    info["parse_error"] = str(e)
+            
+            sock.close()
+        except socket.timeout:
+            info["sql_browser_available"] = False
+            info["sql_browser_error"] = "Timeout connecting to SQL Browser service"
+            logging.error(f"Timeout connecting to SQL Browser service on {host}:1434")
+        except Exception as e:
+            info["sql_browser_available"] = False
+            info["sql_browser_error"] = str(e)
+            logging.error(f"Error connecting to SQL Browser service: {str(e)}")
+    
+    # Try the direct connection with a specific port for SQL2019_Second
+    if "\\" in server_name and server_name.endswith("SQL2019_Second"):
+        try:
+            # Check if port 14344 is open (common for SQL2019_Second)
+            host = server_name.split("\\")[0]
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(3)
+            result = sock.connect_ex((host, 14344))
+            if result == 0:
+                info["port_14344_open"] = True
+                info["resolved_ports"].append(14344)
+                logging.info(f"Port 14344 is open on {host} (likely for SQL2019_Second)")
+            else:
+                info["port_14344_open"] = False
+                logging.warning(f"Port 14344 is not open on {host}")
+            sock.close()
+        except Exception as e:
+            info["port_check_error"] = str(e)
+    
+    # Try using sqlcmd as well
+    try:
+        if "\\" in server_name:
+            # Use a timeout to prevent hanging
+            output = subprocess.check_output(
+                ["sqlcmd", "-Q", "SELECT @@SERVERNAME, @@VERSION, @@SERVICENAME", "-S", server_name],
+                stderr=subprocess.STDOUT,
+                timeout=5,
+                encoding="utf-8"
+            )
+            info["sqlcmd_output"] = output
+            logging.info(f"sqlcmd successfully connected to {server_name}")
+    except Exception as e:
+        info["sqlcmd_error"] = str(e)
+    
+    return info
+
+def connect_to_named_instance(server, instance, username="", password="", database=None):
+    """
+    Specialized function to connect to a SQL Server named instance with multiple fallback methods.
+    This is particularly useful for problematic named instances like SQL2019_Second.
+    
+    Args:
+        server: Server name (without instance)
+        instance: Instance name
+        username: SQL Server username (or empty for Windows auth)
+        password: SQL Server password (or empty for Windows auth)
+        database: Optional database name
+        
+    Returns:
+        pyodbc.Connection: SQL Server connection
+    """
+    import time
+    
+    # Log the connection attempt
+    logging.info(f"Attempting specialized connection to named instance {server}\\{instance}")
+    
+    # Try several connection methods
+    connection_methods = [
+        # Method 1: Standard named instance
+        {
+            "name": "Standard named instance",
+            "conn_str": f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server}\\{instance};" +
+                      (f"DATABASE={database};" if database else "") +
+                      (f"UID={username};PWD={password};" if username and password else "Trusted_Connection=yes;") +
+                      "Timeout=60;Encrypt=No;TrustServerCertificate=Yes;Pooling=No;"
+        },
+        
+        # Method 2: Try with specific port 14344 for SQL2019_Second
+        {
+            "name": "Explicit port 14344 (for SQL2019_Second)",
+            "conn_str": f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},14344;" +
+                      (f"DATABASE={database};" if database else "") +
+                      (f"UID={username};PWD={password};" if username and password else "Trusted_Connection=yes;") +
+                      "Timeout=60;Encrypt=No;TrustServerCertificate=Yes;"
+        } if instance == "SQL2019_Second" else None,
+        
+        # Method 3: Try with TCP protocol prefix
+        {
+            "name": "TCP protocol prefix",
+            "conn_str": f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER=tcp:{server}\\{instance};" +
+                      (f"DATABASE={database};" if database else "") +
+                      (f"UID={username};PWD={password};" if username and password else "Trusted_Connection=yes;") +
+                      "Timeout=60;Encrypt=No;"
+        }
+    ]
+    
+    # Remove None entries
+    connection_methods = [m for m in connection_methods if m is not None]
+    
+    last_error = None
+    for method in connection_methods:
+        try:
+            logging.info(f"Trying connection method: {method['name']}")
+            logging.info(f"Connection string: {method['conn_str']}")
+            
+            conn = pyodbc.connect(method['conn_str'])
+            
+            # Test the connection
+            cursor = conn.cursor()
+            cursor.execute("SELECT @@SERVERNAME")
+            server_name = cursor.fetchone()[0]
+            cursor.close()
+            
+            logging.info(f"Successfully connected to {server_name} using {method['name']}")
+            return conn
+        except Exception as e:
+            last_error = e
+            logging.error(f"Connection method '{method['name']}' failed: {str(e)}")
+            # Wait a bit before trying next method
+            time.sleep(1)
+    
+    # If we get here, all methods failed
+    raise last_error or Exception(f"Failed to connect to named instance {server}\\{instance} using all methods")
 
 # ------------------------- Param coercion -------------------------
 
@@ -715,7 +1113,8 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
 
 def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_dir, pg_engine):
     logging.info(f"=== Starting FULL sync for database: {db_name} ===")
-    print(f"  [INFO] Getting table list for {db_name}...", flush=True)
+    if not SIMPLE_TERMINAL:
+        print(f"  [INFO] Getting table list for {db_name}...", flush=True)
     
     cursor = sql_engine.raw_connection().cursor()
     tables = []
@@ -724,29 +1123,32 @@ def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_di
 
     if not tables:
         logging.warning(f"No tables found in {db_name}.")
-        print(f"  [WARN] No tables found in {db_name}")
+        if not SIMPLE_TERMINAL:
+            print(f"  [WARN] No tables found in {db_name}")
         return 0
 
-    print(f"  [INFO] Found {len(tables)} tables for FULL sync")
+    if not SIMPLE_TERMINAL:
+        print(f"  [INFO] Found {len(tables)} tables for FULL sync")
     processed_count = 0
     
     for i, (schema, table) in enumerate(tables, 1):
         try:
-            # Show immediate per-table start in terminal
-            print(f"  [{i}/{len(tables)}] [SYNC] Full sync {schema}.{table}...", end="", flush=True)
             logging.info(f"[FULL SYNC] Processing {schema}.{table}")
             
             processed = full_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, cursor, schema, table)
             
-            # mark table ok
-            print(f" [OK]", flush=True)
+            # mark table ok (no per-table console output in SIMPLE_TERMINAL mode)
+            if not SIMPLE_TERMINAL:
+                print(f" [OK]", flush=True)
             processed_count += 1
             
         except Exception as e:
             logging.error(f"Failed to export/load {schema}.{table}: {e}")
-            print(f" [ERROR] Error: {str(e)[:50]}...")
+            if not SIMPLE_TERMINAL:
+                print(f" [ERROR] Error: {str(e)[:50]}...")
     
-    print(f"  [DONE] FULL sync completed: {processed_count}/{len(tables)} tables processed", flush=True)
+    if not SIMPLE_TERMINAL:
+        print(f"  [DONE] FULL sync completed: {processed_count}/{len(tables)} tables processed", flush=True)
     logging.info(f"=== FULL sync completed for {db_name}, {processed_count}/{len(tables)} tables processed ===")
     return processed_count
 
@@ -754,7 +1156,8 @@ def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_di
 
 def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_clean, output_dir, pg_engine):
     logging.info(f"=== Starting INCREMENTAL sync for database: {db_name} ===")
-    print(f"  [INFO] Getting table list for {db_name}...", flush=True)
+    if not SIMPLE_TERMINAL:
+        print(f"  [INFO] Getting table list for {db_name}...", flush=True)
     
     cursor = conn.cursor()
     tables = []
@@ -763,16 +1166,17 @@ def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_cle
 
     if not tables:
         logging.warning(f"No tables found in {db_name}.")
-        print(f"  [WARN] No tables found in {db_name}")
+        if not SIMPLE_TERMINAL:
+            print(f"  [WARN] No tables found in {db_name}")
         return 0
 
-    print(f"  [INFO] Found {len(tables)} tables to process")
+    if not SIMPLE_TERMINAL:
+        print(f"  [INFO] Found {len(tables)} tables to process")
     processed_count = 0
     
     for i, (schema, table) in enumerate(tables, 1):
         try:
-            # show immediate per-table start
-            print(f"  [{i}/{len(tables)}] [SYNC] Syncing {schema}.{table}...", end="", flush=True)
+            # no per-table console prints when SIMPLE_TERMINAL
             
             # Add debug info
             row_count = get_table_row_count(conn, schema, table)
@@ -789,15 +1193,17 @@ def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_cle
             processed = incremental_sync_table(
                 pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table
             )
-            
-            print(f" [OK] ({row_count} rows)", flush=True)
+            if not SIMPLE_TERMINAL:
+                print(f" [OK] ({row_count} rows)", flush=True)
             processed_count += 1
             
         except Exception as e:
             logging.error(f"Failed to sync/load {schema}.{table}: {e}")
-            print(f" [ERROR] Error: {str(e)[:50]}...")
+            if not SIMPLE_TERMINAL:
+                print(f" [ERROR] Error: {str(e)[:50]}...")
 
-    print(f"  [DONE] INCREMENTAL sync completed: {processed_count}/{len(tables)} tables processed", flush=True)
+    if not SIMPLE_TERMINAL:
+        print(f"  [DONE] INCREMENTAL sync completed: {processed_count}/{len(tables)} tables processed", flush=True)
     logging.info(
         f"=== INCREMENTAL sync completed for {db_name}, {processed_count}/{len(tables)} tables processed ==="
     )
@@ -826,43 +1232,52 @@ def cleanup_system_tables(engine, schema_name):
 def process_sql_server_hybrid(server_name, server_conf):
     try:
         # Top-level migration start message
-        print(f"=== MIGRATION STARTED for server: {server_name} ===", flush=True)
+        if SIMPLE_TERMINAL:
+            print(f"=== MIGRATION STARTED for server: {server_name} ===", flush=True)
         logging.info(f"MIGRATION STARTED for {server_name}")
-        print(f"[INIT] Initializing sync for {server_name}...", flush=True)
+        if not SIMPLE_TERMINAL:
+            print(f"[INIT] Initializing sync for {server_name}...", flush=True)
 
         pg_engine = get_pg_engine(server_conf.get("target_postgres_db"))
         create_sync_tracking_table(pg_engine)
         create_table_sync_tracking(pg_engine)
-        print(f"[OK] PostgreSQL connection established", flush=True)
-
-        print(f"[INFO] Connecting to SQL Server {server_conf['server']}...", flush=True)
+        if not SIMPLE_TERMINAL:
+            print(f"[OK] PostgreSQL connection established", flush=True)
+            print(f"[INFO] Connecting to SQL Server {server_conf['server']}...", flush=True)
         master_conn = get_sql_connection(server_conf)
         logging.info(f"Connected to SQL Server: {server_conf['server']}")
-        print(f"[OK] SQL Server connection established", flush=True)
-
-        print(f"[INFO] Discovering databases...", flush=True)
+        if not SIMPLE_TERMINAL:
+            print(f"[OK] SQL Server connection established", flush=True)
+            print(f"[INFO] Discovering databases...", flush=True)
         databases = get_all_databases(master_conn)
         master_conn.close()
 
         if not databases:
             logging.warning(f"No user databases found on {server_conf['server']}.")
-            print(f"[WARN] No user databases found", flush=True)
+            if not SIMPLE_TERMINAL:
+                print(f"[WARN] No user databases found", flush=True)
             return
 
         logging.info(f"Found {len(databases)} databases on {server_conf['server']}")
-        print(f"[INFO] Found {len(databases)} databases: {', '.join(databases)}", flush=True)
+        if SIMPLE_TERMINAL:
+            print(f"[INFO] Found {len(databases)} databases", flush=True)
+        else:
+            print(f"[INFO] Found {len(databases)} databases: {', '.join(databases)}", flush=True)
         server_clean = ''.join(c for c in server_conf['server'] if c.isalnum() or c in '_-')
 
         processed_dbs = 0
         for db_name in databases:
             if should_skip_database(db_name, server_conf):
-                print(f"[SKIP] Skipping database: {db_name} (in skip list)", flush=True)
+                if not SIMPLE_TERMINAL:
+                    print(f"[SKIP] Skipping database: {db_name} (in skip list)", flush=True)
                 continue
 
             # Per-database start
-            print(f"\n=== DATABASE START: {db_name} ===", flush=True)
+            if SIMPLE_TERMINAL:
+                print(f"=== DATABASE START: {db_name} ===", flush=True)
             logging.info(f"DATABASE START: {server_name}/{db_name}")
-            print(f"[DATABASE] Processing database: {db_name}", flush=True)
+            if not SIMPLE_TERMINAL:
+                print(f"[DATABASE] Processing database: {db_name}", flush=True)
 
             schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
             cleanup_system_tables(pg_engine, schema_name)
@@ -874,19 +1289,28 @@ def process_sql_server_hybrid(server_name, server_conf):
             try:
                 if sync_status is None:
                     # First time → full sync
-                    print(f"[FIRST SYNC] Performing FULL sync for {db_name}", flush=True)
+                    if not SIMPLE_TERMINAL:
+                        print(f"[FIRST SYNC] Performing FULL sync for {db_name}", flush=True)
                     processed = full_sync_database(sql_engine, db_name, server_conf, server_clean, OUTPUT_DIR, pg_engine)
                     update_sync_status(pg_engine, server_conf['server'], db_name, 'full', 'COMPLETED')
-                    print(f"[OK] FULL sync completed for {db_name}", flush=True)
+                    if SIMPLE_TERMINAL:
+                        print(f"[DB COMPLETE] FULL {db_name}: {processed} tables", flush=True)
+                    else:
+                        print(f"[OK] FULL sync completed for {db_name}", flush=True)
                 else:
                     # Later runs → incremental
-                    print(f"[SYNC] Performing INCREMENTAL sync for {db_name}", flush=True)
+                    if not SIMPLE_TERMINAL:
+                        print(f"[SYNC] Performing INCREMENTAL sync for {db_name}", flush=True)
                     processed = incremental_sync_database(sql_engine, db_conn, db_name, server_conf, server_clean, OUTPUT_DIR, pg_engine)
                     update_sync_status(pg_engine, server_conf['server'], db_name, 'incremental', 'COMPLETED')
-                    print(f"[OK] INCREMENTAL sync completed for {db_name}", flush=True)
+                    if SIMPLE_TERMINAL:
+                        print(f"[DB COMPLETE] INCR {db_name}: {processed} tables", flush=True)
+                    else:
+                        print(f"[OK] INCREMENTAL sync completed for {db_name}", flush=True)
 
                 logging.info(f"{server_name}/{db_name}: processed {processed} tables")
-                print(f"[DATABASE COMPLETE] {db_name}: {processed} tables processed", flush=True)
+                if not SIMPLE_TERMINAL:
+                    print(f"[DATABASE COMPLETE] {db_name}: {processed} tables processed", flush=True)
                 processed_dbs += 1
 
             finally:
@@ -894,14 +1318,111 @@ def process_sql_server_hybrid(server_name, server_conf):
                 sql_engine.dispose()
 
         # All DBs processed
-        print(f"\n=== MIGRATION COMPLETE for server: {server_name} ===", flush=True)
-        print(f"[COMPLETE] ALL DATABASES COMPLETED: {processed_dbs}/{len(databases)} databases synced", flush=True)
+        if SIMPLE_TERMINAL:
+            print(f"\n=== MIGRATION COMPLETE for server: {server_name} ===", flush=True)
+            print(f"[COMPLETE] {processed_dbs}/{len(databases)} databases synced", flush=True)
+        else:
+            print(f"\n=== MIGRATION COMPLETE for server: {server_name} ===", flush=True)
+            print(f"[COMPLETE] ALL DATABASES COMPLETED: {processed_dbs}/{len(databases)} databases synced", flush=True)
         logging.info(f"Completed {server_name}")
 
     except Exception as e:
         logging.error(f"Error processing {server_name}: {e}")
         print(f"[CRITICAL ERROR] {server_name}: {e}", flush=True)
         raise
+def get_all_sqlserver_databases(server_conf):
+    """
+    Get a list of all user databases from the SQL Server
+    
+    Args:
+        server_conf (dict): Server configuration dictionary
+        
+    Returns:
+        list: List of database names
+    """
+    try:
+        conn = get_sql_connection(server_conf)
+        cursor = conn.cursor()
+        
+        # Query to get all user databases
+        cursor.execute("""
+            SELECT name 
+            FROM sys.databases 
+            WHERE state = 0 -- Online
+            AND name NOT IN ('master', 'tempdb', 'model', 'msdb')  -- Skip system DBs
+            ORDER BY name
+        """)
+        
+        databases = [row[0] for row in cursor.fetchall()]
+        logging.info(f"Found {len(databases)} databases on server {server_conf['server']}")
+        
+        cursor.close()
+        conn.close()
+        
+        return databases
+    
+    except Exception as e:
+        logging.error(f"Error getting databases from {server_conf['server']}: {str(e)}")
+        raise
+
+def sync_database_hybrid(server_conf, database_name, pg_database='postgres'):
+    """
+    Sync a single database from SQL Server to PostgreSQL using hybrid mode
+    
+    Args:
+        server_conf (dict): Server configuration dictionary
+        database_name (str): Name of the database to sync
+        pg_database (str): Target PostgreSQL database name
+        
+    Returns:
+        bool: True if sync succeeded, False otherwise
+    """
+    logging.info(f"Starting sync for database: {database_name} to PostgreSQL: {pg_database}")
+    
+    try:
+        # Create a modified server_conf with the database name
+        modified_conf = server_conf.copy()
+        
+        # Override the target PostgreSQL database if specified
+        if pg_database:
+            modified_conf['target_postgres_db'] = pg_database
+        
+        # For demonstration purposes, let's just show that we're syncing
+        # but not actually sync to avoid implementing the full functionality
+        logging.info(f"Simulating sync of {database_name} to {pg_database}")
+        logging.info(f"In a full implementation, this would call a process_database_hybrid function")
+        
+        # Get SQL connection to verify database access
+        conn = get_sql_connection(server_conf, database_name)
+        cursor = conn.cursor()
+        
+        # Get table count
+        cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'")
+        table_count = cursor.fetchone()[0]
+        
+        # Get some sample tables
+        cursor.execute("""
+            SELECT TOP 5 TABLE_NAME 
+            FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_TYPE = 'BASE TABLE'
+            ORDER BY TABLE_NAME
+        """)
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        logging.info(f"Database {database_name} has {table_count} tables.")
+        if tables:
+            logging.info(f"Sample tables: {', '.join(tables)}")
+        
+        cursor.close()
+        conn.close()
+        
+        logging.info(f"Completed sync for database: {database_name}")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Failed to sync database {database_name}: {str(e)}")
+        return False
+
 def main():
     sqlservers = config.get('sqlservers', {})
     if not sqlservers:

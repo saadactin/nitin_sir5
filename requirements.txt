@@ -6,3 +6,4 @@ bcrypt==4.2.0
 PyYAML==6.0.2
 schedule==1.2.2
 SQLAlchemy==2.0.30
+cryptography==42.0.2

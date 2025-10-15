@@ -8,6 +8,7 @@ import logging
 from datetime import datetime
 from sqlalchemy import create_engine, text
 from hybrid_sync import get_sqlalchemy_engine, get_pg_engine, get_sql_connection, get_primary_key_info, get_timestamp_column, get_unique_identifier_column
+from table_filters import is_excluded_schema
 from manage_server import load_config
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,22 @@ def compare_table_rows(server_name, db_name, table_name):
         else:
             schema = 'dbo'
             table = table_name
+
+        # If this schema is excluded from comparisons, return an empty comparison
+        if is_excluded_schema(schema):
+            return {
+                'rows_source': 0,
+                'rows_destination': 0,
+                'missing_rows': pd.DataFrame(),
+                'extra_rows': pd.DataFrame(),
+                'source_data': pd.DataFrame(),
+                'destination_data': pd.DataFrame(),
+                'total_source_rows': 0,
+                'last_sync_time': None,
+                'new_data_since_sync': 0,
+                'sync_status': 'excluded',
+                'data_match': True
+            }
         
         # Get last sync status to determine what should be synced
         sync_status = get_table_sync_status(server_name, db_name, table_name)
@@ -257,8 +274,11 @@ def top_changed_tables(server_name, db_name):
         for row in cursor.tables(tableType='TABLE'):
             schema_name = row.table_schem
             table_name = row.table_name
-            if schema_name.lower() != 'sys':  # Skip system tables
-                tables.append(f"{schema_name}.{table_name}")
+            if schema_name and schema_name.lower() == 'sys':  # Skip system tables
+                continue
+            if is_excluded_schema(schema_name):
+                continue
+            tables.append(f"{schema_name}.{table_name}")
         
         conn.close()
         

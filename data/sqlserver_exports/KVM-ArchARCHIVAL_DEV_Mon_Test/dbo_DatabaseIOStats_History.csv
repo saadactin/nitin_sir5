@@ -1,0 +1,1 @@
+CollectionTime,database_id,file_id,num_of_reads,num_of_writes,io_stall_read_ms,io_stall_write_ms,io_stall,size_on_disk_bytes,physical_name,database_name,file_type_desc

@@ -8,6 +8,7 @@ import logging
 from datetime import datetime
 from sqlalchemy import create_engine, text
 from hybrid_sync import get_sqlalchemy_engine, get_pg_engine, get_sql_connection, get_table_row_count
+from table_filters import is_excluded_schema
 from manage_server import load_config
 
 logger = logging.getLogger(__name__)
@@ -50,7 +51,8 @@ def get_postgres_metrics():
                 # Get tables and row counts for each database
                 db_conn = create_engine(f"{pg_engine.url}?database={db_name}").connect()
                 
-                # Get all tables in the database
+                # Get all tables in the database (exclude system schemas). We'll
+                # also skip configured excluded schemas like 'public' and metric sync schema.
                 table_query = """
                 SELECT schemaname, tablename 
                 FROM pg_tables 
@@ -58,7 +60,7 @@ def get_postgres_metrics():
                 ORDER BY schemaname, tablename
                 """
                 table_result = db_conn.execute(text(table_query))
-                tables = [(row[0], row[1]) for row in table_result.fetchall()]
+                tables = [(row[0], row[1]) for row in table_result.fetchall() if not is_excluded_schema(row[0])]
                 
                 db_table_count = len(tables)
                 db_row_count = 0
@@ -213,8 +215,11 @@ def get_database_metrics(server_name, db_name):
         for row in cursor.tables(tableType='TABLE'):
             schema_name = row.table_schem
             table_name = row.table_name
-            if schema_name.lower() != 'sys':  # Skip system tables
-                tables.append((schema_name, table_name))
+            if schema_name and schema_name.lower() == 'sys':
+                continue
+            if is_excluded_schema(schema_name):
+                continue
+            tables.append((schema_name, table_name))
         
         db_conn.close()
         

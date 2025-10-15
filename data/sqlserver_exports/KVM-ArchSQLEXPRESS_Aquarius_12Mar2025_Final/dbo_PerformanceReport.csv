@@ -1,0 +1,1 @@
+ID,MACHINEID,PlantID,BatchID,ENTRYDATE,ProductionDate,BatchStartTime,BatchEndTime,CycleTime,LoadQuantity,ProductivityMcubeperHr,ProducedQtyinMcube,FormulaName,OperatorID,DriverId,TruckMixerId,SalesOrderId,CustomerID,SiteId,MixCodeId

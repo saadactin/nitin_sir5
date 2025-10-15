@@ -69,6 +69,10 @@
                 <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Host</label>
                 <input type="text" name="server" value="{{ server_config['server'] }}" 
                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-warning-dark focus:outline-none" required>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                  Use server name (e.g., "localhost") or named instance (e.g., "localhost\SQL2019_Second").
+                  Port is automatically detected - no need to specify it.
+                </p>
               </div>
 
               <div>
@@ -82,12 +86,8 @@
                 <input type="password" name="password" value="{{ server_config['password'] }}" 
                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-warning-dark focus:outline-none" required>
               </div>
-
-              <div>
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Port</label>
-                <input type="number" name="port" value="{{ server_config['port'] }}" 
-                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-warning-dark focus:outline-none">
-              </div>
+              
+              <!-- Port field removed - port is auto-detected from server name/instance -->
 
               <!-- Target PostgreSQL DB -->
               <div class="md:col-span-2">

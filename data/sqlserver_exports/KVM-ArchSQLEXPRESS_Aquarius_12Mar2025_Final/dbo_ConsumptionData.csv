@@ -1,0 +1,1 @@
+ID,MACHINEID,PlantID,CHDRTableUniqueID,EntryDate,ProductionDate,ProductID,ProductName,ProductCode,SiloName,MixCodeID,NoOfSubcycles,BatchID,DeliveryNoteNo,JobSiteID,CustomerID,DriverID,TruckMixerID,OrderCode,SubCycleNo,TheoreticalQty,CorrectedQty,RILQuantity,Set1M3,UnitMeasure,MaterialType,CnsWat,AbsWat,AggDiam,Slump,WCRatio,VolMass,PerBatchM3

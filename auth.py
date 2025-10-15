@@ -1,5 +1,7 @@
 import bcrypt
+import os
 from flask import session, redirect, url_for, flash
+import logging
 from db_utils import get_pg_connection, init_pg_schema
 
 # Ensure schema is ready
@@ -34,14 +36,23 @@ def create_user(username, password, role):
         # print(f"Error creating user: {str(e)}")
         return False
 
-def init_admin_user():
-    """Create default admin if not exists"""
+def init_admin_user(create_if_missing=False, default_password=None):
+    """Create default admin if not exists.
+
+    Use create_if_missing=True to enable creation. This prevents automatic
+    creation during import which can lead to insecure defaults.
+    """
+    if not create_if_missing:
+        return
+
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute("SELECT id FROM metrics_sync_tables.users WHERE username = 'admin';")
     if not cur.fetchone():
-        create_user("admin", "admin123", "admin")
-        print("Default admin created (admin / admin123)")
+        pw = default_password or os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123')
+        create_user("admin", pw, "admin")
+        # SECURITY: Never log the actual password
+        logging.info(f"Default admin created (username: admin) - password set from environment or default")
     cur.close()
     conn.close()
 
@@ -62,7 +73,9 @@ def authenticate_user(username, password):
 
 def login_user(username, role):
     """Save login state in session"""
+    # Set both keys for compatibility with different parts of the app
     session["user"] = username
+    session["username"] = username
     session["role"] = role
 
 def logout_user():
@@ -83,4 +96,6 @@ def require_role(allowed_roles):
     return wrapper
 
 # ------------------ AUTO CREATE DEFAULT ADMIN ------------------
-init_admin_user()
+# Do not auto-create admin on import. To create default admin at startup,
+# call init_admin_user(create_if_missing=True) from the application entrypoint
+# or set CREATE_DEFAULT_ADMIN=1 and call it conditionally during startup.

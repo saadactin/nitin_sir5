@@ -48,6 +48,11 @@
       margin-right: 8px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Animation for material icons */
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
   </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
@@ -82,7 +87,7 @@
         <!-- Card Header -->
         <div class="p-4 bg-gray-50 dark:bg-gray-800 border-b border-border-light dark:border-border-dark flex justify-between items-center">
           <h2 class="text-lg font-semibold truncate">{{ name }}</h2>
-          <span class="text-xs font-mono bg-primary/10 text-primary px-2 py-1 rounded-full">{{ conf.port }}</span>
+          <!-- Port display removed - using auto-detection instead -->
         </div>
 
         <!-- Card Body -->
@@ -93,10 +98,17 @@
           </div>
           <div class="flex items-center gap-2">
             <span class="font-medium text-subtext-light dark:text-subtext-dark">Status:</span>
+            {% if server_statuses[name].online %}
             <div class="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
               <span class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
               Online
             </div>
+            {% else %}
+            <div class="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium" title="{{ server_statuses[name].error }}">
+              <span class="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+              Offline
+            </div>
+            {% endif %}
           </div>
         </div>
 
@@ -156,88 +168,176 @@
 
 <!-- JavaScript for Sync Button -->
 <script>
+// Function to check for running syncs on page load
+async function checkRunningSync(button) {
+  const hrefParts = button.href.split('/');
+  const serverName = decodeURIComponent(hrefParts[hrefParts.length - 1]);
+  
+  try {
+    const resp = await fetch(`/sync_status/${encodeURIComponent(serverName)}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      
+      if (data.is_active) {
+        // Sync is running, update button and start polling
+        button.dataset.running = 'true';
+        button.dataset.origHtml = button.innerHTML;
+        button.dataset.origClasses = button.className;
+        
+        button.classList.remove('bg-primary', 'hover:bg-primary-hover');
+        button.classList.add('bg-danger');
+        button.style.pointerEvents = 'none';
+        
+        // Start polling for this running sync
+        startPolling(button, serverName);
+      }
+    }
+  } catch (err) {
+    console.error('Error checking sync status:', err);
+  }
+}
+
+// Function to handle polling
+async function startPolling(button, serverName) {
+  const pollInterval = 2000; // ms
+  let finalStatus = null;
+
+  async function poll() {
+    try {
+      const sresp = await fetch(`/sync_status/${encodeURIComponent(serverName)}`);
+      if (sresp.ok) {
+        const data = await sresp.json();
+        
+        if (data.is_active) {
+          // Show real-time progress for active syncs
+          const status = data.status || 'running';
+          const message = data.message || 'Processing...';
+          const currentDb = data.current_database || '';
+          
+          // Update button with progress
+          if (status === 'running' || status === 'starting') {
+            if (currentDb) {
+              button.innerHTML = `<span class="material-icons animate-spin">sync</span> ${currentDb}`;
+            } else {
+              button.innerHTML = `<span class="material-icons animate-spin">sync</span> ${message}`;
+            }
+          } else if (status === 'stopping') {
+            button.innerHTML = '<span class="material-icons">stop</span> Stopping...';
+          }
+          
+          // Continue polling for active syncs
+          await new Promise(r => setTimeout(r, pollInterval));
+          return poll();
+        } else {
+          // Sync completed, check final status
+          const status = (data && data.status) ? data.status : 'none';
+          if (status && status.toLowerCase() !== 'in-progress') {
+            finalStatus = status.toLowerCase();
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      // ignore transient errors and keep polling
+      console.error('poll error', err);
+    }
+    // continue polling
+    await new Promise(r => setTimeout(r, pollInterval));
+    return poll();
+  }
+
+  await poll();
+
+  // show final result based on status
+  if (finalStatus === 'completed' || finalStatus === 'success') {
+    button.classList.remove('bg-danger');
+    button.classList.add('bg-accent');
+    button.innerHTML = '<span class="material-icons">check_circle</span> Done';
+  } else if (finalStatus === 'failed') {
+    button.className = button.dataset.origClasses; // revert
+    button.innerHTML = '<span class="material-icons">error</span> Failed';
+  } else {
+    // unknown/none
+    button.className = button.dataset.origClasses;
+    button.innerHTML = '<span class="material-icons">help</span> Unknown';
+  }
+
+  // restore after a short delay so user sees result
+  setTimeout(() => {
+    button.innerHTML = button.dataset.origHtml;
+    button.className = button.dataset.origClasses;
+    button.style.pointerEvents = '';
+    button.dataset.running = 'false';
+  }, 3000);
+}
+
+// Check for running syncs when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.sync-button').forEach(button => {
+    checkRunningSync(button);
+  });
+});
+
 document.querySelectorAll('.sync-button').forEach(button => {
   button.addEventListener('click', async function(e) {
     e.preventDefault(); // Stop normal navigation
 
-    // prevent double-clicks
+    // prevent double-clicks and already running syncs
     if (button.dataset.running === 'true') return;
-    button.dataset.running = 'true';
-
-    // save original state
-    button.dataset.origHtml = button.innerHTML;
-    button.dataset.origClasses = button.className;
-
-    // Change to red while syncing and show running text (spinner)
-    button.classList.remove('bg-primary', 'hover:bg-primary-hover');
-    button.classList.add('bg-danger');
-    button.innerHTML = '<span class="spinner"></span> Running...';
-    button.style.pointerEvents = 'none';
-
+    
     // start background sync (returns quickly)
     try {
       const startResp = await fetch(button.href);
-      if (!startResp.ok) throw new Error('Failed to start background sync');
+      
+      if (!startResp.ok) {
+        const errorData = await startResp.json();
+        if (startResp.status === 409) {
+          // Sync already running - show appropriate message and start polling
+          button.dataset.running = 'true';
+          button.dataset.origHtml = button.innerHTML;
+          button.dataset.origClasses = button.className;
+          
+          button.classList.remove('bg-primary', 'hover:bg-primary-hover');
+          button.classList.add('bg-danger');
+          button.innerHTML = '<span class="material-icons animate-spin">sync</span> Already Running...';
+          button.style.pointerEvents = 'none';
+          
+          // derive server name from the href
+          const hrefParts = button.href.split('/');
+          const serverName = decodeURIComponent(hrefParts[hrefParts.length - 1]);
+          
+          // Start polling for the existing sync
+          startPolling(button, serverName);
+          return;
+        }
+        throw new Error(errorData.message || 'Failed to start background sync');
+      }
 
-      // Poll the sync status until it is no longer 'in-progress'
+      button.dataset.running = 'true';
+      
+      // save original state
+      button.dataset.origHtml = button.innerHTML;
+      button.dataset.origClasses = button.className;
+
+      // Change to red while syncing and show running text (spinner)
+      button.classList.remove('bg-primary', 'hover:bg-primary-hover');
+      button.classList.add('bg-danger');
+      button.innerHTML = '<span class="material-icons animate-spin">sync</span> Running...';
+      button.style.pointerEvents = 'none';
+
       // derive server name from the href (last path segment)
       const hrefParts = button.href.split('/');
       const serverName = decodeURIComponent(hrefParts[hrefParts.length - 1]);
 
-      const pollInterval = 2000; // ms
-      let finalStatus = null;
-
-      async function poll() {
-        try {
-          const sresp = await fetch(`/sync_status/${encodeURIComponent(serverName)}`);
-          if (sresp.ok) {
-            const data = await sresp.json();
-            const status = (data && data.status) ? data.status : (data && data.state) ? data.state : 'none';
-            if (status && status.toLowerCase() !== 'in-progress') {
-              finalStatus = status.toLowerCase();
-              return;
-            }
-          }
-        } catch (err) {
-          // ignore transient errors and keep polling
-          console.error('poll error', err);
-        }
-        // continue polling
-        await new Promise(r => setTimeout(r, pollInterval));
-        return poll();
-      }
-
-      await poll();
-
-      // show final result based on status
-      if (finalStatus === 'success') {
-        button.classList.remove('bg-danger');
-        button.classList.add('bg-accent');
-        button.innerHTML = '<span class="material-icons">check_circle</span> Done';
-      } else if (finalStatus === 'failed') {
-        button.className = button.dataset.origClasses; // revert
-        button.innerHTML = '<span class="material-icons">error</span> Failed';
-      } else {
-        // unknown/none
-        button.className = button.dataset.origClasses;
-        button.innerHTML = '<span class="material-icons">help</span> Unknown';
-      }
-
-      // restore after a short delay so user sees result
-      setTimeout(() => {
-        button.innerHTML = button.dataset.origHtml;
-        button.className = button.dataset.origClasses;
-        button.style.pointerEvents = '';
-        button.dataset.running = 'false';
-      }, 3000);
+      // Start polling for the new sync
+      startPolling(button, serverName);
 
     } catch (err) {
       // failed to start background sync
       console.error('start error', err);
-      button.className = button.dataset.origClasses; // revert colors
       button.innerHTML = '<span class="material-icons">error</span> Failed to start';
       setTimeout(() => {
-        button.innerHTML = button.dataset.origHtml;
+        button.innerHTML = button.dataset.origHtml || 'Sync Server';
         button.className = button.dataset.origClasses;
         button.style.pointerEvents = '';
         button.dataset.running = 'false';

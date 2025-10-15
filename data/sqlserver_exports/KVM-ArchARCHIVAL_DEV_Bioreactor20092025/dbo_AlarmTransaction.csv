@@ -1,0 +1,1 @@
+AlarmTransactionId,AlarmName,AlarmRaisedDateTime,AcknowledgedDateTime,Acknowledged,ActualValue,Remark,AcknowledgedBy,CreatedBy,CreatedDate,UpdatedBy,UpdatedDate,ClearBy,IsClear,IsSilence,SilenceBy,ClearDateTime,SilenceDateTime,MachineCode,ParameterTagName

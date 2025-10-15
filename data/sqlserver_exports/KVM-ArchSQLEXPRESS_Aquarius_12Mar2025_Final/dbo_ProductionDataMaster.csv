@@ -1,0 +1,1 @@
+Id,MachineId,Product,Date,ShiftId,ShiftHours,ExpectedUnits,GoodUnits,ProducedUnits,RejectedUnits,CreatedBy,CreatedDate,ProductionCapacity_Units_Per_Hr,RunningTime_Min,AvailableTime_Min

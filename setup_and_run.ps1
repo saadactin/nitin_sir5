@@ -44,9 +44,10 @@ try {
     # Start the Flask app in a new PowerShell window so this launcher can finish and the server keeps running.
     Write-Host "Starting Flask app in a new window..." -ForegroundColor Yellow
 
+    # Start the server with HYBRID_SYNC_SIMPLE_TERMINAL enabled so the server window stays minimal
     $startInfo = @{
         FilePath = 'powershell'
-        ArgumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-NoExit','-Command', "& { Set-Location -LiteralPath '$root'; & '$pythonExe' 'app.py' }")
+        ArgumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-NoExit','-Command', "& { Set-Location -LiteralPath '$root'; $env:HYBRID_SYNC_SIMPLE_TERMINAL='1'; & '$pythonExe' 'app.py' }")
         WorkingDirectory = $root
     }
     Start-Process @startInfo | Out-Null

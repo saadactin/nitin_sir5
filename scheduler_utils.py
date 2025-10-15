@@ -59,7 +59,7 @@ def _job_wrapper(server_name, server_conf, job_type):
 
     try:
         # Record that this sync has started so we can detect stuck runs later
-        log_sync(server_name, 'in-progress', f'Started {job_type} at {timestamp.strftime("%Y-%m-%d %H:%M:%S")}')
+        log_sync(server_name, 'started', f'Started {job_type} at {timestamp.strftime("%Y-%m-%d %H:%M:%S")}')
 
         process_sql_server_hybrid(server_name, server_conf)
         print(f"\n[OK] SYNC COMPLETED: {server_name} at {datetime.datetime.now().strftime('%H:%M:%S')}")

@@ -7,12 +7,12 @@
   <!-- Navigation -->
   <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto text-gray-700 dark:text-gray-300">
     {% if session.get("role") in ["admin", "operator", "viewer"] %}
-    <a href="{{ url_for('index') }}"
-       class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
-              {% if request.endpoint == 'index' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">
-      <span class="material-icons">play_arrow</span>
-      <span>Run Sync</span>
-    </a>
+<a href="{{ url_for('index') }}"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          {% if request.endpoint == 'index' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">
+  <span class="material-icons">home</span>
+  <span>Home</span>
+</a>
     {% endif %}
 
     {% if session.get("role") in ["admin", "operator"] %}
@@ -21,6 +21,13 @@
           {% if request.endpoint == 'schedule_page' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">
   <span class="material-icons">add_task</span>
   <span>Create Schedule</span>
+</a>
+
+<a href="{{ url_for('upload_csv') }}"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          {% if request.endpoint == 'upload_csv' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">
+  <span class="material-icons">upload_file</span>
+  <span>Upload</span>
 </a>
 
     {% endif %}

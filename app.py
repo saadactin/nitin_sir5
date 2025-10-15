@@ -1,15 +1,25 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response
+import pandas as pd
+from werkzeug.utils import secure_filename
 import json
 import psycopg2
 import yaml
 import os
 import logging
+# Load environment variables from .env in development to ensure PG_*, CREATE_DEFAULT_ADMIN, etc. are available
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    # python-dotenv is optional in production; if not installed, rely on real environment
+    pass
 import sys
-from flask import Flask, render_template, request, redirect, url_for, flash
+# ...existing imports above...
 from alerts import LogAnalyzer
 from datetime import datetime
 import threading
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
+from connection_sync import sync_yaml_to_db, sync_db_to_yaml, update_connection, remove_connection
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config, save_config
 from dashboard import get_last_10_syncs, get_last_sync_details, log_sync, get_last_sync_for_server
@@ -34,6 +44,7 @@ from analytics_advanced import (
     parse_schema_changes_from_log,
     collect_alerts,
 )
+from sync_manager import sync_manager
 from hybrid_sync import get_sql_connection
 from hybrid_sync import get_all_databases as hs_get_all_databases
 from hybrid_sync import (
@@ -49,6 +60,60 @@ from hybrid_sync import (
     create_table_sync_tracking,
 )
 
+def test_sql_connection(server_conf):
+    """Test if a SQL Server connection is valid
+    
+    Args:
+        server_conf: SQL server configuration dictionary
+        
+    Returns:
+        tuple: (success, error_message)
+    """
+    try:
+        # Log the connection attempt details
+        server = server_conf.get('server', '')
+        app.logger.info(f"Testing connection to SQL Server: {server}")
+        
+        if '\\' in server:
+            app.logger.info(f"Detected named instance format. Will use SQL Browser for port resolution.")
+        
+        # Attempt to connect
+        conn = get_sql_connection(server_conf)
+        
+        # Execute a simple query to verify the connection
+        cursor = conn.cursor()
+        cursor.execute("SELECT @@SERVERNAME, @@VERSION")
+        server_info = cursor.fetchone()
+        app.logger.info(f"Connected successfully to {server_info[0]}")
+        cursor.close()
+        conn.close()
+        return True, None
+    except Exception as e:
+        error_message = str(e)
+        app.logger.error(f"Connection test failed: {error_message}")
+        
+        # Enhanced error messages for common issues
+        user_message = error_message
+        
+        if "Error Locating Server/Instance Specified" in error_message:
+            user_message = (
+                f"Could not locate SQL Server instance '{server_conf.get('server', '')}'. "
+                f"Check that the instance name is correct and SQL Browser service is running. "
+                f"For named instances (server\\instance), ensure SQL Browser service is enabled and UDP port 1434 is open."
+            )
+        elif "Login timeout expired" in error_message:
+            user_message = (
+                f"Connection timeout to '{server_conf.get('server', '')}'. "
+                f"Check if server is reachable and firewall allows connection."
+            )
+        elif "Login failed for user" in error_message:
+            user_message = (
+                f"Authentication failed. Check username and password. "
+                f"If using Windows Authentication, ensure your account has access."
+            )
+        
+        return False, user_message
+
 # Configure logging for better visibility
 logging.basicConfig(
     level=logging.INFO,
@@ -60,13 +125,21 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production-2025')
+# Prefer environment-provided secret key. If missing, warn but keep compatibility.
+env_secret = os.environ.get('SECRET_KEY') or os.environ.get('SECRET')
+if env_secret:
+    app.secret_key = env_secret
+else:
+    # Fallback to older default to avoid breaking existing installs, but log strongly
+    app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production-2025')
+    app.logger.warning('No SECRET_KEY found in environment; using fallback secret. Set SECRET_KEY in .env for production.')
 
 # Session configuration for security
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+# Respect environment to enable secure cookies in production
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', '0') in ('1', 'true', 'True')
+app.config['SESSION_COOKIE_SAMESITE'] = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+app.config['PERMANENT_SESSION_LIFETIME'] = int(os.environ.get('PERMANENT_SESSION_LIFETIME', '3600'))  # 1 hour
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 
 # Server restart detection - invalidate old sessions
@@ -75,6 +148,22 @@ SERVER_START_TIME = datetime.now().timestamp()
 # Enable Flask request logging
 app.logger.setLevel(logging.INFO)
 logging.getLogger('werkzeug').setLevel(logging.INFO)
+
+# If the hybrid sync simple terminal mode is enabled, reduce console noise from Flask/werkzeug
+if os.environ.get('HYBRID_SYNC_SIMPLE_TERMINAL', '1').lower() in ('1', 'true', 'yes'):
+    # Lower werkzeug console logs to WARNING so only important messages show on the terminal
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+    # Also set the root stream handler to WARNING so app-level INFO logs go to file only
+    for h in logging.getLogger().handlers:
+        if isinstance(h, logging.StreamHandler):
+            h.setLevel(logging.WARNING)
+
+# Initialize database schema and sync YAML configuration to database
+logging.info("Initializing connection database and syncing with YAML config...")
+if sync_yaml_to_db():
+    logging.info("Successfully synced YAML configuration to database")
+else:
+    logging.warning("Failed to sync YAML configuration to database, using YAML file as fallback")
 
 # Add request logging middleware
 @app.before_request
@@ -128,7 +217,19 @@ def log_response_info(response):
     app.logger.info(f'[RESP] {request.method} {request.path} - {response.status_code}')
     return response
 
-init_admin_user()
+# Custom error handlers
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors with a friendly page"""
+    app.logger.warning(f'[404] Page not found: {request.path} - {request.remote_addr}')
+    return render_template('404.html'), 404
+
+# Conditionally create default admin at import time when explicitly enabled via env
+try:
+    if os.environ.get('CREATE_DEFAULT_ADMIN', '0') in ('1', 'true', 'True'):
+        init_admin_user(create_if_missing=True, default_password=os.environ.get('DEFAULT_ADMIN_PASSWORD'))
+except Exception:
+    app.logger.info('Default admin creation skipped or failed at import-time')
 
 
 
@@ -198,9 +299,19 @@ def index():
     app.logger.info(f"[HOME] Homepage accessed by user: {session.get('username', 'Unknown')}")
     config = load_config()
     sqlservers = config.get("sqlservers", {})
-    role = session.get("role")  # make sure this is aligned with the above line
+    
+    # Check connection status for each server
+    server_statuses = {}
+    for server_name, server_conf in sqlservers.items():
+        success, error = test_sql_connection(server_conf)
+        server_statuses[server_name] = {
+            "online": success,
+            "error": error
+        }
+    
+    role = session.get("role")
     app.logger.info(f"[INFO] Loaded {len(sqlservers)} SQL servers for display")
-    return render_template("sync_servers.html", sqlservers=sqlservers, role=role)
+    return render_template("sync_servers.html", sqlservers=sqlservers, server_statuses=server_statuses, role=role)
 
 
 @app.route("/server/<server_name>")
@@ -300,11 +411,11 @@ def sync_selected_databases(server_name):
 def sync_server(server_name):
     """Run sync for the selected server"""
     app.logger.info(f"[SYNC START] Starting sync operation for server: {server_name}")
-    print(f"[SYNC STARTED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
+    app.logger.info(f"[SYNC STARTED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
     
     # Log an in-progress entry so manual/stuck runs can be detected later
     try:
-        log_sync(server_name, 'in-progress', f'Started manual sync at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        log_sync(server_name, 'started', f'Started manual sync at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     except Exception:
         pass
     config = load_config()
@@ -314,12 +425,12 @@ def sync_server(server_name):
             app.logger.info(f"[PROCESS] Processing hybrid sync for {server_name}")
             process_sql_server_hybrid(server_name, server_conf)
             app.logger.info(f"Sync completed successfully for {server_name}")
-            print(f"[SYNC COMPLETED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
+            app.logger.info(f"[SYNC COMPLETED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
             flash(f"Sync completed for {server_name}", "success")
             log_sync(server_name, "success")
         except Exception as e:
             app.logger.error(f"Sync failed for {server_name}: {e}")
-            print(f"[SYNC FAILED] {server_name} - {e}")
+            app.logger.error(f"[SYNC FAILED] {server_name} - {e}")
             flash(f"Sync failed for {server_name}: {e}", "danger")
             log_sync(server_name, "failed", str(e))
     else:
@@ -331,64 +442,128 @@ def sync_server(server_name):
 @app.route('/sync_background/<server_name>', methods=['GET'])
 @require_role(["admin", "operator"])
 def sync_background(server_name):
-    """Start the sync in a background thread and return immediately.
-    This re-uses the same core sync logic (process_sql_server_hybrid) but
-    launches it in a daemon thread so the HTTP request can finish and the
-    sync will continue even if the user navigates away.
+    """Start the sync in a background thread using the enhanced sync manager.
+    This provides better isolation, progress tracking, and prevents interference
+    from navigation or other operations.
     """
     app.logger.info(f"[SYNC-ASYNC START] Request to start background sync for: {server_name}")
-
-    def _worker():
-        app.logger.info(f"[SYNC-ASYNC WORKER] Background worker started for: {server_name}")
-        try:
-            try:
-                log_sync(server_name, 'in-progress', f'Started manual background sync at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-            except Exception:
-                pass
-
-            config = load_config()
-            server_conf = config.get("sqlservers", {}).get(server_name)
-            if server_conf:
-                try:
-                    app.logger.info(f"[PROCESS] Background processing hybrid sync for {server_name}")
-                    process_sql_server_hybrid(server_name, server_conf)
-                    app.logger.info(f"[SYNC-ASYNC COMPLETE] Background sync completed for {server_name}")
-                    try:
-                        log_sync(server_name, "success")
-                    except Exception:
-                        pass
-                except Exception as e:
-                    app.logger.exception(f"[SYNC-ASYNC FAILED] Background sync failed for {server_name}: {e}")
-                    try:
-                        log_sync(server_name, "failed", str(e))
-                    except Exception:
-                        pass
-            else:
-                app.logger.warning(f"[SYNC-ASYNC] Server {server_name} not found in configuration (background)")
-
-        except Exception:
-            app.logger.exception(f"[SYNC-ASYNC] Unexpected error in background worker for {server_name}")
-
-    # Start daemon thread so it doesn't block server shutdown and runs independently
-    thread = threading.Thread(target=_worker, daemon=True, name=f"sync-{server_name}")
-    thread.start()
-
-    # Return immediately to the client. Client JS already expects a successful response.
-    return jsonify({"started": True}), 202
+    
+    config = load_config()
+    server_conf = config.get("sqlservers", {}).get(server_name)
+    
+    if not server_conf:
+        app.logger.warning(f"[SYNC-ASYNC] Server {server_name} not found in configuration")
+        return jsonify({
+            "success": False,
+            "message": f"Server {server_name} not found in configuration"
+        }), 404
+    
+    # Use the sync manager to start background sync
+    result = sync_manager.start_sync(server_name, server_conf, app)
+    
+    if result["success"]:
+        app.logger.info(f"[SYNC-ASYNC] Background sync started successfully for {server_name} (ID: {result['sync_id']})")
+        flash(f"Background sync started for {server_name}", "success")
+        return jsonify(result), 202
+    else:
+        app.logger.warning(f"[SYNC-ASYNC] Failed to start background sync for {server_name}: {result['message']}")
+        flash(f"Failed to start sync for {server_name}: {result['message']}", "warning")
+        return jsonify(result), 409
 
 
 @app.route('/sync_status/<server_name>', methods=['GET'])
 @require_role(["admin", "operator", "viewer"])
 def sync_status(server_name):
-    """Return the most recent sync status for a server as JSON."""
+    """Return the most recent sync status for a server as JSON.
+    This now includes real-time status from the sync manager if a sync is currently running.
+    """
     try:
+        # Check if there's an active sync running
+        active_sync = sync_manager.get_sync_status(server_name)
+        
+        if active_sync:
+            # Check if sync is actually active (running) or completed
+            sync_status = active_sync["status"]
+            is_actually_active = sync_status not in ["completed", "failed"]
+            
+            # Return real-time sync status
+            return jsonify({
+                "server": server_name,
+                "status": active_sync["status"],
+                "progress": active_sync.get("progress", 0),
+                "message": active_sync.get("message", ""),
+                "sync_id": active_sync.get("sync_id"),
+                "start_time": active_sync["start_time"].isoformat() if active_sync.get("start_time") else None,
+                "current_database": active_sync.get("current_database"),
+                "databases_processed": active_sync.get("databases_processed", 0),
+                "total_databases": active_sync.get("total_databases", 0),
+                "is_active": is_actually_active
+            }), 200
+        
+        # No active sync, return last recorded status
         last = get_last_sync_for_server(server_name)
         if not last:
-            return jsonify({"server": server_name, "status": "none"}), 200
-        return jsonify({"server": last["server"], "status": last["status"], "time": last["time"], "details": last["details"]}), 200
+            return jsonify({"server": server_name, "status": "none", "is_active": False}), 200
+        
+        return jsonify({
+            "server": last["server"],
+            "status": last["status"],
+            "time": last["time"],
+            "details": last["details"],
+            "is_active": False
+        }), 200
+        
     except Exception as e:
         app.logger.exception(f"Error fetching sync status for {server_name}: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/sync_status/all', methods=['GET'])
+@require_role(["admin", "operator", "viewer"])
+def all_sync_status():
+    """Return status of all active syncs"""
+    try:
+        active_syncs = sync_manager.get_all_active_syncs()
+        
+        # Convert datetime objects to ISO format for JSON serialization
+        for server_name, sync_data in active_syncs.items():
+            if sync_data.get("start_time"):
+                sync_data["start_time"] = sync_data["start_time"].isoformat()
+            # Convert error timestamps too
+            if sync_data.get("errors"):
+                for error in sync_data["errors"]:
+                    if error.get("timestamp"):
+                        error["timestamp"] = error["timestamp"].isoformat()
+        
+        return jsonify({
+            "active_syncs": active_syncs,
+            "count": len(active_syncs)
+        }), 200
+        
+    except Exception as e:
+        app.logger.exception(f"Error fetching all sync statuses: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/sync_stop/<server_name>', methods=['POST'])
+@require_role(["admin", "operator"])
+def stop_sync(server_name):
+    """Stop a running sync for the specified server"""
+    try:
+        result = sync_manager.stop_sync(server_name)
+        
+        if result["success"]:
+            app.logger.info(f"[SYNC-STOP] Stop request successful for {server_name}")
+            flash(f"Stop request sent for {server_name}", "info")
+        else:
+            app.logger.warning(f"[SYNC-STOP] Stop request failed for {server_name}: {result['message']}")
+            flash(f"Cannot stop sync for {server_name}: {result['message']}", "warning")
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        app.logger.exception(f"Error stopping sync for {server_name}: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 CONFIG_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "config/db_connections.yaml")
@@ -401,15 +576,18 @@ def load_config():
 def load_pg_databases():
     """Return list of Postgres DBs, or [] if connection fails"""
     try:
-        config = load_config()
-        pg_conf = config.get("postgresql", {})
-
+        # Use db_utils approach that handles both env vars and YAML
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        
+        # Connect to the configured Postgres database (or fallback to 'postgres')
+        connect_db = pg_conf.get('database') or 'postgres'
         conn = psycopg2.connect(
-            dbname="postgres",  
+            dbname=connect_db,
             user=pg_conf.get("username"),
             password=pg_conf.get("password"),
             host=pg_conf.get("host"),
-            port=pg_conf.get("port", 5432),
+            port=int(pg_conf.get("port", 5432)),
         )
         cur = conn.cursor()
         cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
@@ -417,7 +595,7 @@ def load_pg_databases():
         conn.close()
         return dbs
     except Exception as e:
-        print(f"WARNING: Could not load Postgres DBs: {e}")
+        app.logger.exception(f"WARNING: Could not load Postgres DBs: {e}")
         return []
 
 
@@ -429,26 +607,63 @@ def add_server():
         server = request.form["server"]
         username = request.form["username"]
         password = request.form["password"]
-        port = int(request.form.get("port", 1433))
         pg_database = request.form.get("pg_database")
 
+        # Log the server details (without password)
+        app.logger.info(f"Attempting to add new server '{server_name}' with address '{server}'")
+        
+        # Handle special characters in server name
+        if '\\' in server:
+            app.logger.info(f"Named instance detected: {server}")
+        
         config = load_config()
         config.setdefault("sqlservers", {})
 
         if server_name in config["sqlservers"]:
             flash(f"Server {server_name} already exists!", "error")
             return redirect(url_for("add_server"))
-
-        config["sqlservers"][server_name] = {
+            
+        # Create the server config - no explicit port as we'll auto-detect
+        server_conf = {
             "server": server,
             "username": username,
             "password": password,
-            "port": port,
             "check_new_databases": True,
             "skip_databases": [],
             "sync_mode": "hybrid",
             "target_postgres_db": pg_database,
         }
+        
+        # Test the connection before saving
+        app.logger.info(f"Testing connection to {server} before saving configuration")
+        success, error = test_sql_connection(server_conf)
+        
+        if not success:
+            app.logger.error(f"Connection test failed for {server}: {error}")
+            
+            # Add diagnostic information for named instances
+            diagnostic_info = ""
+            if '\\' in server:
+                diagnostic_info = (
+                    " For named instances like 'server\\instancename', ensure that: "
+                    "1) The SQL Browser service is running on the target server, "
+                    "2) UDP port 1434 is accessible, and "
+                    "3) The instance name is spelled correctly."
+                )
+            
+            flash(f"Connection failed! {error}{diagnostic_info}", "danger")
+            
+            # Return to the form with the previously entered values
+            postgres_dbs = load_pg_databases()
+            return render_template("add_sources.html", 
+                                  postgres_dbs=postgres_dbs,
+                                  server_name=server_name,
+                                  server=server,
+                                  username=username,
+                                  pg_database=pg_database)
+        
+        # If connection successful, save the configuration
+        config["sqlservers"][server_name] = server_conf
         save_config(config)
 
         flash(f"Server {server_name} added with Postgres target {pg_database}", "success")
@@ -457,6 +672,58 @@ def add_server():
     # GET request
     postgres_dbs = load_pg_databases()
     return render_template("add_sources.html", postgres_dbs=postgres_dbs)
+
+
+@app.route("/test-connection", methods=["POST"])
+@require_role(["admin", "operator"])
+def test_connection():
+    """Test SQL Server connection via AJAX"""
+    try:
+        data = request.get_json()
+        
+        # Extract connection details from the request
+        server_name = data.get("server_name", "").strip()
+        server = data.get("server", "").strip()
+        username = data.get("username", "").strip()
+        password = data.get("password", "").strip()
+        
+        # Validate required fields
+        if not all([server_name, server, username, password]):
+            return jsonify({
+                "success": False, 
+                "message": "All fields are required"
+            }), 400
+        
+        # Create temporary server config for testing
+        server_conf = {
+            "server": server,
+            "username": username,
+            "password": password,
+        }
+        
+        # Test the connection
+        app.logger.info(f"Testing connection to {server} for user {username}")
+        success, error = test_sql_connection(server_conf)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Connection successful!"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": f"Connection failed: {error}"
+            }), 400
+            
+    except Exception as e:
+        app.logger.exception(f"Error testing connection: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Connection test error: {str(e)}"
+        }), 500
+
+
 @app.route("/edit-server/<server_name>", methods=["GET", "POST"])
 @require_role(["admin", "operator"])
 def edit_server(server_name):
@@ -467,23 +734,41 @@ def edit_server(server_name):
         server = request.form["server"]
         username = request.form["username"]
         password = request.form["password"]
-        port = int(request.form.get("port", 1433))
         pg_database = request.form.get("pg_database")
 
         if server_name not in servers:
             flash(f"Server {server_name} does not exist!", "error")
             return redirect(url_for("index"))
-
-        servers[server_name] = {
+            
+        # Create server config - no explicit port as we'll auto-detect
+        server_conf = {
             "server": server,
             "username": username,
             "password": password,
-            "port": port,
             "check_new_databases": True,
-            "skip_databases": [],
-            "sync_mode": "hybrid",
+            "skip_databases": servers[server_name].get("skip_databases", []),
+            "sync_mode": servers[server_name].get("sync_mode", "hybrid"),
             "target_postgres_db": pg_database,
         }
+        
+        # Test the connection before saving
+        success, error = test_sql_connection(server_conf)
+        if not success:
+            flash(f"Connection failed! Error: {error}", "danger")
+            # Return to the form with the previously entered values
+            postgres_dbs = load_pg_databases()
+            return render_template("edit_sources.html", 
+                                  postgres_dbs=postgres_dbs,
+                                  server_name=server_name,
+                                  server_config={
+                                      "server": server,
+                                      "username": username,
+                                      "password": password,
+                                      "target_postgres_db": pg_database
+                                  })
+                                  
+        # If connection successful, update the configuration
+        servers[server_name] = server_conf
         save_config(config)
 
         flash(f"Server {server_name} updated successfully!", "success")
@@ -570,6 +855,60 @@ def schedule_page():
 
     jobs = get_schedules()
     return render_template("schedule.html", servers=servers, jobs=jobs, role=session.get("role"))
+
+# ------------------ CSV Upload → Postgres ------------------
+
+ALLOWED_EXTENSIONS = {"csv"}
+
+def _allowed_file(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/upload", methods=["GET", "POST"])
+@require_role(["admin", "operator"])
+def upload_csv():
+    try:
+        postgres_dbs = load_pg_databases()
+
+        if request.method == "POST":
+            selected_db = request.form.get("pg_database")
+            file = request.files.get("csv_file")
+
+            if not selected_db:
+                flash("Please select a target PostgreSQL database.", "warning")
+                return redirect(url_for("upload_csv"))
+
+            if not file or file.filename == "":
+                flash("Please choose a CSV file to upload.", "warning")
+                return redirect(url_for("upload_csv"))
+
+            if not _allowed_file(file.filename):
+                flash("Only .csv files are allowed.", "danger")
+                return redirect(url_for("upload_csv"))
+
+            filename = secure_filename(file.filename)
+
+            # Read CSV directly into memory and load to Postgres
+            try:
+                df = pd.read_csv(file)
+            except Exception as e:
+                flash(f"Failed to read CSV: {e}", "danger")
+                return redirect(url_for("upload_csv"))
+
+            # Clean table name from file name (without extension)
+            table_name = os.path.splitext(filename)[0]
+            table_name = ''.join(c for c in table_name if c.isalnum() or c in '_-')
+
+            engine = get_pg_engine(selected_db)
+            # Load into public schema, replacing any existing table of same name
+            df.to_sql(table_name, engine, schema="public", if_exists="replace", index=False)
+
+            flash(f"Uploaded '{filename}' to database '{selected_db}' as table 'public.{table_name}'.", "success")
+            return redirect(url_for("upload_csv"))
+
+        return render_template("upload.html", postgres_dbs=postgres_dbs, role=session.get("role"))
+    except Exception as e:
+        flash(f"Upload failed: {e}", "danger")
+        return redirect(url_for("index"))
 
 @app.route("/view-schedules")
 @require_role(["admin", "operator", "viewer"])
@@ -1020,14 +1359,14 @@ def explore():
 
 # ------------------ MAIN ------------------
 if __name__ == "__main__":
-    print("="*60)
-    print("[STARTING] ACTIN SYNC APPLICATION")
-    print("="*60)
-    print(f"[DATE] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"[PYTHON] {sys.version.split()[0]}")
-    print(f"[FLASK] Debug Mode: ON")
-    print(f"[LOGGING] Level: INFO")
-    print("="*60)
+    app.logger.info("="*60)
+    app.logger.info("[STARTING] ACTIN SYNC APPLICATION")
+    app.logger.info("="*60)
+    app.logger.info(f"[DATE] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    app.logger.info(f"[PYTHON] {sys.version.split()[0]}")
+    app.logger.info(f"[FLASK] Debug Mode: ON")
+    app.logger.info(f"[LOGGING] Level: INFO")
+    app.logger.info("="*60)
     
     # Configure werkzeug to be more verbose
     logging.getLogger('werkzeug').setLevel(logging.DEBUG)
@@ -1037,17 +1376,81 @@ if __name__ == "__main__":
         app.logger.info("[INIT] Initializing Flask application...")
         app.logger.info("[CONFIG] Loading configuration...")
         app.logger.info("[AUTH] Authentication system ready")
+        # Optionally create default admin based on environment variable
+        try:
+            # Always ensure default admin exists on startup when running app.py
+            from auth import init_admin_user
+            default_pw = os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123')
+            init_admin_user(create_if_missing=True, default_password=default_pw)
+            app.logger.info('Ensured default admin exists (created if missing)')
+        except Exception as e:
+            # Non-fatal: keep startup going even if admin creation fails
+            app.logger.exception(f'Default admin creation skipped or failed: {e}')
         app.logger.info("[DATABASE] Database connections configured")
         app.logger.info("[SCHEDULER] Scheduler system active")
+        
+        # Add diagnostic route for SQL Server named instances
+        @app.route('/api/diagnose-sql-server/<server_name>', methods=['GET'])
+        @require_role(["admin"])
+        def diagnose_sql_server(server_name):
+            """
+            Diagnostic endpoint to help troubleshoot SQL Server connection issues,
+            particularly for named instances with port detection problems.
+            """
+            try:
+                from hybrid_sync import get_sql_server_instance_info
+                
+                # Get server config
+                config = load_config()
+                server_conf = config.get("sqlservers", {}).get(server_name)
+                
+                if not server_conf:
+                    return jsonify({"error": f"Server {server_name} not found"}), 404
+                    
+                # Get instance info
+                info = get_sql_server_instance_info(server_conf["server"])
+                
+                # Test connection and add result
+                success, error = test_sql_connection(server_conf)
+                info["connection_test"] = {
+                    "success": success,
+                    "error": error
+                }
+                
+                return jsonify({
+                    "server_name": server_name,
+                    "instance_info": info
+                })
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        # Add API endpoint for job statuses
+        @app.route('/api/job-statuses', methods=['GET'])
+        @require_role(["admin", "operator", "viewer"])
+        def api_job_statuses():
+            """API endpoint to get current job statuses for the view schedules page"""
+            try:
+                from scheduler_utils import scheduled_jobs
+                return jsonify(scheduled_jobs)
+            except Exception as e:
+                app.logger.error(f"Error fetching job statuses: {e}")
+                return jsonify({"error": str(e)}), 500
+                
         app.logger.info("[STARTUP] Application startup complete!")
         
-        print("[READY] Application ready! Access at: http://127.0.0.1:5000")
-        print("="*60)
+        app.logger.info("[READY] Application ready! Access at: http://127.0.0.1:5000")
+        app.logger.info("="*60)
         
-        # Run with verbose output
-        app.run(debug=True, host='127.0.0.1', port=5000, use_reloader=True, use_debugger=True)
-        
+        # Run with configurable runtime flags from environment for safety
+        flask_debug = os.environ.get('FLASK_DEBUG', '0') in ('1', 'true', 'True')
+        app_host = os.environ.get('APP_HOST', '127.0.0.1')
+        app_port = int(os.environ.get('APP_PORT', '5001'))
+        use_debugger = os.environ.get('APP_USE_DEBUGGER', '0') in ('1', 'true', 'True')
+        use_reloader = os.environ.get('APP_USE_RELOADER', '0') in ('1', 'true', 'True')
+
+        app.logger.info(f"Starting Flask app host={app_host} port={app_port} debug={flask_debug} debugger={use_debugger}")
+        app.run(debug=flask_debug, host=app_host, port=app_port, use_reloader=use_reloader, use_debugger=use_debugger)
     except Exception as e:
-        print(f"[ERROR] STARTUP ERROR: {e}")
+        app.logger.error(f"[ERROR] STARTUP ERROR: {e}")
         app.logger.error(f"Failed to start application: {e}")
         sys.exit(1)

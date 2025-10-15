@@ -22,3 +22,18 @@ python app.py
 
 
 Your app should now be up and running!
+
+
+5. Why This Fails Sometimes
+SQL Browser service not running
+
+Firewall blocking UDP 1434
+
+Network policies restricting dynamic port discovery
+
+6. The Registry Storage
+Windows stores named instance port information in:
+
+text
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.SQL2019_Second\MSSQLServer\SuperSocketNetLib\Tcp\IPAll
+Where it specifies TCPDynamicPorts or TCPPort

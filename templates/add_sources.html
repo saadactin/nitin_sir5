@@ -62,19 +62,24 @@
               <div>
                 <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Server Name</label>
                 <input type="text" name="server_name" placeholder="e.g., server1" 
+                       value="{{ server_name or '' }}"
                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
                 <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Unique identifier for this server</p>
               </div>
 
               <div>
                 <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Host/Server Address</label>
-                <input type="text" name="server" placeholder="localhost or IP address" 
+                <input type="text" name="server" placeholder="localhost or server\instance" 
+                       value="{{ server or '' }}"
                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
+              
+              
               </div>
 
               <div>
                 <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Username</label>
                 <input type="text" name="username" placeholder="sa or windows" 
+                       value="{{ username or '' }}"
                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
                 <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Use 'windows' for Windows Authentication</p>
               </div>
@@ -82,24 +87,29 @@
               <div>
                 <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Password</label>
                 <input type="password" name="password" placeholder="Password or 'windows'" 
+                       value="{{ password or '' }}"
                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
                 <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Use 'windows' for Windows Authentication</p>
               </div>
-
-              <div>
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Port</label>
-                <input type="number" name="port" value="1433" 
-                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none">
-              </div>
+              
+              <!-- Port field removed - port is auto-detected from server name/instance -->
 
               <!-- Target PostgreSQL DB -->
+              <div class="md:col-span-2 mb-2">
+                <p class="text-sm text-blue-600 dark:text-blue-400">
+                  <i class="fas fa-info-circle"></i> 
+                  SQL Server port is automatically detected based on instance name. 
+                  <a href="/static/SQL_SERVER_CONNECTIONS.md" target="_blank" class="underline">Learn more</a>
+                </p>
+              </div>
+
               <div class="md:col-span-2">
                 <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Target PostgreSQL Database</label>
                 <select name="pg_database" class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none" required>
                   <option value="">Select target PostgreSQL database</option>
                   {% if postgres_dbs %}
                     {% for db in postgres_dbs %}
-                      <option value="{{ db }}">{{ db }}</option>
+                      <option value="{{ db }}" {% if pg_database == db %}selected{% endif %}>{{ db }}</option>
                     {% endfor %}
                   {% else %}
                     <option value="">No PostgreSQL databases found</option>
@@ -110,6 +120,11 @@
 
               <!-- Action Buttons -->
               <div class="md:col-span-2 flex gap-3 pt-4">
+                <button type="button" id="testConnectionBtn"
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors flex items-center gap-2">
+                  <span class="material-icons text-sm">wifi_tethering</span>
+                  Test Connection
+                </button>
                 <button type="submit" 
                         class="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-md font-medium transition-colors flex items-center gap-2">
                   <span class="material-icons text-sm">add</span>
@@ -141,5 +156,76 @@
       </div>
     </main>
   </div>
+
+  <!-- JavaScript for Test Connection -->
+  <script>
+    document.getElementById('testConnectionBtn').addEventListener('click', async function() {
+      const button = this;
+      const originalHtml = button.innerHTML;
+      const originalClasses = button.className;
+      
+      // Get form values
+      const serverName = document.querySelector('input[name="server_name"]').value.trim();
+      const server = document.querySelector('input[name="server"]').value.trim();
+      const username = document.querySelector('input[name="username"]').value.trim();
+      const password = document.querySelector('input[name="password"]').value.trim();
+      
+      // Validate required fields
+      if (!serverName || !server || !username || !password) {
+        showMessage(button, 'error', 'Please fill in all fields', originalHtml, originalClasses);
+        return;
+      }
+      
+      // Show testing state
+      button.disabled = true;
+      button.innerHTML = '<span class="material-icons text-sm animate-spin">sync</span> Testing...';
+      button.className = 'px-6 py-2 bg-yellow-600 text-white rounded-md font-medium transition-colors flex items-center gap-2';
+      
+      try {
+        const response = await fetch('/test-connection', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            server_name: serverName,
+            server: server,
+            username: username,
+            password: password
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showMessage(button, 'success', 'Connection successful!', originalHtml, originalClasses);
+        } else {
+          showMessage(button, 'error', data.message || 'Connection failed', originalHtml, originalClasses);
+        }
+        
+      } catch (error) {
+        console.error('Connection test error:', error);
+        showMessage(button, 'error', 'Connection test failed', originalHtml, originalClasses);
+      }
+    });
+    
+    function showMessage(button, type, message, originalHtml, originalClasses) {
+      // Show result for 3 seconds
+      if (type === 'success') {
+        button.className = 'px-6 py-2 bg-green-600 text-white rounded-md font-medium transition-colors flex items-center gap-2';
+        button.innerHTML = '<span class="material-icons text-sm">check_circle</span> ' + message;
+      } else {
+        button.className = 'px-6 py-2 bg-red-600 text-white rounded-md font-medium transition-colors flex items-center gap-2';
+        button.innerHTML = '<span class="material-icons text-sm">error</span> ' + message;
+      }
+      
+      // Reset after 3 seconds
+      setTimeout(() => {
+        button.innerHTML = originalHtml;
+        button.className = originalClasses;
+        button.disabled = false;
+      }, 3000);
+    }
+  </script>
 </body>
 </html>

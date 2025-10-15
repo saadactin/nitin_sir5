@@ -1,0 +1,1 @@
+ParameterId,ParameterName,ParameterType,Setpoint,LowerThreshold,UpperThreshold,Abbreavation,ShortCode,PLCTagName,OurDBColumnName,Unit,AlarmEnabled,IsActive,IsEditableOnControlScreen,OrganizationId,PlantId,MachineId,DepartmentId,SensorId,CreatedBy,CreatedDate,UpdatedBy,UpdatedDate,TriggerValue,AlarmText
