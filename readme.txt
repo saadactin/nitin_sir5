@@ -37,3 +37,9 @@ Windows stores named instance port information in:
 text
 HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.SQL2019_Second\MSSQLServer\SuperSocketNetLib\Tcp\IPAll
 Where it specifies TCPDynamicPorts or TCPPort
+
+I am facing an issue activating the Cursor Pro plan. While the bank has set up a standing instruction for the payment, Cursor has not received the funds.
+Cursor support needs the following transaction details from our end to resolve this:
+•	The last 4 digits of the company card used.
+•	The exact date and time the charge was attempted.
+	The card's 

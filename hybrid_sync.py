@@ -11,6 +11,32 @@ import psycopg2
 from load_postgres import create_schema_if_not_exists, create_table_with_proper_types
 
 
+# Helper function to send error emails
+def send_error_email(error_type, server_name, error_message, details=None):
+    """Send immediate email notification when errors occur during sync"""
+    try:
+        from utils.email_service import email_service
+        
+        if error_type == "connection_failed":
+            email_service.notify_server_down(
+                server_name=server_name,
+                error_message=error_message
+            )
+        elif error_type == "sync_failed":
+            email_service.notify_sync_failed(
+                server_name=server_name,
+                error_message=error_message
+            )
+        elif error_type == "system_error":
+            email_service.notify_system_error(
+                title=f"Sync Error - {server_name}",
+                details=f"{error_message}\n\n{details if details else ''}"
+            )
+    except Exception as e:
+        # Don't let email failures stop the sync process
+        logging.warning(f"Could not send error email: {e}")
+
+
 # Set up enhanced logging for terminal visibility
 logging.basicConfig(
     level=logging.INFO,
@@ -58,7 +84,7 @@ with open(CONFIG_PATH, 'r') as f:
 
 pg_conf = config['postgresql']
 
-BATCH_SIZE = int(os.environ.get('HYBRID_SYNC_BATCH_SIZE', '10000'))
+BATCH_SIZE = int(os.environ.get('HYBRID_SYNC_BATCH_SIZE', '5000'))  # Reduced default batch size for better memory management
 
 
 # ------------------------- Connections -------------------------
@@ -223,10 +249,35 @@ def get_sql_connection(conf, database=None):
         if "Error Locating Server/Instance Specified" in error_msg:
             logging.error(f"SQL Browser service might not be running or instance '{original_server}' doesn't exist")
             logging.error("Make sure SQL Browser service is running on the server and UDP port 1434 is open in firewall")
+            # Send immediate email notification
+            send_error_email(
+                error_type="connection_failed",
+                server_name=original_server,
+                error_message=f"SQL Server connection failed: {error_msg}\n\nSQL Browser service might not be running or instance doesn't exist."
+            )
         elif "Login timeout expired" in error_msg:
             logging.error(f"Connection timeout. Check if server is reachable and firewall allows connection")
+            # Send immediate email notification
+            send_error_email(
+                error_type="connection_failed",
+                server_name=original_server,
+                error_message=f"SQL Server connection timeout: {error_msg}\n\nServer might be down or unreachable."
+            )
         elif "SQL Server Network Interfaces" in error_msg:
             logging.error(f"Network interface issue. For named instances, ensure SQL Browser service is running")
+            # Send immediate email notification
+            send_error_email(
+                error_type="connection_failed",
+                server_name=original_server,
+                error_message=f"SQL Server network interface error: {error_msg}"
+            )
+        else:
+            # Generic connection failure
+            send_error_email(
+                error_type="connection_failed",
+                server_name=original_server,
+                error_message=f"SQL Server connection failed: {error_msg}"
+            )
         raise
 
 
@@ -313,18 +364,40 @@ def get_sqlalchemy_engine(conf, database=None):
         
         return engine
     except Exception as e:
-        logging.error(f"SQLAlchemy: Failed to create engine for {original_server}: {str(e)}")
+        error_msg = f"SQLAlchemy: Failed to create engine for {original_server}: {str(e)}"
+        logging.error(error_msg)
+        
+        # Send immediate email notification for SQL engine creation failure
+        send_error_email(
+            error_type="connection_failed",
+            server_name=original_server,
+            error_message=f"Failed to create SQL Server engine",
+            details=str(e)
+        )
         raise
 
 
 def get_pg_engine(target_db=None):
     """Get PostgreSQL engine for a specific target DB"""
-    db_name = target_db if target_db else pg_conf['database']
-    conn_str = (
-        f"postgresql+psycopg2://{pg_conf['username']}:{pg_conf['password']}@"
-        f"{pg_conf['host']}:{pg_conf['port']}/{db_name}"
-    )
-    return create_engine(conn_str)
+    try:
+        db_name = target_db if target_db else pg_conf['database']
+        conn_str = (
+            f"postgresql+psycopg2://{pg_conf['username']}:{pg_conf['password']}@"
+            f"{pg_conf['host']}:{pg_conf['port']}/{db_name}"
+        )
+        return create_engine(conn_str)
+    except Exception as e:
+        error_msg = f"Failed to create PostgreSQL engine: {str(e)}"
+        logging.error(error_msg)
+        
+        # Send immediate email notification for PostgreSQL connection failure
+        send_error_email(
+            error_type="connection_failed",
+            server_name="PostgreSQL",
+            error_message=f"Failed to connect to PostgreSQL database '{target_db or pg_conf.get('database', 'unknown')}'",
+            details=str(e)
+        )
+        raise
 
 def get_sql_server_instance_info(server_name):
     """
@@ -553,6 +626,57 @@ def _coerce_param(value):
     return value
 
 
+# ------------------------- Column Selection Helpers -------------------------
+
+def get_best_sync_column(conn, schema, table, df_columns=None):
+    """
+    Intelligently select the best column for syncing based on various criteria.
+    Returns tuple of (column_name, column_type)
+    """
+    logging.info(f"Selecting best sync column for {schema}.{table}")
+    
+    # First try to get primary key
+    pk_columns = get_primary_key_info(conn, schema, table)
+    if pk_columns and (df_columns is None or pk_columns[0] in df_columns):
+        logging.info(f"Using primary key as sync column: {pk_columns[0]}")
+        return pk_columns[0], 'pk'
+        
+    # Try to find a good timestamp column
+    ts_col = get_timestamp_column(conn, schema, table)
+    if ts_col and (df_columns is None or ts_col in df_columns):
+        logging.info(f"Using timestamp column as sync column: {ts_col}")
+        return ts_col, 'timestamp'
+        
+    # Look for a BIGINT column that might be a good sync column
+    try:
+        query = f"""
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = '{schema}'
+        AND TABLE_NAME = '{table}'
+        AND DATA_TYPE = 'bigint'
+        AND IS_NULLABLE = 'NO'
+        ORDER BY ORDINAL_POSITION
+        """
+        cursor = conn.cursor()
+        cursor.execute(query)
+        bigint_cols = [row[0] for row in cursor.fetchall()]
+        
+        if bigint_cols and (df_columns is None or bigint_cols[0] in df_columns):
+            logging.info(f"Using BIGINT column as sync column: {bigint_cols[0]}")
+            return bigint_cols[0], 'bigint'
+    except Exception as e:
+        logging.warning(f"Error finding BIGINT columns: {str(e)}")
+    
+    # As a last resort, try unique identifier
+    uid_col = get_unique_identifier_column(conn, schema, table)
+    if uid_col and (df_columns is None or uid_col in df_columns):
+        logging.info(f"Using unique identifier column as sync column: {uid_col}")
+        return uid_col, 'uid'
+        
+    logging.warning(f"No suitable sync column found for {schema}.{table}")
+    return None, None
+
 # ------------------------- Tracking tables -------------------------
 
 def create_sync_tracking_table(engine):
@@ -693,6 +817,43 @@ def update_last_synced_pk(engine, server_name, database_name, schema, table, pk_
         conn.commit()
 
 
+def optimize_copy_to_postgres(df, engine, schema_name, table_name, batch_size=1000):
+    """Optimized copy of DataFrame to PostgreSQL using native copy_from."""
+    import io
+    import psycopg2.extensions
+    
+    if df.empty:
+        return 0
+        
+    # Convert DataFrame to CSV buffer
+    output = io.StringIO()
+    df.to_csv(output, sep='\t', header=False, index=False, na_rep='\\N')
+    output.seek(0)
+    
+    # Get raw connection from SQLAlchemy engine
+    connection = engine.raw_connection()
+    try:
+        with connection.cursor() as cursor:
+            # Use PostgreSQL's COPY command for faster insertion
+            cursor.copy_from(
+                output,
+                f'"{schema_name}"."{table_name}"',
+                sep='\t',
+                null='\\N',
+                columns=df.columns.tolist()
+            )
+        connection.commit()
+        return len(df)
+    except Exception as e:
+        connection.rollback()
+        logging.error(f"Error during optimized copy: {str(e)}")
+        # Fallback to regular to_sql if COPY fails
+        df.to_sql(table_name, engine, schema=schema_name, if_exists='append', index=False, chunksize=batch_size)
+        return len(df)
+    finally:
+        connection.close()
+        output.close()
+
 # ------------------------- Helpers: discovery -------------------------
 
 def get_all_databases(conn):
@@ -776,6 +937,78 @@ def ensure_table_and_columns(engine, schema, table_name, df: pd.DataFrame):
             conn.commit()
         logging.info(f"Added columns on {schema}.{table_name}: {missing}")
 
+
+# ------------------------- Initial Sync Helpers -------------------------
+
+def perform_initial_sync(pg_engine, sql_engine, conn, schema, table, schema_name, table_name):
+    """
+    Perform initial sync of a table, ensuring all data is copied correctly.
+    """
+    logging.info(f"Performing initial sync of {schema}.{table}")
+    
+    try:
+        # First, get row count
+        count_query = f"SELECT COUNT(*) FROM [{schema}].[{table}]"
+        total_rows = pd.read_sql(count_query, sql_engine).iloc[0, 0]
+        logging.info(f"Total rows to sync: {total_rows}")
+        
+        if total_rows == 0:
+            logging.info("Source table is empty, nothing to sync")
+            return 0
+            
+        # For small tables (< 1000 rows), sync all at once
+        if total_rows < 1000:
+            query = f"SELECT * FROM [{schema}].[{table}]"
+            df = pd.read_sql(query, sql_engine)
+            logging.info(f"Retrieved {len(df)} rows for initial sync")
+            
+            if not df.empty:
+                # Handle any datetime columns
+                datetime_cols = df.select_dtypes(include=['datetime64[ns]']).columns
+                for col in datetime_cols:
+                    df[col] = pd.to_datetime(df[col])
+                
+                df.to_sql(table_name, pg_engine, schema=schema_name, 
+                         if_exists='append', index=False)
+                logging.info(f"Successfully inserted {len(df)} rows")
+                return len(df)
+        
+        # For larger tables, use batching
+        else:
+            sync_col, col_type = get_best_sync_column(conn, schema, table)
+            if not sync_col:
+                logging.warning("No suitable sync column found, falling back to full table sync")
+                query = f"SELECT * FROM [{schema}].[{table}]"
+                df = pd.read_sql(query, sql_engine)
+                df.to_sql(table_name, pg_engine, schema=schema_name,
+                         if_exists='append', index=False, chunksize=5000)
+                return len(df)
+            
+            processed = 0
+            batch_size = 5000
+            
+            while processed < total_rows:
+                query = f"""
+                    SELECT TOP ({batch_size}) * 
+                    FROM [{schema}].[{table}]
+                    ORDER BY [{sync_col}] ASC
+                """
+                df = pd.read_sql(query, sql_engine)
+                
+                if df.empty:
+                    break
+                
+                df.to_sql(table_name, pg_engine, schema=schema_name,
+                         if_exists='append', index=False)
+                
+                processed += len(df)
+                logging.info(f"Processed {processed}/{total_rows} rows")
+            
+            return processed
+            
+    except Exception as e:
+        logging.error(f"Error during initial sync: {str(e)}")
+        raise
 
 # ------------------------- Source helpers (SQL Server) -------------------------
 
@@ -867,21 +1100,70 @@ def write_audit_csv(server_clean, db_name, schema, table, df: pd.DataFrame):
 
 
 def batch_fetch_new_rows(engine, schema, table, sync_column, last_value, batch_size):
-    """Yield batches of new rows ordered by sync_column for resume capability."""
+    """Yield batches of new rows ordered by sync_column for resume capability with progress tracking."""
     next_marker = last_value
+    
+    # Get total count and max value for progress tracking
+    count_query = f"""
+        SELECT 
+            COUNT(*) as total_count,
+            MIN([{sync_column}]) as min_val,
+            MAX([{sync_column}]) as max_val
+        FROM [{schema}].[{table}]
+        WHERE [{sync_column}] > ?
+    """
+    
+    with engine.raw_connection().cursor() as cursor:
+        cursor.execute(count_query, [_coerce_param(last_value if last_value is not None else -1)])
+        total_count, min_val, max_val = cursor.fetchone()
+    
+    if total_count == 0:
+        logging.info(f"No new records to sync in {schema}.{table}")
+        return
+        
+    logging.info(f"Found {total_count} new records to sync in {schema}.{table}")
+    logging.info(f"Value range: {min_val} to {max_val}")
+    
+    processed = 0
     while True:
-        query = f"SELECT TOP ({int(batch_size)}) * FROM [{schema}].[{table}]"
-        params = {}
-        if next_marker is None:
-            query += f" ORDER BY [{sync_column}] ASC"
-            df = pd.read_sql(query, engine)
-        else:
-            query += f" WHERE [{sync_column}] > :marker ORDER BY [{sync_column}] ASC"
-            df = pd.read_sql(text(query), engine, params={"marker": _coerce_param(next_marker)})
-        if df.empty:
-            break
-        next_marker = df[sync_column].max()
-        yield df, next_marker
+        # Use parameterized query for better performance and safety
+        query = f"""
+            SELECT TOP ({int(batch_size)}) * 
+            FROM [{schema}].[{table}]
+            WHERE [{sync_column}] > ?
+            ORDER BY [{sync_column}] ASC
+        """
+        
+        try:
+            # Use raw cursor for better memory management
+            with engine.raw_connection().cursor() as cursor:
+                cursor.execute(query, [_coerce_param(next_marker if next_marker is not None else -1)])
+                
+                # Fetch column names
+                columns = [column[0] for column in cursor.description]
+                
+                # Fetch rows and create DataFrame
+                rows = cursor.fetchall()
+                if not rows:
+                    break
+                    
+                df = pd.DataFrame.from_records(rows, columns=columns)
+                
+                if df.empty:
+                    break
+                    
+                next_marker = df[sync_column].max()
+                processed += len(df)
+                
+                # Log progress
+                progress = (processed / total_count) * 100 if total_count > 0 else 0
+                logging.info(f"Processing {schema}.{table}: {processed}/{total_count} records ({progress:.1f}%)")
+                
+                yield df, next_marker
+                
+        except Exception as e:
+            logging.error(f"Error fetching batch from {schema}.{table}: {str(e)}")
+            raise
 
 
 
@@ -954,11 +1236,16 @@ def full_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, c
         return 0
     
 def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_engine, conn, schema, table):
+    """
+    Perform incremental sync of a table from SQL Server to PostgreSQL.
+    """
     if should_skip_table(schema, table):
         return 0
     
     # First ensure schema exists even for empty tables
     try:
+        logging.info(f"Starting incremental sync for {schema}.{table}")
+        
         # Get schema information first
         schema_query = f"""
         SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
@@ -967,6 +1254,11 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
         ORDER BY ORDINAL_POSITION
         """
         schema_df = pd.read_sql(schema_query, sql_engine)
+        
+        # Get row count in source
+        count_query = f"SELECT COUNT(*) FROM [{schema}].[{table}]"
+        source_count = pd.read_sql(count_query, sql_engine).iloc[0, 0]
+        logging.info(f"Source table has {source_count} total records")
         
         if not schema_df.empty:
             # Create empty DataFrame with correct schema
@@ -992,124 +1284,219 @@ def incremental_sync_table(pg_engine, server_conf, db_name, server_clean, sql_en
     except Exception as e:
         logging.warning(f"Could not ensure schema for {schema}.{table}: {e}")
     
-    # Now continue with the existing incremental sync logic
+    # Now continue with the improved incremental sync logic
     current_count = get_table_row_count(conn, schema, table)
     last_value = get_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table)
     
-    if last_value is not None and current_count == 0:
-        logging.info(f"Detected empty source (possible TRUNCATE) for {schema}.{table}; skipping to preserve target")
+    if current_count == 0:
+        logging.info(f"Source table {schema}.{table} is empty")
         return 0
     
-    pk_columns = get_primary_key_info(conn, schema, table)
-    ts_col = get_timestamp_column(conn, schema, table)
-    uid_col = get_unique_identifier_column(conn, schema, table)
-    sync_col = pk_columns[0] if pk_columns else (ts_col if ts_col else uid_col)
+    schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
+    table_name = f"{schema}_{table}"
+    
+    # Check if target table exists and has data
+    try:
+        target_exists = False
+        with pg_engine.connect() as conn:
+            # Check if table exists
+            check_query = f"""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = '{schema_name}'
+                    AND table_name = '{table_name}'
+                )
+            """
+            target_exists = conn.execute(text(check_query)).scalar()
+            
+        if not target_exists:
+            logging.info(f"Target table doesn't exist. Performing initial sync.")
+            return perform_initial_sync(pg_engine, sql_engine, conn, schema, table, schema_name, table_name)
+            
+    except Exception as e:
+        logging.error(f"Error checking target table: {str(e)}")
+        return 0
+    
+    # Get the best sync column
+    sync_col, col_type = get_best_sync_column(conn, schema, table)
+    logging.info(f"Using {sync_col} ({col_type}) as sync column")
     
     schema_name = f"{server_clean}_{db_name}".replace('-', '_').replace(' ', '_')
     table_name = f"{schema}_{table}"
     processed = 0
     
-    if sync_col:
-        if last_value is None:
-            # When last_value is None, use hash-based deduplication instead of skipping
-            logging.info(f"Last value is None for {schema}.{table}, using hash-based deduplication")
-            
-            # Fetch all data from source
-            query = f"SELECT * FROM [{schema}].[{table}]"
-            df = pd.read_sql(query, sql_engine)
-            if df.empty:
-                logging.info(f"Table {schema}.{table} is empty, but schema ensured in PostgreSQL")
-                return 0  # Schema already created above
-            
-            # Check if target table exists and has data
-            with pg_engine.connect() as pg_conn:
+    def get_effective_pk_columns(df_columns):
+        """Get effective primary key columns, preferring real PKs but falling back to all columns"""
+        if pk_columns and all(pk in df_columns for pk in pk_columns):
+            return pk_columns
+        elif sync_col and sync_col in df_columns:
+            return [sync_col]
+        return list(df_columns)  # Use all columns if no better option
+        
+    def calculate_row_hash(row, hash_columns):
+        """Calculate deterministic hash of row values for specified columns"""
+        values = []
+        for col in hash_columns:
+            val = row[col]
+            if pd.isna(val):
+                values.append('NULL')
+            elif isinstance(val, (pd.Timestamp, datetime)):
+                values.append(val.isoformat())
+            else:
+                values.append(str(val))
+        row_str = '|'.join(values)
+        return hashlib.md5(row_str.encode('utf-8')).hexdigest()
+
+    try:
+        if sync_col:
+            # Improved incremental sync with sync column
+            if last_value is None:
+                # First sync - fetch all data with enhanced deduplication
+                query = f"SELECT * FROM [{schema}].[{table}]"
+                df = pd.read_sql(query, sql_engine)
+                
+                if df.empty:
+                    logging.info(f"Source table {schema}.{table} is empty")
+                    return 0
+                
+                # Get existing data from target
                 try:
-                    dst_df = pd.read_sql(f'SELECT * FROM "{schema_name}"."{table_name}"', pg_conn)
+                    with pg_engine.connect() as pg_conn:
+                        dst_df = pd.read_sql(f'SELECT * FROM "{schema_name}"."{table_name}"', pg_conn)
                 except Exception:
                     dst_df = pd.DataFrame()
-            
-            if dst_df.empty:
-                # Target table is empty, insert all data
-                df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
-                # Update last synced value
+                
+                if not dst_df.empty:
+                    # Enhanced deduplication using effective primary key
+                    hash_columns = get_effective_pk_columns(df.columns)
+                    
+                    # Calculate hashes
+                    df['row_hash'] = df.apply(lambda row: calculate_row_hash(row, hash_columns), axis=1)
+                    dst_df['row_hash'] = dst_df.apply(lambda row: calculate_row_hash(row, hash_columns), axis=1)
+                    
+                    # Find truly new rows
+                    new_rows_idx = df[~df['row_hash'].isin(dst_df['row_hash'])].index
+                    df = df.drop('row_hash', axis=1)
+                    
+                    if len(new_rows_idx) > 0:
+                        df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name, 
+                                                   if_exists='append', index=False, chunksize=BATCH_SIZE)
+                        processed = len(new_rows_idx)
+                        logging.info(f"Inserted {processed} new unique rows into {schema}.{table}")
+                else:
+                    # First insert into empty target
+                    df.to_sql(table_name, pg_engine, schema=schema_name, 
+                             if_exists='append', index=False, chunksize=BATCH_SIZE)
+                    processed = len(df)
+                    logging.info(f"Initial insert of {processed} rows into {schema}.{table}")
+                
                 if sync_col in df.columns:
                     update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, df[sync_col].max())
-                return len(df)
+                
             else:
-                # Target table has data, use hash-based deduplication
-                common = list(set(df.columns) & set(dst_df.columns))
-                if not common:
-                    return 0
-                
-                src = df[common].fillna('')
-                dst = dst_df[common].fillna('')
-                
-                # Use the same hash logic as the fallback
-                def row_md5(row):
-                    row_tuple = tuple(str(x) for x in row)
-                    return hashlib.md5(str(row_tuple).encode('utf-8')).hexdigest()
-                
-                src['row_hash'] = src.apply(row_md5, axis=1)
-                dst['row_hash'] = dst.apply(row_md5, axis=1)
-                
-                new_rows_idx = src[~src['row_hash'].isin(dst['row_hash'])].index
-                if len(new_rows_idx) > 0:
-                    df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
-                    # Update last synced value
-                    if sync_col in df.columns:
-                        update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, df[sync_col].max())
-                    return len(new_rows_idx)
-                else:
-                    logging.info(f"No new rows found for {schema}.{table}")
-                    return 0
-        else:
-            # Normal incremental sync when last_value is not None
-            for df, _ in batch_fetch_new_rows(sql_engine, schema, table, sync_col, last_value, BATCH_SIZE):
-                if df.empty:
-                    continue
-                df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
-                next_marker = df[sync_col].max()
-                update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, next_marker)
-                processed += len(df)
-
-    else:
-        query = f"SELECT * FROM [{schema}].[{table}]"
-        df = pd.read_sql(query, sql_engine)
-        if df.empty:
-            logging.info(f"Table {schema}.{table} is empty, but schema ensured in PostgreSQL")
-            return 0  # Schema already created above
+                # Regular incremental sync with batching and deduplication
+                batch_count = 0
+                for df, marker in batch_fetch_new_rows(sql_engine, schema, table, sync_col, last_value, BATCH_SIZE):
+                    if df.empty:
+                        continue
+                    
+                    batch_count += 1
+                    logging.info(f"Processing batch {batch_count} for {schema}.{table}")
+                    
+                    # Get potential duplicates from target for this batch
+                    min_val = df[sync_col].min()
+                    max_val = df[sync_col].max()
+                    
+                    try:
+                        # Get overlapping records from target for deduplication
+                        overlap_query = f"""
+                        SELECT * FROM "{schema_name}"."{table_name}" 
+                        WHERE "{sync_col}" BETWEEN $1 AND $2
+                        """
+                        with pg_engine.connect() as pg_conn:
+                            dst_df = pd.read_sql(overlap_query, pg_conn, 
+                                               params=[_coerce_param(min_val), _coerce_param(max_val)])
+                    except Exception as e:
+                        logging.warning(f"Could not fetch overlapping records, assuming none: {e}")
+                        dst_df = pd.DataFrame()
+                    
+                    if not dst_df.empty:
+                        # Deduplicate against overlapping records
+                        hash_columns = get_effective_pk_columns(df.columns)
+                        
+                        df['row_hash'] = df.apply(lambda row: calculate_row_hash(row, hash_columns), axis=1)
+                        dst_df['row_hash'] = dst_df.apply(lambda row: calculate_row_hash(row, hash_columns), axis=1)
+                        
+                        new_rows_idx = df[~df['row_hash'].isin(dst_df['row_hash'])].index
+                        df = df.drop('row_hash', axis=1)
+                        
+                        if len(new_rows_idx) > 0:
+                            df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name,
+                                                       if_exists='append', index=False, chunksize=BATCH_SIZE)
+                            batch_processed = len(new_rows_idx)
+                            processed += batch_processed
+                            logging.info(f"Inserted {batch_processed} unique rows in batch {batch_count}")
+                    else:
+                        # No overlapping records, safe to insert all
+                        df.to_sql(table_name, pg_engine, schema=schema_name,
+                                if_exists='append', index=False, chunksize=BATCH_SIZE)
+                        processed += len(df)
+                        logging.info(f"Inserted {len(df)} rows in batch {batch_count} (no overlap)")
+                    
+                    update_last_synced_pk(pg_engine, server_conf['server'], db_name, schema, table, marker)
+                    
+                logging.info(f"Completed incremental sync of {processed} rows across {batch_count} batches")
         
-        with pg_engine.connect() as pg_conn:
+        else:
+            # Fallback for tables without sync column - full table comparison
+            logging.info(f"No sync column available for {schema}.{table}, using full table comparison")
+            
+            query = f"SELECT * FROM [{schema}].[{table}]"
+            df = pd.read_sql(query, sql_engine)
+            
+            if df.empty:
+                logging.info(f"Source table {schema}.{table} is empty")
+                return 0
+            
             try:
-                dst_df = pd.read_sql(f'SELECT * FROM "{schema_name}"."{table_name}"', pg_conn)
+                with pg_engine.connect() as pg_conn:
+                    dst_df = pd.read_sql(f'SELECT * FROM "{schema_name}"."{table_name}"', pg_conn)
             except Exception:
                 dst_df = pd.DataFrame()
-        
-        common = list(set(df.columns) & set(dst_df.columns)) if not dst_df.empty else list(df.columns)
-        if not common:
-            return 0
-        
-        src = df[common].fillna('')
-        if dst_df.empty:
-            df.to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
-            processed = len(df)
-        else:
-            dst = dst_df[common].fillna('')
             
-            def row_md5(row):
-                # Convert row to tuple of strings to handle NaNs consistently
-                row_tuple = tuple(str(x) for x in row)
-                return hashlib.md5(str(row_tuple).encode('utf-8')).hexdigest()
- 
-            src['row_hash'] = src.apply(row_md5, axis=1)
-            dst['row_hash'] = dst.apply(row_md5, axis=1)
-            
-            new_rows_idx = src[~src['row_hash'].isin(dst['row_hash'])].index
-            if len(new_rows_idx) > 0:
-                df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name, if_exists='append', index=False, chunksize=BATCH_SIZE)
-                processed = len(new_rows_idx)
-    
-    return processed
+            if not dst_df.empty:
+                # Use all common columns for comparison
+                common_cols = list(set(df.columns) & set(dst_df.columns))
+                if not common_cols:
+                    logging.warning(f"No common columns between source and target for {schema}.{table}")
+                    return 0
+                
+                # Calculate hashes using all common columns
+                df['row_hash'] = df[common_cols].apply(
+                    lambda row: calculate_row_hash(row, common_cols), axis=1)
+                dst_df['row_hash'] = dst_df[common_cols].apply(
+                    lambda row: calculate_row_hash(row, common_cols), axis=1)
+                
+                new_rows_idx = df[~df['row_hash'].isin(dst_df['row_hash'])].index
+                df = df.drop('row_hash', axis=1)
+                
+                if len(new_rows_idx) > 0:
+                    df.iloc[new_rows_idx].to_sql(table_name, pg_engine, schema=schema_name,
+                                               if_exists='append', index=False, chunksize=BATCH_SIZE)
+                    processed = len(new_rows_idx)
+                    logging.info(f"Inserted {processed} unique rows using full table comparison")
+            else:
+                # First insert into empty target
+                df.to_sql(table_name, pg_engine, schema=schema_name,
+                         if_exists='append', index=False, chunksize=BATCH_SIZE)
+                processed = len(df)
+                logging.info(f"Initial insert of {processed} rows into empty target table")
+        
+        return processed
+        
+    except Exception as e:
+        logging.error(f"Error during incremental sync of {schema}.{table}: {str(e)}")
+        raise
 
 def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_dir, pg_engine):
     logging.info(f"=== Starting FULL sync for database: {db_name} ===")
@@ -1143,9 +1530,18 @@ def full_sync_database(sql_engine, db_name, server_conf, server_clean, output_di
             processed_count += 1
             
         except Exception as e:
-            logging.error(f"Failed to export/load {schema}.{table}: {e}")
+            error_msg = f"Failed to export/load {schema}.{table}: {e}"
+            logging.error(error_msg)
             if not SIMPLE_TERMINAL:
                 print(f" [ERROR] Error: {str(e)[:50]}...")
+            
+            # Send immediate email notification for critical table sync errors
+            send_error_email(
+                error_type="sync_failed",
+                server_name=f"{server_conf.get('server', 'Unknown')}/{db_name}",
+                error_message=f"Table full sync failed: {schema}.{table}",
+                details=str(e)
+            )
     
     if not SIMPLE_TERMINAL:
         print(f"  [DONE] FULL sync completed: {processed_count}/{len(tables)} tables processed", flush=True)
@@ -1198,9 +1594,18 @@ def incremental_sync_database(sql_engine, conn, db_name, server_conf, server_cle
             processed_count += 1
             
         except Exception as e:
-            logging.error(f"Failed to sync/load {schema}.{table}: {e}")
+            error_msg = f"Failed to sync/load {schema}.{table}: {e}"
+            logging.error(error_msg)
             if not SIMPLE_TERMINAL:
                 print(f" [ERROR] Error: {str(e)[:50]}...")
+            
+            # Send immediate email notification for critical table sync errors
+            send_error_email(
+                error_type="sync_failed",
+                server_name=f"{server_conf.get('server', 'Unknown')}/{db_name}",
+                error_message=f"Table sync failed: {schema}.{table}",
+                details=str(e)
+            )
 
     if not SIMPLE_TERMINAL:
         print(f"  [DONE] INCREMENTAL sync completed: {processed_count}/{len(tables)} tables processed", flush=True)
@@ -1327,8 +1732,17 @@ def process_sql_server_hybrid(server_name, server_conf):
         logging.info(f"Completed {server_name}")
 
     except Exception as e:
-        logging.error(f"Error processing {server_name}: {e}")
+        error_msg = f"Error processing {server_name}: {e}"
+        logging.error(error_msg)
         print(f"[CRITICAL ERROR] {server_name}: {e}", flush=True)
+        
+        # Send immediate email notification for server-level failures
+        send_error_email(
+            error_type="sync_failed",
+            server_name=server_name,
+            error_message=f"Server sync process failed critically",
+            details=str(e)
+        )
         raise
 def get_all_sqlserver_databases(server_conf):
     """

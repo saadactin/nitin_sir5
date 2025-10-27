@@ -6,14 +6,20 @@ import psycopg2
 import yaml
 import os
 import logging
-# Load environment variables from .env in development to ensure PG_*, CREATE_DEFAULT_ADMIN, etc. are available
+# Load environment variables from .env; also try email.env fallback
 try:
     from dotenv import load_dotenv
     load_dotenv()
+    try:
+        load_dotenv("email.env")
+    except Exception:
+        pass
 except Exception:
     # python-dotenv is optional in production; if not installed, rely on real environment
     pass
 import sys
+import signal
+import atexit
 # ...existing imports above...
 from alerts import LogAnalyzer
 from datetime import datetime
@@ -33,7 +39,7 @@ from scheduler_utils import (
 )
 from analytics import compare_table_rows, delta_tracking, top_changed_tables
 from metrics import get_server_metrics, get_database_metrics
-from sync_summary import get_sync_comparison, get_all_server_comparisons, get_individual_server_comparison, get_detailed_table_comparison
+from sync_summary import get_sync_comparison, get_all_server_comparisons, get_individual_server_comparison, get_detailed_table_comparison, bp as sync_summary_bp
 from analytics_advanced import (
     fetch_database_history,
     fetch_table_history,
@@ -59,6 +65,83 @@ from hybrid_sync import (
     create_sync_tracking_table,
     create_table_sync_tracking,
 )
+from utils.email_service import email_service
+
+# Global flag to track if shutdown email was sent
+_shutdown_email_sent = False
+_shutdown_in_progress = False
+
+def send_shutdown_email(reason="Manual shutdown"):
+    """Send email notification when Flask server is shutting down"""
+    global _shutdown_email_sent
+    
+    # Only send once
+    if _shutdown_email_sent:
+        return
+    
+    _shutdown_email_sent = True  # Set immediately to prevent duplicates
+    
+    try:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        shutdown_message = f"""Flask Application Server is shutting down.
+
+Timestamp: {timestamp}
+Shutdown Reason: {reason}
+Server URL: http://127.0.0.1:5001
+
+The Flask server has been stopped.
+
+Possible reasons:
+- Manual shutdown (Ctrl+C pressed)
+- Application error or crash
+- System shutdown
+- Process terminated
+
+Action Required: Restart the Flask application server if this was not intentional.
+
+To restart:
+1. Open PowerShell in project directory
+2. Run: .\\myenv1\\Scripts\\python.exe app.py
+"""
+        
+        print(f"\n[SHUTDOWN EMAIL] Sending shutdown notification...")
+        result = email_service.notify_server_down(
+            server_name="Flask Application Server",
+            error_message=shutdown_message
+        )
+        
+        if result.success:
+            print(f"[SHUTDOWN EMAIL] ✓ Alert sent successfully to {len(result.recipients)} recipients")
+        else:
+            print(f"[SHUTDOWN EMAIL] ✗ Failed to send alert: {result.error}")
+            
+    except Exception as e:
+        print(f"[SHUTDOWN EMAIL] Exception: {e}")
+
+def signal_handler(sig, frame):
+    """Handle Ctrl+C and other termination signals"""
+    global _shutdown_in_progress
+    
+    # Prevent multiple signal handlers from running
+    if _shutdown_in_progress:
+        return
+    
+    _shutdown_in_progress = True
+    
+    print("\n" + "="*60)
+    print("[SHUTDOWN] Shutdown signal received (Ctrl+C)")
+    print("="*60)
+    
+    send_shutdown_email("Manual shutdown (Ctrl+C)")
+    
+    print("[SHUTDOWN] Cleanup complete. Exiting...")
+    print("="*60)
+    
+    sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
+signal.signal(signal.SIGTERM, signal_handler)  # Termination signal
 
 def test_sql_connection(server_conf):
     """Test if a SQL Server connection is valid
@@ -125,6 +208,31 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+
+# Register blueprints
+app.register_blueprint(sync_summary_bp, url_prefix='/sync-summary')
+
+@app.route('/sync-summary/<server_name>/tables')
+def server_tables(server_name):
+    """Direct route for server tables view for backward compatibility"""
+    config = load_config()
+    sqlservers = config.get("sqlservers", {})
+    
+    if server_name not in sqlservers:
+        flash(f"Server '{server_name}' not found", "error")
+        return redirect(url_for('index'))
+    
+    target_db = sqlservers[server_name].get('target_postgres_db')
+    if not target_db:
+        flash(f"No target database configured for server '{server_name}'", "error")
+        return redirect(url_for('index'))
+    
+    return render_template( 
+        'server_tables.html',
+        server_name=server_name,
+        target_db=target_db
+    )
+
 # Prefer environment-provided secret key. If missing, warn but keep compatibility.
 env_secret = os.environ.get('SECRET_KEY') or os.environ.get('SECRET')
 if env_secret:
@@ -283,8 +391,11 @@ def create_user_route():
         password = request.form["password"]
         role = request.form["role"]
         
-        if create_user(username, password, role):
-            flash(f"User {username} created with role {role}", "success")
+        # Get the current user who is creating this user
+        created_by = session.get("username", "admin")
+        
+        if create_user(username, password, role, created_by=created_by):
+            flash(f"User {username} created with role {role}. Notification email sent.", "success")
         else:
             flash(f"User {username} already exists or creation failed", "warning")
             
@@ -428,11 +539,19 @@ def sync_server(server_name):
             app.logger.info(f"[SYNC COMPLETED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
             flash(f"Sync completed for {server_name}", "success")
             log_sync(server_name, "success")
+            try:
+                email_service.notify_sync_success(server_name)
+            except Exception:
+                pass
         except Exception as e:
             app.logger.error(f"Sync failed for {server_name}: {e}")
             app.logger.error(f"[SYNC FAILED] {server_name} - {e}")
             flash(f"Sync failed for {server_name}: {e}", "danger")
             log_sync(server_name, "failed", str(e))
+            try:
+                email_service.notify_sync_failed(server_name, str(e))
+            except Exception:
+                pass
     else:
         app.logger.warning(f"Server {server_name} not found in configuration")
         flash(f"Server {server_name} not found!", "danger")
@@ -856,9 +975,63 @@ def schedule_page():
     jobs = get_schedules()
     return render_template("schedule.html", servers=servers, jobs=jobs, role=session.get("role"))
 
-# ------------------ CSV Upload → Postgres ------------------
+# ------------------ CSV/Excel/Text Upload → Postgres ------------------
 
-ALLOWED_EXTENSIONS = {"csv"}
+ALLOWED_EXTENSIONS = {"csv", "xlsx", "xls", "txt"}
+
+# Global variable to track upload progress
+upload_progress = {}
+
+
+def _normalize_dataframe(df, file_content=None):
+    """Normalize dataframe column names and handle malformed headers.
+    If there are duplicate/very long column names or too many columns,
+    fallback to a single-column dataframe with the full file content.
+    """
+    import re
+    # If df is None or empty, try to use file_content
+    try:
+        rows, cols = df.shape
+    except Exception:
+        rows, cols = (0, 0)
+
+    if (rows == 0 or cols == 0) and file_content:
+        return pd.DataFrame({"content": [file_content]})
+
+    cols_list = [str(c) for c in df.columns]
+    # Detect problematic cases: duplicate column names, extremely long names, or too many columns
+    dup = len(cols_list) != len(set(cols_list))
+    long_name = any(len(c) > 120 for c in cols_list)
+    too_many = len(cols_list) > 100
+
+    if dup or long_name or too_many:
+        # fallback to single-column containing the full file content (or join rows)
+        if file_content is None:
+            # join rows into one long string
+            try:
+                file_content = "\n".join(df.astype(str).agg(" ".join, axis=1).tolist())
+            except Exception:
+                file_content = " ".join(df.astype(str).values.flatten().astype(str).tolist())
+        return pd.DataFrame({"content": [file_content]})
+
+    # Sanitize column names and ensure uniqueness
+    new_cols = []
+    seen = {}
+    for i, c in enumerate(cols_list):
+        c2 = re.sub(r"[^0-9a-zA-Z_]", "_", c).strip("_").lower()
+        if not c2:
+            c2 = f"col_{i+1}"
+        base = c2
+        suffix = 1
+        while c2 in seen:
+            suffix += 1
+            c2 = f"{base}_{suffix}"
+        seen[c2] = True
+        new_cols.append(c2)
+
+    df.columns = new_cols
+    return df
+
 
 def _allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -871,44 +1044,163 @@ def upload_csv():
 
         if request.method == "POST":
             selected_db = request.form.get("pg_database")
-            file = request.files.get("csv_file")
+            files = request.files.getlist("files")
 
             if not selected_db:
                 flash("Please select a target PostgreSQL database.", "warning")
                 return redirect(url_for("upload_csv"))
 
-            if not file or file.filename == "":
-                flash("Please choose a CSV file to upload.", "warning")
+            if not files or len(files) == 0 or files[0].filename == "":
+                flash("Please choose at least one file to upload.", "warning")
                 return redirect(url_for("upload_csv"))
 
-            if not _allowed_file(file.filename):
-                flash("Only .csv files are allowed.", "danger")
-                return redirect(url_for("upload_csv"))
+            # Generate unique session ID for tracking progress
+            import uuid
+            session_id = str(uuid.uuid4())
+            
+            # Initialize progress tracking
+            upload_progress[session_id] = {
+                'total': len(files),
+                'completed': 0,
+                'current_file': '',
+                'status': 'processing',
+                'results': []
+            }
 
-            filename = secure_filename(file.filename)
-
-            # Read CSV directly into memory and load to Postgres
             try:
-                df = pd.read_csv(file)
+                engine = get_pg_engine(selected_db)
+                successful_uploads = 0
+                failed_uploads = 0
+
+                for idx, file in enumerate(files):
+                    if file.filename == "":
+                        continue
+
+                    if not _allowed_file(file.filename):
+                        upload_progress[session_id]['results'].append({
+                            'file': file.filename,
+                            'status': 'failed',
+                            'message': 'File type not allowed. Only CSV, XLS, XLSX, TXT are supported.'
+                        })
+                        failed_uploads += 1
+                        continue
+
+                    filename = secure_filename(file.filename)
+                    upload_progress[session_id]['current_file'] = filename
+
+                    try:
+                        # Read file based on extension (read bytes first to avoid stream/seek issues)
+                        import io
+                        file_ext = filename.rsplit(".", 1)[1].lower()
+                        file_bytes = file.read()
+                        df = None
+                        text_content = None
+
+                        if file_ext == 'csv':
+                            try:
+                                text_content = file_bytes.decode('utf-8')
+                                df = pd.read_csv(io.StringIO(text_content))
+                            except Exception:
+                                # fallback to bytes-based read
+                                df = pd.read_csv(io.BytesIO(file_bytes))
+
+                        elif file_ext in ['xlsx', 'xls']:
+                            df = pd.read_excel(io.BytesIO(file_bytes))
+
+                        elif file_ext == 'txt':
+                            # decode to text and try several delimiter strategies
+                            try:
+                                text_content = file_bytes.decode('utf-8')
+                            except Exception:
+                                text_content = file_bytes.decode('latin-1', errors='replace')
+
+                            # Try tab, then comma, then whitespace, then pandas auto
+                            try:
+                                df = pd.read_csv(io.StringIO(text_content), sep='\t')
+                                if len(df.columns) == 1:
+                                    df = pd.read_csv(io.StringIO(text_content), sep=',')
+                                if len(df.columns) == 1:
+                                    df = pd.read_csv(io.StringIO(text_content), sep=r'\s+', engine='python')
+                            except Exception:
+                                try:
+                                    df = pd.read_csv(io.StringIO(text_content))
+                                except Exception:
+                                    # as last resort, store whole content as single column
+                                    df = pd.DataFrame({'content': [text_content]})
+
+                        else:
+                            raise ValueError(f"Unsupported file type: {file_ext}")
+
+                        # Normalize dataframe columns and fallback if headers malformed
+                        df = _normalize_dataframe(df, file_content=text_content)
+
+                        # Clean table name from file name (without extension)
+                        table_name = os.path.splitext(filename)[0]
+                        table_name = ''.join(c for c in table_name if c.isalnum() or c in '_-')
+                        table_name = table_name.lower()  # PostgreSQL convention
+
+                        # Load into public schema, replacing any existing table of same name
+                        df.to_sql(table_name, engine, schema="public", if_exists="replace", index=False)
+
+                        upload_progress[session_id]['results'].append({
+                            'file': filename,
+                            'status': 'success',
+                            'message': f"Successfully loaded to table 'public.{table_name}' ({len(df)} rows)"
+                        })
+                        successful_uploads += 1
+
+                    except Exception as e:
+                        import traceback
+                        error_details = traceback.format_exc()
+                        print(f"[UPLOAD ERROR] File: {filename}")
+                        print(f"[UPLOAD ERROR] {error_details}")
+                        
+                        upload_progress[session_id]['results'].append({
+                            'file': filename,
+                            'status': 'failed',
+                            'message': f"Error: {str(e)}"
+                        })
+                        failed_uploads += 1
+
+                    # Update progress
+                    upload_progress[session_id]['completed'] = idx + 1
+
+                # Mark as complete
+                upload_progress[session_id]['status'] = 'complete'
+                upload_progress[session_id]['current_file'] = ''
+
+                # Flash summary message
+                if successful_uploads > 0 and failed_uploads == 0:
+                    flash(f"✅ Successfully uploaded {successful_uploads} file(s) to database '{selected_db}'.", "success")
+                elif successful_uploads > 0 and failed_uploads > 0:
+                    flash(f"⚠️ Uploaded {successful_uploads} file(s), {failed_uploads} failed. Check details below.", "warning")
+                else:
+                    flash(f"❌ All {failed_uploads} file(s) failed to upload.", "danger")
+
+                return render_template("upload.html", 
+                                     postgres_dbs=postgres_dbs, 
+                                     role=session.get("role"),
+                                     upload_results=upload_progress[session_id]['results'])
+
             except Exception as e:
-                flash(f"Failed to read CSV: {e}", "danger")
+                upload_progress[session_id]['status'] = 'error'
+                upload_progress[session_id]['current_file'] = ''
+                flash(f"Upload process failed: {e}", "danger")
                 return redirect(url_for("upload_csv"))
-
-            # Clean table name from file name (without extension)
-            table_name = os.path.splitext(filename)[0]
-            table_name = ''.join(c for c in table_name if c.isalnum() or c in '_-')
-
-            engine = get_pg_engine(selected_db)
-            # Load into public schema, replacing any existing table of same name
-            df.to_sql(table_name, engine, schema="public", if_exists="replace", index=False)
-
-            flash(f"Uploaded '{filename}' to database '{selected_db}' as table 'public.{table_name}'.", "success")
-            return redirect(url_for("upload_csv"))
 
         return render_template("upload.html", postgres_dbs=postgres_dbs, role=session.get("role"))
     except Exception as e:
         flash(f"Upload failed: {e}", "danger")
         return redirect(url_for("index"))
+
+@app.route("/api/upload-progress/<session_id>")
+@require_role(["admin", "operator"])
+def get_upload_progress(session_id):
+    """API endpoint to check upload progress"""
+    if session_id in upload_progress:
+        return jsonify(upload_progress[session_id])
+    else:
+        return jsonify({'status': 'not_found'}), 404
 
 @app.route("/view-schedules")
 @require_role(["admin", "operator", "viewer"])
@@ -953,6 +1245,41 @@ def delete_schedule_route(server_name, job_type):
     except Exception as e:
         flash(f"Failed to delete schedule: {e}", "danger")
     return redirect(url_for("view_schedules"))
+
+@app.route("/api/verify-schedules")
+@require_role(["admin", "operator", "viewer"])
+def verify_schedules_api():
+    """
+    Verify that all schedules from database are loaded and running.
+    Useful after server restart to confirm schedule restoration.
+    """
+    try:
+        from scheduler_utils import get_schedules, scheduled_jobs
+        import schedule as sched
+        
+        # Get schedules from database
+        db_schedules = get_schedules()
+        
+        # Get currently loaded jobs from schedule library
+        active_jobs = []
+        for job in sched.jobs:
+            active_jobs.append({
+                'tags': list(job.tags) if hasattr(job, 'tags') else [],
+                'next_run': str(job.next_run) if hasattr(job, 'next_run') else None
+            })
+        
+        # Get in-memory job metadata
+        memory_jobs = scheduled_jobs
+        
+        return jsonify({
+            'database_schedules': db_schedules,
+            'active_scheduler_jobs': active_jobs,
+            'memory_metadata': memory_jobs,
+            'status': 'ok',
+            'message': f'{len(db_schedules)} schedules in database, {len(active_jobs)} active jobs in scheduler'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e), 'status': 'error'}), 500
 
 # ------------------ ANALYTICS ROUTES ------------------
 
@@ -1244,6 +1571,340 @@ def sync_summary_json():
 
 # ------------------ ADVANCED ANALYTICS ROUTES ------------------
 
+@app.route("/advanced-analytics")
+@require_role(["admin", "operator", "viewer"])
+def advanced_analytics():
+    """Advanced Analytics Dashboard - Real-time performance metrics and trends"""
+    try:
+        metrics = get_advanced_analytics_metrics()
+        return render_template("advanced_analytics.html", metrics=metrics, role=session.get("role"))
+    except Exception as e:
+        flash(f"Error loading analytics: {e}", "danger")
+        return redirect(url_for("index"))
+
+@app.route("/advanced-analytics/api/metrics")
+@require_role(["admin", "operator", "viewer"])
+def advanced_analytics_api_metrics():
+    """API endpoint for real-time metrics updates"""
+    try:
+        metrics = get_advanced_analytics_metrics()
+        return jsonify(metrics)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/advanced-analytics/api/activity")
+@require_role(["admin", "operator", "viewer"])
+def advanced_analytics_api_activity():
+    """API endpoint for recent activity feed"""
+    try:
+        activities = get_recent_activity_feed()
+        return jsonify(activities)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def get_advanced_analytics_metrics():
+    """Aggregate advanced analytics metrics from database"""
+    from datetime import datetime, timedelta
+    
+    metrics = {
+        'total_syncs_today': 0,
+        'successful_syncs': 0,
+        'failed_syncs': 0,
+        'success_rate': 0,
+        'active_syncs': 0,
+        'active_servers': 0,
+        'total_servers': 0,  # NEW: Total unique servers
+        'avg_sync_time': '0s',
+        'performance_labels': [],
+        'performance_data': [],
+        'top_servers_labels': [],
+        'top_servers_data': [],
+        'duration_distribution': [0, 0, 0, 0, 0],
+        'server_statuses': [],
+        'recent_activities': []
+    }
+    
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv("POSTGRES_HOST", "localhost"),
+            port=int(os.getenv("POSTGRES_PORT", 5432)),
+            database=os.getenv("POSTGRES_DB", "test1"),
+            user=os.getenv("POSTGRES_USER", "migration_user"),
+            password=os.getenv("POSTGRES_PASSWORD", "StrongPassword123")
+        )
+        cursor = conn.cursor()
+        
+        # Get today's date
+        today = datetime.now().date()
+        
+        # Total syncs today - count only 'success' status (not 'started')
+        cursor.execute("""
+            SELECT COUNT(*) FROM metrics_sync_tables.sync_history 
+            WHERE DATE(sync_time) = %s AND status IN ('success', 'failed', 'error')
+        """, (today,))
+        metrics['total_syncs_today'] = cursor.fetchone()[0] or 0
+        
+        # Successful syncs today
+        cursor.execute("""
+            SELECT COUNT(*) FROM metrics_sync_tables.sync_history 
+            WHERE DATE(sync_time) = %s AND status = 'success'
+        """, (today,))
+        metrics['successful_syncs'] = cursor.fetchone()[0] or 0
+        
+        # Failed syncs today
+        cursor.execute("""
+            SELECT COUNT(*) FROM metrics_sync_tables.sync_history 
+            WHERE DATE(sync_time) = %s AND status IN ('failed', 'error')
+        """, (today,))
+        metrics['failed_syncs'] = cursor.fetchone()[0] or 0
+        
+        # Success rate
+        if metrics['total_syncs_today'] > 0:
+            metrics['success_rate'] = round((metrics['successful_syncs'] / metrics['total_syncs_today']) * 100, 1)
+        else:
+            metrics['success_rate'] = 100
+        
+        # Active syncs - changed to 'started' since that's what your system uses
+        cursor.execute("""
+            SELECT COUNT(DISTINCT server_name) FROM metrics_sync_tables.sync_history 
+            WHERE status = 'started'
+        """)
+        metrics['active_syncs'] = cursor.fetchone()[0] or 0
+        
+        # Active servers
+        cursor.execute("""
+            SELECT COUNT(DISTINCT server_name) FROM metrics_sync_tables.sync_history 
+            WHERE status = 'started'
+        """)
+        metrics['active_servers'] = cursor.fetchone()[0] or 0
+        
+        # Total unique servers (all time)
+        cursor.execute("""
+            SELECT COUNT(DISTINCT server_name) FROM metrics_sync_tables.sync_history
+        """)
+        metrics['total_servers'] = cursor.fetchone()[0] or 0
+        
+        # Average sync time (simplified - sync_history doesn't have duration data)
+        # We'll just show count of syncs in last 24 hours
+        metrics['avg_sync_time'] = 'N/A'
+        
+        # Performance data (last 24 hours, hourly) - simplified to just show sync counts
+        cursor.execute("""
+            SELECT 
+                TO_CHAR(DATE_TRUNC('hour', sync_time), 'HH24:MI') as hour,
+                COUNT(*) as sync_count
+            FROM metrics_sync_tables.sync_history 
+            WHERE sync_time >= NOW() - INTERVAL '24 hours' 
+            AND status = 'success'
+            GROUP BY DATE_TRUNC('hour', sync_time)
+            ORDER BY DATE_TRUNC('hour', sync_time)
+        """)
+        perf_data = cursor.fetchall()
+        metrics['performance_labels'] = [row[0] for row in perf_data] if perf_data else ['00:00']
+        metrics['performance_data'] = [row[1] for row in perf_data] if perf_data else [0]
+        
+        # Top servers by sync count (last 7 days) - show top 50 for production scale
+        cursor.execute("""
+            SELECT server_name, COUNT(*) as sync_count
+            FROM metrics_sync_tables.sync_history 
+            WHERE sync_time >= NOW() - INTERVAL '7 days'
+            AND status = 'success'
+            GROUP BY server_name
+            ORDER BY sync_count DESC
+            LIMIT 50
+        """)
+        top_servers = cursor.fetchall()
+        metrics['top_servers_labels'] = [row[0] for row in top_servers] if top_servers else ['No Data']
+        metrics['top_servers_data'] = [row[1] for row in top_servers] if top_servers else [0]
+        
+        # Duration distribution - skip for now since we don't have duration data
+        # Just return default empty distribution
+        metrics['duration_distribution'] = [0, 0, 0, 0, 0]
+        
+        # Server statuses - OPTIMIZED for production (100+ servers)
+        # Single query with all needed data - avoids N+1 query problem
+        cursor.execute("""
+            WITH latest_sync AS (
+                SELECT DISTINCT ON (server_name)
+                    server_name,
+                    status,
+                    sync_time
+                FROM metrics_sync_tables.sync_history 
+                ORDER BY server_name, sync_time DESC
+            ),
+            success_rates AS (
+                SELECT 
+                    server_name,
+                    COUNT(CASE WHEN status = 'success' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as success_rate
+                FROM metrics_sync_tables.sync_history 
+                WHERE sync_time >= NOW() - INTERVAL '7 days'
+                AND status IN ('success', 'failed', 'error')
+                GROUP BY server_name
+            ),
+            today_counts AS (
+                SELECT 
+                    server_name,
+                    COUNT(*) as sync_count
+                FROM metrics_sync_tables.sync_history 
+                WHERE DATE(sync_time) = %s
+                AND status = 'success'
+                GROUP BY server_name
+            )
+            SELECT 
+                ls.server_name,
+                ls.status,
+                ls.sync_time,
+                COALESCE(sr.success_rate, 0) as success_rate_7d,
+                COALESCE(tc.sync_count, 0) as tables_synced
+            FROM latest_sync ls
+            LEFT JOIN success_rates sr ON ls.server_name = sr.server_name
+            LEFT JOIN today_counts tc ON ls.server_name = tc.server_name
+            ORDER BY ls.sync_time DESC
+        """, (today,))
+        server_rows = cursor.fetchall()
+        
+        for row in server_rows:
+            server_name, status, last_sync, success_rate_7d, tables_count = row
+            
+            # Determine status color
+            status_class = 'online' if status == 'success' else ('syncing' if status == 'started' else 'offline')
+            
+            metrics['server_statuses'].append({
+                'name': server_name,
+                'status': status_class,
+                'last_sync': last_sync.strftime('%Y-%m-%d %H:%M:%S') if last_sync else 'Never',
+                'duration': 'N/A',  # We don't have duration data
+                'success_rate_7d': round(success_rate_7d, 1),
+                'tables_synced': tables_count
+            })
+        
+        # Recent activities (last 100 for production scale)
+        cursor.execute("""
+            SELECT server_name, status, sync_time, details
+            FROM metrics_sync_tables.sync_history 
+            ORDER BY sync_time DESC
+            LIMIT 100
+        """)
+        activities = cursor.fetchall()
+        
+        for activity in activities:
+            server_name, status, sync_time, details = activity
+            
+            # Skip 'started' status entries for activity feed
+            if status == 'started':
+                continue
+            
+            if status == 'success':
+                icon = 'check_circle'
+                icon_color = 'green'
+                message = f"Successfully synced {server_name}"
+            elif status == 'failed' or status == 'error':
+                icon = 'error'
+                icon_color = 'red'
+                message = f"Failed to sync {server_name}"
+                if details:
+                    message += f": {details[:50]}..."
+            else:
+                icon = 'info'
+                icon_color = 'gray'
+                message = f"{server_name} - {status}"
+            
+            # Calculate time ago
+            time_diff = datetime.now() - sync_time
+            if time_diff.seconds < 60:
+                time_ago = f"{time_diff.seconds}s ago"
+            elif time_diff.seconds < 3600:
+                time_ago = f"{time_diff.seconds // 60}m ago"
+            elif time_diff.days == 0:
+                time_ago = f"{time_diff.seconds // 3600}h ago"
+            else:
+                time_ago = f"{time_diff.days}d ago"
+            
+            metrics['recent_activities'].append({
+                'icon': icon,
+                'icon_color': icon_color,
+                'message': message,
+                'timestamp': time_ago
+            })
+        
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        logging.error(f"Error getting advanced analytics metrics: {e}")
+    
+    return metrics
+
+def get_recent_activity_feed():
+    """Get recent activity feed for AJAX updates"""
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv("POSTGRES_HOST", "localhost"),
+            port=int(os.getenv("POSTGRES_PORT", 5432)),
+            database=os.getenv("POSTGRES_DB", "test1"),
+            user=os.getenv("POSTGRES_USER", "migration_user"),
+            password=os.getenv("POSTGRES_PASSWORD", "StrongPassword123")
+        )
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT server_name, status, sync_time, details
+            FROM metrics_sync_tables.sync_history 
+            ORDER BY sync_time DESC
+            LIMIT 100
+        """)
+        activities = cursor.fetchall()
+        
+        result = []
+        for activity in activities:
+            server_name, status, sync_time, details = activity
+            
+            # Skip 'started' status entries
+            if status == 'started':
+                continue
+            
+            if status == 'success':
+                icon = 'check_circle'
+                icon_color = 'green'
+                message = f"Successfully synced {server_name}"
+            elif status == 'failed' or status == 'error':
+                icon = 'error'
+                icon_color = 'red'
+                message = f"Failed to sync {server_name}"
+                if details:
+                    message += f": {details[:50]}..."
+            else:
+                icon = 'info'
+                icon_color = 'gray'
+                message = f"{server_name} - {status}"
+            
+            time_diff = datetime.now() - sync_time
+            if time_diff.seconds < 60:
+                time_ago = f"{time_diff.seconds}s ago"
+            elif time_diff.seconds < 3600:
+                time_ago = f"{time_diff.seconds // 60}m ago"
+            elif time_diff.days == 0:
+                time_ago = f"{time_diff.seconds // 3600}h ago"
+            else:
+                time_ago = f"{time_diff.days}d ago"
+            
+            result.append({
+                'icon': icon,
+                'icon_color': icon_color,
+                'message': message,
+                'timestamp': time_ago
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return result
+    except Exception as e:
+        logging.error(f"Error getting activity feed: {e}")
+        return []
+
+# ------------------ SYNC HISTORY ROUTES ------------------
+
 @app.route("/sync-history/<server>/<db>")
 @require_role(["admin", "operator", "viewer"])
 def sync_history(server, db):
@@ -1388,6 +2049,14 @@ if __name__ == "__main__":
             app.logger.exception(f'Default admin creation skipped or failed: {e}')
         app.logger.info("[DATABASE] Database connections configured")
         app.logger.info("[SCHEDULER] Scheduler system active")
+        
+        # Initialize daily email summary scheduler
+        try:
+            from daily_summary_scheduler import init_daily_summary
+            daily_scheduler = init_daily_summary(app)
+            app.logger.info("[EMAIL] Daily summary scheduler initialized (sends at 23:59)")
+        except Exception as e:
+            app.logger.warning(f"[EMAIL] Failed to initialize daily summary scheduler: {e}")
         
         # Add diagnostic route for SQL Server named instances
         @app.route('/api/diagnose-sql-server/<server_name>', methods=['GET'])

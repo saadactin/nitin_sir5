@@ -8,8 +8,8 @@ from db_utils import get_pg_connection, init_pg_schema
 init_pg_schema()
 
 
-def create_user(username, password, role):
-    """Create a new user with hashed password"""
+def create_user(username, password, role, created_by="system"):
+    """Create a new user with hashed password and send notification email"""
     try:
         conn = get_pg_connection()
         cur = conn.cursor()
@@ -28,12 +28,29 @@ def create_user(username, password, role):
         cur.close()
         conn.close()
         
-        # Simply return True/False without printing
-        return result is not None
+        # If user was created successfully, send email notification
+        if result is not None:
+            try:
+                # Import email service here to avoid circular imports
+                from utils.email_service import email_service
+                email_result = email_service.notify_user_created(
+                    username=username,
+                    role=role,
+                    created_by=created_by
+                )
+                if email_result.success:
+                    logging.info(f"User creation notification sent for '{username}' (role: {role})")
+                else:
+                    logging.warning(f"Failed to send user creation notification: {email_result.error}")
+            except Exception as e:
+                # Don't fail user creation if email fails
+                logging.error(f"Error sending user creation email: {e}")
+            
+            return True
+        return False
             
     except Exception as e:
-        # Remove the error print or keep it for debugging (your choice)
-        # print(f"Error creating user: {str(e)}")
+        logging.error(f"Error creating user: {str(e)}")
         return False
 
 def init_admin_user(create_if_missing=False, default_password=None):

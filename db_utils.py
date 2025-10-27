@@ -47,7 +47,12 @@ def load_pg_config():
         if conn:
             pg_config = get_connection_from_db('postgresql')
             if pg_config:
-                return pg_config
+                # Validate required fields are present and non-empty
+                required_keys = ['database', 'username', 'password', 'host', 'port']
+                if all(pg_config.get(k) not in (None, "") for k in required_keys):
+                    return pg_config
+                else:
+                    logger.warning("PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML")
     except Exception as e:
         logger.warning(f"Failed to load PostgreSQL config from DB: {e}")
     
@@ -133,14 +138,35 @@ def get_pg_connection_without_config():
 
 def get_pg_connection():
     """Return a live PostgreSQL connection"""
-    conf = load_pg_config()
-    return psycopg2.connect(
-        dbname=conf["database"],
-        user=conf["username"],
-        password=conf["password"],
-        host=conf["host"],
-        port=conf["port"],
-    )
+    try:
+        conf = load_pg_config()
+        # If YAML/DB didn't provide a password, try environment variables directly as a last resort
+        password = conf.get("password") or os.environ.get('PG_PASSWORD') or os.environ.get('POSTGRES_PASSWORD')
+        if not password:
+            raise RuntimeError("PostgreSQL password not supplied. Set PG_PASSWORD or POSTGRES_PASSWORD in .env, or provide in YAML.")
+        return psycopg2.connect(
+            dbname=conf["database"],
+            user=conf["username"],
+            password=password,
+            host=conf["host"],
+            port=conf["port"],
+        )
+    except psycopg2.OperationalError as e:
+        error_msg = str(e)
+        if 'database' in error_msg and 'does not exist' in error_msg:
+            # Extract database name from config
+            try:
+                conf = load_pg_config()
+                db_name = conf.get("database", "unknown")
+                logger.error(f"\n{'='*70}")
+                logger.error(f"DATABASE ERROR: PostgreSQL database '{db_name}' does not exist!")
+                logger.error(f"{'='*70}")
+                logger.error(f"SOLUTION: Run this command to create the database:")
+                logger.error(f"  python create_database.py")
+                logger.error(f"{'='*70}\n")
+            except:
+                pass
+        raise
 
 def get_connection_from_db(connection_type):
     """Load connection configuration from database"""

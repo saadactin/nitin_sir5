@@ -1,0 +1,6 @@
+product_id,product_name,category,price,stock_quantity
+101,Widget A,Electronics,29.99,150
+102,Widget B,Electronics,39.99,200
+103,Gadget X,Home,49.99,75
+104,Tool Y,Hardware,19.99,300
+105,Device Z,Electronics,99.99,50

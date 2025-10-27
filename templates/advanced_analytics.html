@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Analytics - Real-time Performance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+            "success": "#198754",
+            "success-dark": "#157347",
+            "warning": "#ffc107",
+            "warning-dark": "#e0a800"
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.5rem" }
+        },
+      },
+    };
+  </script>
+  <style>
+    .material-icons { font-size: 20px; vertical-align: middle; }
+    .metric-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      color: white;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    .metric-card.success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    .metric-card.warning {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .metric-card.info {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      height: 400px;
+    }
+    .dark .chart-container {
+      background: #1E293B;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .7; }
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .status-online {
+      background-color: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .status-offline {
+      background-color: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+    }
+    .status-syncing {
+      background-color: #f59e0b;
+      box-shadow: 0 0 8px #f59e0b;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 left-0 w-64 bg-surface-light dark:bg-surface-dark shadow-lg z-10">
+      <div class="flex items-center justify-center h-16 bg-primary text-white">
+        <h1 class="text-xl font-bold">SQL Sync Dashboard</h1>
+      </div>
+      <nav class="mt-8">
+        <div class="px-4 space-y-2">
+          <a href="/" class="flex items-center px-4 py-2 text-text-light dark:text-text-dark rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+            <span class="material-icons mr-3">dashboard</span>
+            Dashboard
+       
+        </div>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto ml-64 p-8">
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-text-light dark:text-text-dark mb-2">
+              📈 Advanced Analytics Dashboard
+            </h1>
+            <p class="text-subtext-light dark:text-subtext-dark">
+              Real-time performance metrics and trends
+            </p>
+          </div>
+          <div class="flex items-center gap-2 bg-surface-light dark:bg-surface-dark px-4 py-2 rounded-lg shadow border border-border-light dark:border-border-dark">
+            <span class="status-indicator status-online pulse"></span>
+            <span class="text-sm font-medium text-text-light dark:text-text-dark">
+              Live Updates Active
+            </span>
+            <span class="text-xs text-subtext-light dark:text-subtext-dark ml-2" id="lastUpdate">
+              Just now
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Metrics Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Syncs Today -->
+        <div class="metric-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="material-icons text-3xl opacity-80">sync</span>
+            <span class="text-sm opacity-80">Today</span>
+          </div>
+          <h2 class="text-3xl font-bold mb-1" id="totalSyncsToday">{{ metrics.total_syncs_today }}</h2>
+          <p class="text-sm opacity-90">Total Syncs</p>
+          <div class="mt-2 text-xs opacity-75">
+            <span id="syncTrend">All syncs today</span>
+          </div>
+        </div>
+
+        <!-- Success Rate -->
+        <div class="metric-card success">
+          <div class="flex items-center justify-between mb-2">
+            <span class="material-icons text-3xl opacity-80">check_circle</span>
+            <span class="text-sm opacity-80">Success</span>
+          </div>
+          <h2 class="text-3xl font-bold mb-1" id="successRate">{{ metrics.success_rate }}%</h2>
+          <p class="text-sm opacity-90">Success Rate</p>
+          <div class="mt-2 text-xs opacity-75">
+            <span id="successTrend">{{ metrics.successful_syncs }} / {{ metrics.total_syncs_today }} successful</span>
+          </div>
+        </div>
+
+        <!-- Active Syncs -->
+        <div class="metric-card warning">
+          <div class="flex items-center justify-between mb-2">
+            <span class="material-icons text-3xl opacity-80">hourglass_empty</span>
+            <span class="text-sm opacity-80">Running</span>
+          </div>
+          <h2 class="text-3xl font-bold mb-1" id="activeSyncs">{{ metrics.active_syncs }}</h2>
+          <p class="text-sm opacity-90">Active Syncs</p>
+          <div class="mt-2 text-xs opacity-75">
+            <span id="activeServers">{% if metrics.active_servers > 0 %}Across {{ metrics.active_servers }} server{{ 's' if metrics.active_servers != 1 else '' }}{% else %}No active syncs{% endif %}</span>
+          </div>
+        </div>
+
+        <!-- Avg Sync Time -->
+        <div class="metric-card info">
+          <div class="flex items-center justify-between mb-2">
+            <span class="material-icons text-3xl opacity-80">speed</span>
+            <span class="text-sm opacity-80">Performance</span>
+          </div>
+          <h2 class="text-3xl font-bold mb-1" id="avgSyncTime">{{ metrics.avg_sync_time }}</h2>
+          <p class="text-sm opacity-90">Avg Sync Time</p>
+          <div class="mt-2 text-xs opacity-75">
+            <span id="perfTrend">Last 24 hours</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Sync Performance Over Time -->
+        <div class="chart-container">
+          <h3 class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Sync Performance (Last 24 Hours)</h3>
+          <canvas id="syncPerformanceChart"></canvas>
+        </div>
+
+        <!-- Success vs Failure Rate -->
+        <div class="chart-container">
+          <h3 class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Success vs Failure Rate</h3>
+          <canvas id="successRateChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Top Servers by Sync Count -->
+        <div class="chart-container">
+          <h3 class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Top Servers by Sync Count</h3>
+          <canvas id="topServersChart"></canvas>
+        </div>
+
+        <!-- Sync Duration Distribution -->
+        <div class="chart-container">
+          <h3 class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Sync Duration Distribution</h3>
+          <canvas id="durationDistChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Server Status Table -->
+      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow mb-6 border border-border-light dark:border-border-dark">
+        <div class="p-6">
+          <h3 class="text-xl font-semibold text-text-light dark:text-text-dark mb-4">
+            Server Status Overview
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
+              <thead class="bg-background-light dark:bg-background-dark">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-subtext-light dark:text-subtext-dark uppercase tracking-wider">
+                    Server
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-subtext-light dark:text-subtext-dark uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-subtext-light dark:text-subtext-dark uppercase tracking-wider">
+                    Last Sync
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-subtext-light dark:text-subtext-dark uppercase tracking-wider">
+                    Duration
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-subtext-light dark:text-subtext-dark uppercase tracking-wider">
+                    Success Rate (7d)
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-subtext-light dark:text-subtext-dark uppercase tracking-wider">
+                    Tables Synced
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border-light dark:divide-border-dark" id="serverStatusTable">
+                {% if metrics.server_statuses|length > 0 %}
+                  {% for server in metrics.server_statuses %}
+                  <tr class="hover:bg-background-light dark:hover:bg-background-dark transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="font-medium text-text-light dark:text-text-dark">{{ server.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="status-indicator status-{{ server.status }}"></span>
+                      <span class="text-sm text-text-light dark:text-text-dark capitalize">{{ server.status }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light dark:text-text-dark">
+                      {{ server.last_sync }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light dark:text-text-dark">
+                      {{ server.duration }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="w-16 bg-border-light dark:bg-border-dark rounded-full h-2 mr-2">
+                          <div class="bg-success h-2 rounded-full" style="width: {{ server.success_rate_7d }}%"></div>
+                        </div>
+                        <span class="text-sm text-text-light dark:text-text-dark">{{ server.success_rate_7d }}%</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light dark:text-text-dark">
+                      {{ server.tables_synced }}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-sm text-subtext-light dark:text-subtext-dark">
+                      No server sync data available yet. Run your first sync to see statistics here.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Feed -->
+      <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-text-light dark:text-text-dark">
+              Recent Activity
+            </h3>
+            <button onclick="loadRecentActivity()" class="text-sm text-primary hover:text-primary-hover dark:text-primary dark:hover:text-primary-hover">
+              Refresh
+            </button>
+          </div>
+          <div id="activityFeed" class="space-y-3">
+            {% if metrics.recent_activities|length > 0 %}
+              {% for activity in metrics.recent_activities %}
+              <div class="flex items-start gap-3 p-3 bg-background-light dark:bg-background-dark rounded-lg">
+                <span class="material-icons text-{{ activity.icon_color }}-500 text-sm mt-1">{{ activity.icon }}</span>
+                <div class="flex-1">
+                  <p class="text-sm text-text-light dark:text-text-dark">{{ activity.message }}</p>
+                  <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">{{ activity.timestamp }}</p>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-center py-8 text-sm text-subtext-light dark:text-subtext-dark">
+                No recent activity. Sync operations will appear here.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Global chart instances
+    let syncPerformanceChart, successRateChart, topServersChart, durationDistChart;
+
+    // Initialize charts on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeCharts();
+      startLiveUpdates();
+    });
+
+    // Initialize all charts
+    function initializeCharts() {
+      // Sync Performance Chart (Line)
+      const perfCtx = document.getElementById('syncPerformanceChart').getContext('2d');
+      const perfLabels = {{ metrics.performance_labels | tojson }};
+      const perfData = {{ metrics.performance_data | tojson }};
+      
+      syncPerformanceChart = new Chart(perfCtx, {
+        type: 'line',
+        data: {
+          labels: perfLabels.length > 0 ? perfLabels : ['No Data'],
+          datasets: [{
+            label: 'Sync Duration (seconds)',
+            data: perfData.length > 0 ? perfData : [0],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true, 
+              title: { display: true, text: 'Duration (s)' },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            },
+            x: { 
+              title: { display: true, text: 'Time' },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            }
+          }
+        }
+      });
+
+      // Success Rate Chart (Doughnut)
+      const successCtx = document.getElementById('successRateChart').getContext('2d');
+      const successfulSyncs = {{ metrics.successful_syncs }};
+      const failedSyncs = {{ metrics.failed_syncs }};
+      
+      successRateChart = new Chart(successCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Successful', 'Failed'],
+          datasets: [{
+            data: [successfulSyncs, failedSyncs],
+            backgroundColor: ['#10b981', '#ef4444'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      // Top Servers Chart (Bar)
+      const serversCtx = document.getElementById('topServersChart').getContext('2d');
+      const topServerLabels = {{ metrics.top_servers_labels | tojson }};
+      const topServerData = {{ metrics.top_servers_data | tojson }};
+      
+      topServersChart = new Chart(serversCtx, {
+        type: 'bar',
+        data: {
+          labels: topServerLabels.length > 0 ? topServerLabels : ['No Data'],
+          datasets: [{
+            label: 'Sync Count',
+            data: topServerData.length > 0 ? topServerData : [0],
+            backgroundColor: 'rgba(139, 92, 246, 0.8)',
+            borderColor: 'rgba(139, 92, 246, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true, 
+              title: { display: true, text: 'Syncs' },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            }
+          }
+        }
+      });
+
+      // Duration Distribution Chart (Bar)
+      const durationCtx = document.getElementById('durationDistChart').getContext('2d');
+      const durationDist = {{ metrics.duration_distribution | tojson }};
+      
+      durationDistChart = new Chart(durationCtx, {
+        type: 'bar',
+        data: {
+          labels: ['<1 min', '1-5 min', '5-15 min', '15-30 min', '>30 min'],
+          datasets: [{
+            label: 'Number of Syncs',
+            data: durationDist,
+            backgroundColor: [
+              'rgba(34, 197, 94, 0.8)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(251, 191, 36, 0.8)',
+              'rgba(249, 115, 22, 0.8)',
+              'rgba(239, 68, 68, 0.8)'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true, 
+              title: { display: true, text: 'Count' },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Start live updates every 30 seconds
+    function startLiveUpdates() {
+      setInterval(updateMetrics, 30000);
+    }
+
+    // Update metrics via AJAX
+    async function updateMetrics() {
+      try {
+        const response = await fetch('/advanced-analytics/api/metrics');
+        const data = await response.json();
+        
+        // Update metric cards
+        document.getElementById('totalSyncsToday').textContent = data.total_syncs_today;
+        document.getElementById('successRate').textContent = data.success_rate + '%';
+        document.getElementById('activeSyncs').textContent = data.active_syncs;
+        document.getElementById('avgSyncTime').textContent = data.avg_sync_time;
+        
+        // Update success trend
+        document.getElementById('successTrend').textContent = data.successful_syncs + ' / ' + data.total_syncs_today + ' successful';
+        
+        // Update active servers
+        if (data.active_servers > 0) {
+          document.getElementById('activeServers').textContent = 'Across ' + data.active_servers + ' server' + (data.active_servers != 1 ? 's' : '');
+        } else {
+          document.getElementById('activeServers').textContent = 'No active syncs';
+        }
+        
+        // Update charts
+        updateCharts(data);
+        
+        // Update timestamp
+        document.getElementById('lastUpdate').textContent = 'Just now';
+        
+        console.log('Metrics updated successfully');
+      } catch (error) {
+        console.error('Error updating metrics:', error);
+      }
+    }
+
+    // Update chart data
+    function updateCharts(data) {
+      // Update performance chart
+      if (data.performance_labels && data.performance_labels.length > 0) {
+        syncPerformanceChart.data.labels = data.performance_labels;
+        syncPerformanceChart.data.datasets[0].data = data.performance_data;
+      }
+      syncPerformanceChart.update();
+      
+      // Update success rate chart
+      successRateChart.data.datasets[0].data = [data.successful_syncs, data.failed_syncs];
+      successRateChart.update();
+      
+      // Update top servers chart
+      if (data.top_servers_labels && data.top_servers_labels.length > 0) {
+        topServersChart.data.labels = data.top_servers_labels;
+        topServersChart.data.datasets[0].data = data.top_servers_data;
+      }
+      topServersChart.update();
+      
+      // Update duration distribution
+      durationDistChart.data.datasets[0].data = data.duration_distribution;
+      durationDistChart.update();
+    }
+
+    // Load recent activity
+    async function loadRecentActivity() {
+      try {
+        const response = await fetch('/advanced-analytics/api/activity');
+        const activities = await response.json();
+        
+        const feedContainer = document.getElementById('activityFeed');
+        if (activities && activities.length > 0) {
+          feedContainer.innerHTML = activities.map(activity => `
+            <div class="flex items-start gap-3 p-3 bg-background-light dark:bg-background-dark rounded-lg">
+              <span class="material-icons text-${activity.icon_color}-500 text-sm mt-1">${activity.icon}</span>
+              <div class="flex-1">
+                <p class="text-sm text-text-light dark:text-text-dark">${activity.message}</p>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">${activity.timestamp}</p>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          feedContainer.innerHTML = '<div class="text-center py-8 text-sm text-subtext-light dark:text-subtext-dark">No recent activity. Sync operations will appear here.</div>';
+        }
+      } catch (error) {
+        console.error('Error loading activity:', error);
+      }
+    }
+  </script>
+</body>
+</html>

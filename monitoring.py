@@ -30,6 +30,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from sqlalchemy import text
+from utils.email_service import email_service
 
 from manage_server import load_config
 from hybrid_sync import (
@@ -262,6 +263,10 @@ def collect_alerts_with_severity(server: Optional[str] = None, db: Optional[str]
                 conn.close()
             except Exception as e:
                 alerts.append(Alert(severity="CRITICAL", message=f"Server unreachable: {e}", server=s_name, category="connection"))
+                try:
+                    email_service.notify_server_down(s_name, str(e))
+                except Exception:
+                    pass
     except Exception:
         pass
 

@@ -3,6 +3,8 @@ import yaml
 import os
 import time
 import logging
+import psycopg2
+from flask import Blueprint, render_template, jsonify, flash, redirect, url_for
 from db_utils import get_pg_connection
 from table_filters import is_excluded_schema
 
@@ -32,6 +34,66 @@ def load_config():
     with open(CONFIG_PATH, "r") as f:
         return yaml.safe_load(f)
 
+# Create blueprint with prefix
+bp = Blueprint('sync_summary', __name__, url_prefix='/sync-summary')
+
+@bp.route('/')
+def index():
+    """Show sync summary page"""
+    return render_template('sync_summary.html')
+
+@bp.route('/quick.json')
+def quick_summary():
+    """Get quick summary data for all servers"""
+    # Use caching for quick summary data
+    cache_key = "quick_summary"
+    cached_data = _cache_get(cache_key)
+    if cached_data:
+        return jsonify(cached_data)
+
+    all_data = get_all_server_comparisons()
+    if all_data:
+        _cache_set(cache_key, all_data)
+    return jsonify(all_data)
+
+@bp.route('/<server_name>/tables')
+def server_tables(server_name):
+    """Show table comparison page for a specific server"""
+    config = load_config()
+    sqlservers = config.get("sqlservers", {})
+    
+    if server_name not in sqlservers:
+        flash(f"Server '{server_name}' not found", "error")
+        return redirect(url_for('sync_summary.index'))
+    
+    server_config = sqlservers[server_name]
+    target_db = server_config.get('target_postgres_db')
+    if not target_db:
+        flash(f"No target database configured for server '{server_name}'", "error")
+        return redirect(url_for('sync_summary.index'))
+    
+    return render_template(
+        'server_tables.html',
+        server_name=server_name,
+        target_db=target_db
+    )
+
+@bp.route('/<server_name>/tables/data.json')
+def server_tables_data(server_name):
+    """Get table comparison data for a specific server"""
+    # Use caching for table comparison data
+    cache_key = f"tables:{server_name}"
+    cached_data = _cache_get(cache_key)
+    if cached_data:
+        return jsonify(cached_data)
+    
+    comparison = get_table_comparison(server_name)
+    if comparison:
+        _cache_set(cache_key, comparison)
+    return jsonify(comparison)
+
+
+
 def build_sql_connection_string(server_config, database=None):
     """Build SQL Server connection string supporting both SQL Auth and Windows Auth"""
     server = server_config['server']
@@ -56,6 +118,155 @@ def build_sql_connection_string(server_config, database=None):
         conn_str += f"DATABASE={database};"
     
     return conn_str
+
+def normalize_table_name(table_key):
+    """
+    Normalize table names for comparison by removing server prefixes and standardizing format.
+    
+    Examples:
+    - 'BottleDB1.dbo.Alarms' -> 'BottleDB1.dbo.Alarms'
+    - 'test1.localhost_BottleDB1.dbo_Alarms' -> 'BottleDB1.dbo.Alarms'
+    - 'test1.localhost_Desserts.dbo.Students1' -> 'Desserts.dbo.Students1'
+    """
+    # Split by dots to analyze components
+    parts = table_key.split('.')
+    
+    if len(parts) >= 3:
+        # Handle PostgreSQL format: test1.localhost_DatabaseName.schema.table
+        if parts[0].startswith('test') and 'localhost_' in parts[1]:
+            # Extract database name from the localhost_ prefix
+            db_part = parts[1].replace('localhost_', '')
+            # Reconstruct as database.schema.table
+            normalized = f"{db_part}.{'.'.join(parts[2:])}"
+            return normalized
+        else:
+            # Already in standard format: database.schema.table
+            return table_key
+    else:
+        # Fallback for unexpected formats
+        return table_key
+
+def get_table_comparison(server_name):
+    """Get table-by-table comparison for a specific server"""
+    LOG.info(f"Starting table comparison for server: {server_name}")
+    config = load_config()
+    sqlservers = config.get("sqlservers", {})
+
+    if server_name not in sqlservers:
+        LOG.error(f"Server '{server_name}' not found in config")
+        return {"error": f"Server '{server_name}' not found"}
+
+    server_config = sqlservers[server_name]
+    target_db = server_config.get('target_postgres_db')
+
+    if not target_db:
+        LOG.error(f"No target database configured for server '{server_name}'")
+        return {"error": "No target database configured"}
+
+    try:
+        # Get row counts for each user database and table
+        sql_counts = {}
+        conn_str = build_sql_connection_string(server_config, "master")
+        master_conn = pyodbc.connect(conn_str)
+        master_cur = master_conn.cursor()
+        master_cur.execute("""
+            SELECT name FROM sys.databases 
+            WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')
+        """)
+        databases = [row[0] for row in master_cur.fetchall()]
+        for db_name in databases:
+            if db_name in server_config.get('skip_databases', []):
+                continue
+            try:
+                db_conn_str = build_sql_connection_string(server_config, db_name)
+                db_conn = pyodbc.connect(db_conn_str)
+                db_cur = db_conn.cursor()
+                db_cur.execute("""
+                    SELECT s.name as schema_name, t.name as table_name
+                    FROM sys.tables t
+                    INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+                    WHERE t.is_ms_shipped = 0
+                """)
+                tables = [(row[0], row[1]) for row in db_cur.fetchall()]
+                for schema, table in tables:
+                    if not is_excluded_schema(schema) and table not in ["IS2B_BatchRunningDatatest", "Products3"]:
+                        try:
+                            db_cur.execute(f"SELECT COUNT(*) FROM [{schema}].[{table}]")
+                            count = db_cur.fetchone()[0]
+                            key = f"{db_name}.{schema}.{table}"
+                            sql_counts[key] = count
+                        except Exception as e:
+                            LOG.exception(f"Error counting rows in SQL Server table {db_name}.{schema}.{table}: {e}")
+                            continue
+                db_cur.close()
+                db_conn.close()
+            except Exception as e:
+                LOG.exception(f"Error processing database {db_name}: {e}")
+                continue
+        master_cur.close()
+        master_conn.close()
+        LOG.info(f"Found {len(sql_counts)} SQL Server tables with accurate row counts")
+
+        # Connect to PostgreSQL
+        pg_conn = get_pg_connection()
+        pg_cursor = pg_conn.cursor()
+        LOG.info("Starting PostgreSQL table count query")
+        pg_cursor.execute("""
+            SELECT current_database(), schemaname, relname, n_live_tup
+            FROM pg_stat_user_tables
+        """)
+        pg_counts = {}
+        for db_name, schema, table, count in pg_cursor:
+            if not is_excluded_schema(schema) and table not in ["IS2B_BatchRunningDatatest", "Products3"]:
+                key = f"{db_name}.{schema}.{table}"
+                pg_counts[key] = count
+
+        # Create normalized comparison maps
+        sql_normalized = {}
+        pg_normalized = {}
+        
+        # Normalize SQL Server table names
+        for original_key, count in sql_counts.items():
+            normalized_key = normalize_table_name(original_key)
+            sql_normalized[normalized_key] = count
+            LOG.debug(f"SQL: {original_key} -> {normalized_key} = {count}")
+        
+        # Normalize PostgreSQL table names
+        for original_key, count in pg_counts.items():
+            normalized_key = normalize_table_name(original_key)
+            pg_normalized[normalized_key] = count
+            LOG.debug(f"PG: {original_key} -> {normalized_key} = {count}")
+
+        # Compare tables using normalized names
+        all_tables = set(sql_normalized.keys()) | set(pg_normalized.keys())
+        comparison = []
+
+        for normalized_table in sorted(all_tables):
+            sql_count = sql_normalized.get(normalized_table, 0)
+            pg_count = pg_normalized.get(normalized_table, 0)
+            difference = pg_count - sql_count
+
+            # Update status logic to reflect accurate comparison
+            status = "Complete" if difference == 0 else ("Extra in PostgreSQL" if difference > 0 else "Missing in PostgreSQL")
+
+            comparison.append({
+                'table_name': normalized_table,
+                'sql_rows': sql_count,
+                'pg_rows': pg_count,
+                'difference': difference,
+                'status': status
+            })
+
+        return {
+            'server_name': server_name,
+            'target_db': target_db,
+            'tables': comparison,
+            'total_tables': len(comparison)
+        }
+
+    except Exception as e:
+        LOG.error(f"Error during table comparison: {e}")
+        return {"error": str(e)}
 
 def get_individual_server_comparison(server_name):
     """Get detailed comparison for a specific SQL Server"""
@@ -216,7 +427,6 @@ def get_postgres_total_rows_for_db(target_db):
         pg_config = config.get('postgresql', {})
         
         # Create connection to target database
-        import psycopg2
         conn = psycopg2.connect(
             host=pg_config.get('host', 'localhost'),
             port=pg_config.get('port', 5432),
@@ -362,7 +572,6 @@ def get_postgres_total_rows():
             pg_config = config.get('postgresql', {})
             
             # Create new connection to target database
-            import psycopg2
             conn = psycopg2.connect(
                 host=pg_config.get('host', 'localhost'),
                 port=pg_config.get('port', 5432),
@@ -728,7 +937,6 @@ def get_postgres_table_details(target_db):
         config = load_config()
         pg_config = config.get('postgresql', {})
         
-        import psycopg2
         conn = psycopg2.connect(
             host=pg_config.get('host', 'localhost'),
             port=pg_config.get('port', 5432),

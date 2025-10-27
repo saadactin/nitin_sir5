@@ -36,7 +36,7 @@
       },
     };
   </script>
-  <style>
+    <style>
     .material-icons { font-size: 20px; vertical-align: middle; }
   </style>
 </head>
@@ -101,7 +101,9 @@
               servers.forEach(s => {
                 const div = document.createElement('div');
                 div.className = 'bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark overflow-hidden hover:shadow-xl transition-shadow cursor-pointer';
-                div.onclick = () => { window.location.href = `/sync-summary/${encodeURIComponent(s.server_name)}`; };
+                div.onclick = () => { 
+                  window.location.href = `/sync-summary/${encodeURIComponent(s.server_name)}/tables`;
+                };
 
                 const pct = s.comparison?.sync_percentage ? `${s.comparison.sync_percentage.toFixed(2)}%` : '0%';
                 const sqlTotal = s.comparison?.sql_total_rows || (s.sql_server?.total_rows || 0);
@@ -151,8 +153,8 @@
               container.innerHTML = `<div class="col-span-1 lg:col-span-2 p-6 bg-red-50 text-red-700 rounded">Fetch error: ${err}</div>`;
             }
           }
-          // load on DOM ready
-          document.addEventListener('DOMContentLoaded', renderServerCards);
+            // load on DOM ready
+            document.addEventListener('DOMContentLoaded', renderServerCards);
         </script>
 
         {% if not servers %}

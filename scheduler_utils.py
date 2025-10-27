@@ -7,6 +7,7 @@ from db_utils import get_pg_connection, init_pg_schema
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config
 from dashboard import log_sync
+from utils.email_service import email_service
 
 # Initialize DB schema
 init_pg_schema()
@@ -62,13 +63,51 @@ def _job_wrapper(server_name, server_conf, job_type):
         log_sync(server_name, 'started', f'Started {job_type} at {timestamp.strftime("%Y-%m-%d %H:%M:%S")}')
 
         process_sql_server_hybrid(server_name, server_conf)
-        print(f"\n[OK] SYNC COMPLETED: {server_name} at {datetime.datetime.now().strftime('%H:%M:%S')}")
-        print(f"[STATUS] SUCCESS\n")
+        
+        # Calculate duration
+        end_timestamp = datetime.datetime.now()
+        duration = end_timestamp - timestamp
+        duration_str = f"{int(duration.total_seconds() // 60)}m {int(duration.total_seconds() % 60)}s"
+        
+        print(f"\n[OK] SYNC COMPLETED: {server_name} at {end_timestamp.strftime('%H:%M:%S')}")
+        print(f"[STATUS] SUCCESS")
+        print(f"[DURATION] {duration_str}\n")
+        
+        # Send success email notification for scheduled sync
+        try:
+            email_result = email_service.notify_schedule_success(
+                server_name=server_name,
+                job_type=job_type,
+                duration=duration_str
+            )
+            if email_result.success:
+                print(f"[EMAIL] Success notification sent for scheduled sync: {server_name} ({job_type})")
+            else:
+                print(f"[EMAIL] Failed to send success notification: {email_result.error}")
+        except Exception as e:
+            print(f"[EMAIL] Error sending success notification: {e}")
+            
     except Exception as e:
         status = "failed"
         error_message = str(e)
-        print(f"\n[ERROR] SYNC FAILED: {server_name} at {datetime.datetime.now().strftime('%H:%M:%S')}")
+        end_timestamp = datetime.datetime.now()
+        
+        print(f"\n[ERROR] SYNC FAILED: {server_name} at {end_timestamp.strftime('%H:%M:%S')}")
         print(f"[ERROR] {error_message}\n")
+        
+        # Send failure email notification for scheduled sync
+        try:
+            email_result = email_service.notify_schedule_failed(
+                server_name=server_name,
+                job_type=job_type,
+                error_message=error_message
+            )
+            if email_result.success:
+                print(f"[EMAIL] Failure notification sent for scheduled sync: {server_name} ({job_type})")
+            else:
+                print(f"[EMAIL] Failed to send failure notification: {email_result.error}")
+        except Exception as e:
+            print(f"[EMAIL] Error sending failure notification: {e}")
 
     # Update memory jobs
     for job in scheduled_jobs:
@@ -97,6 +136,30 @@ def _add_job_metadata(server_name, job_type):
     _save_schedule_to_db(server_name, job_type, None, "pending", None)
 
 # ---------------- Scheduling ----------------
+def health_check_all_servers():
+    """Ping all configured SQL servers and send email on failures."""
+    try:
+        cfg = load_config()
+        for s_name, s_conf in cfg.get('sqlservers', {}).items():
+            try:
+                conn = get_pg_connection()  # ensure PG reachable
+                conn.close()
+            except Exception:
+                # continue even if PG check fails; focus on SQL servers
+                pass
+            try:
+                from hybrid_sync import get_sql_connection
+                c = get_sql_connection(s_conf)
+                c.close()
+            except Exception as e:
+                try:
+                    email_service.notify_server_down(s_name, str(e))
+                except Exception:
+                    pass
+    except Exception:
+        # Don't raise from scheduler
+        pass
+
 def schedule_interval_sync(server_name, minutes):
     config = load_config()
     server_conf = config['sqlservers'].get(server_name)
@@ -262,9 +325,17 @@ def get_schedules():
 
 def load_schedules_from_db():
     """
-    Load only active schedules from database (exclude deleted ones)
+    Load only active schedules from database (exclude deleted ones).
+    This function runs automatically on server startup to restore all schedules.
     """
-    conn = get_pg_connection()
+    try:
+        conn = get_pg_connection()
+    except Exception as e:
+        print(f"\n[SCHEDULER WARNING] Cannot connect to database: {e}")
+        print("[SCHEDULER] Skipping schedule restoration. Database may not be configured yet.")
+        print("[SCHEDULER] Schedules will be loaded when database becomes available.\n")
+        return
+    
     cur = conn.cursor()
     try:
         # IMPORTANT: Exclude schedules marked as 'deleted'
@@ -275,6 +346,18 @@ def load_schedules_from_db():
         """)
         rows = cur.fetchall()
         loaded_count = 0
+        failed_count = 0
+        
+        print("\n" + "="*70)
+        print("[SCHEDULER] RESTORING SCHEDULES FROM DATABASE")
+        print("="*70)
+        
+        if not rows:
+            print("[SCHEDULER] No active schedules found in database")
+            print("="*70 + "\n")
+            return
+        
+        print(f"[SCHEDULER] Found {len(rows)} schedule(s) to restore")
         
         for server_name, job_type in rows:
             try:
@@ -289,25 +372,39 @@ def load_schedules_from_db():
                 if job_type.startswith("interval_"):
                     minutes = int(job_type.replace("interval_", "").replace("m", ""))
                     schedule_interval_sync(server_name, minutes)
+                    print(f"  ✓ Restored: {server_name} - Every {minutes} minutes")
                     loaded_count += 1
                 elif job_type.startswith("daily_"):
                     time_str = job_type.replace("daily_", "")
                     hour, minute = map(int, time_str.split(":"))
                     schedule_daily_sync(server_name, hour, minute)
+                    print(f"  ✓ Restored: {server_name} - Daily at {time_str}")
                     loaded_count += 1
+                else:
+                    print(f"  ⚠ Skipped: {server_name} - Unknown schedule type: {job_type}")
+                    failed_count += 1
             except ValueError as e:
-                print(f"⚠️ Skipping invalid schedule for {server_name}: {e}")
-                continue
+                print(f"  ✗ Failed: {server_name} - Invalid format: {e}")
+                failed_count += 1
+            except Exception as e:
+                print(f"  ✗ Failed: {server_name} - Error: {e}")
+                failed_count += 1
         
-        print(f"[LOAD_SCHEDULES] Successfully loaded {loaded_count} active schedules from database")
+        print("-"*70)
+        print(f"[SCHEDULER] Restoration complete:")
+        print(f"  • Successfully loaded: {loaded_count} schedule(s)")
+        if failed_count > 0:
+            print(f"  • Failed to load: {failed_count} schedule(s)")
+        print("="*70 + "\n")
         
     except Exception as e:
-        print(f"[LOAD_SCHEDULES] Error loading schedules: {e}")
+        print(f"\n[SCHEDULER ERROR] Failed to load schedules from database: {e}\n")
     finally:
         cur.close()
         conn.close()
 
-# Auto-load schedules
+# Auto-load schedules on module import (happens on server startup)
+print("\n[SCHEDULER] Initializing scheduler system...")
 load_schedules_from_db()
 
 # Schedule periodic watchdog to mark stale in-progress syncs (runs every 30 minutes)
@@ -317,3 +414,9 @@ try:
     mark_stale_in_progress(60)
 except Exception as e:
     print(f"[WATCHDOG] Failed to schedule watchdog: {e}")
+
+# Schedule periodic health checks for server availability
+try:
+    sched.every(15).minutes.do(health_check_all_servers).tag('health_check')
+except Exception as e:
+    print(f"[HEALTH] Failed to schedule health checks: {e}")
