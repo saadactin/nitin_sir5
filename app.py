@@ -3,6 +3,10 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 import json
 import psycopg2
+try:
+    from clickhouse_driver import Client as CHClient
+except Exception:
+    CHClient = None
 import yaml
 import os
 import logging
@@ -718,6 +722,89 @@ def load_pg_databases():
         return []
 
 
+def load_ch_databases():
+    """Return list of ClickHouse databases, or [] if connection fails or driver missing.
+
+    This function attempts a TCP connection via clickhouse-driver first. If that fails
+    (authentication/connection), it falls back to the HTTP interface (/query) and
+    requests the databases in JSON format. This makes discovery resilient across
+    different ClickHouse deployments.
+    """
+    def _http_show_databases(host, port, user, password):
+        """Use ClickHouse HTTP interface to fetch databases as JSONCompact."""
+        try:
+            import urllib.request
+            import urllib.parse
+            import json
+
+            http_port = int(os.environ.get('CLICKHOUSE_HTTP_PORT', 8123)) if not port else (int(port) if str(port).isdigit() else 8123)
+            url_host = host
+            query = "SHOW DATABASES"
+            params = {
+                'query': query,
+                'format': 'JSONCompact'
+            }
+            full_url = f"http://{url_host}:{http_port}/?{urllib.parse.urlencode(params)}"
+
+            # Build opener with optional basic auth
+            if user:
+                password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+                password_mgr.add_password(None, full_url, user, password or '')
+                handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
+                opener = urllib.request.build_opener(handler)
+            else:
+                opener = urllib.request.build_opener()
+
+            with opener.open(full_url, timeout=5) as resp:
+                body = resp.read()
+                try:
+                    parsed = json.loads(body.decode('utf-8'))
+                except Exception:
+                    return []
+
+                # JSONCompact.data is list of lists
+                data = parsed.get('data') or []
+                dbs = [row[0] for row in data if isinstance(row, (list, tuple)) and len(row) > 0]
+                return dbs
+        except Exception as e:
+            app.logger.debug(f"HTTP ClickHouse discovery failed: {e}")
+            return []
+
+    try:
+        # If driver is missing, try HTTP only
+        if CHClient is None:
+            app.logger.warning("clickhouse-driver is not installed; trying HTTP discovery for ClickHouse")
+            return _http_show_databases(os.environ.get('CLICKHOUSE_HOST'), os.environ.get('CLICKHOUSE_PORT'), os.environ.get('CLICKHOUSE_USER'), os.environ.get('CLICKHOUSE_PASSWORD', ''))
+
+        # Read env vars; password defaults to empty string (not None)
+        ch_host = os.environ.get('CLICKHOUSE_HOST')
+        ch_port = os.environ.get('CLICKHOUSE_PORT')
+        ch_user = os.environ.get('CLICKHOUSE_USER')
+        ch_password = os.environ.get('CLICKHOUSE_PASSWORD', '')
+
+        if not ch_host or not ch_port or not ch_user:
+            app.logger.warning('CLICKHOUSE_HOST, CLICKHOUSE_PORT and CLICKHOUSE_USER must be set in environment to discover ClickHouse databases')
+            # Try HTTP without full env set — try defaults
+            return _http_show_databases(os.environ.get('CLICKHOUSE_HOST', 'localhost'), os.environ.get('CLICKHOUSE_PORT', '8123'), os.environ.get('CLICKHOUSE_USER', ''), os.environ.get('CLICKHOUSE_PASSWORD', ''))
+
+        client = CHClient(host=ch_host, port=int(ch_port), user=ch_user, password=ch_password)
+        rows = client.execute('SHOW DATABASES')
+        dbs = []
+        for r in rows:
+            if isinstance(r, (list, tuple)):
+                dbs.append(r[0])
+            else:
+                dbs.append(r)
+        return dbs
+    except Exception as e:
+        app.logger.error(f"WARNING: Could not load ClickHouse DBs: {e}")
+        # Try HTTP fallback if TCP failed
+        try:
+            return _http_show_databases(os.environ.get('CLICKHOUSE_HOST'), os.environ.get('CLICKHOUSE_PORT'), os.environ.get('CLICKHOUSE_USER'), os.environ.get('CLICKHOUSE_PASSWORD', ''))
+        except Exception:
+            return []
+
+
 @app.route("/add-server", methods=["GET", "POST"])
 @require_role(["admin", "operator"])
 def add_server():
@@ -1039,159 +1126,207 @@ def _allowed_file(filename: str) -> bool:
 @app.route("/upload", methods=["GET", "POST"])
 @require_role(["admin", "operator"])
 def upload_csv():
-    try:
-        postgres_dbs = load_pg_databases()
+    postgres_dbs = load_pg_databases()
+    clickhouse_dbs = load_ch_databases()
 
-        if request.method == "POST":
-            selected_db = request.form.get("pg_database")
-            files = request.files.getlist("files")
+    if request.method == "POST":
+        target_engine = request.form.get("target_engine", "postgres")
+        selected_db = request.form.get("target_db")
+        files = request.files.getlist("files")
 
-            if not selected_db:
-                flash("Please select a target PostgreSQL database.", "warning")
-                return redirect(url_for("upload_csv"))
+        app.logger.info(f"[UPLOAD] POST received: engine={target_engine}, db={selected_db}, files={len(files)}")
 
-            if not files or len(files) == 0 or files[0].filename == "":
-                flash("Please choose at least one file to upload.", "warning")
-                return redirect(url_for("upload_csv"))
+        if not selected_db:
+            flash("Please select a target database.", "warning")
+            app.logger.warning(f"[UPLOAD] No database selected")
+            return redirect(url_for("upload_csv"))
 
-            # Generate unique session ID for tracking progress
-            import uuid
-            session_id = str(uuid.uuid4())
-            
-            # Initialize progress tracking
-            upload_progress[session_id] = {
-                'total': len(files),
-                'completed': 0,
-                'current_file': '',
-                'status': 'processing',
-                'results': []
-            }
+        if not files or len(files) == 0 or files[0].filename == "":
+            flash("Please choose at least one file to upload.", "warning")
+            app.logger.warning(f"[UPLOAD] No files uploaded")
+            return redirect(url_for("upload_csv"))
 
-            try:
-                engine = get_pg_engine(selected_db)
-                successful_uploads = 0
-                failed_uploads = 0
+        # Generate unique session ID for tracking progress
+        import uuid
+        session_id = str(uuid.uuid4())
+        
+        # Initialize progress tracking
+        upload_progress[session_id] = {
+            'total': len(files),
+            'completed': 0,
+            'current_file': '',
+            'status': 'processing',
+            'results': []
+        }
 
-                for idx, file in enumerate(files):
-                    if file.filename == "":
-                        continue
+        try:
+            successful_uploads = 0
+            failed_uploads = 0
 
-                    if not _allowed_file(file.filename):
-                        upload_progress[session_id]['results'].append({
-                            'file': file.filename,
-                            'status': 'failed',
-                            'message': 'File type not allowed. Only CSV, XLS, XLSX, TXT are supported.'
-                        })
-                        failed_uploads += 1
-                        continue
+            # Prepare target engine/clients
+            pg_engine = None
+            ch_client = None
+            if target_engine == 'postgres':
+                pg_engine = get_pg_engine(selected_db)
+            elif target_engine == 'clickhouse':
+                if CHClient is None:
+                    flash('ClickHouse driver not installed on server. Please install clickhouse-driver.', 'danger')
+                    return redirect(url_for('upload_csv'))
+                # Read connection info from environment (required)
+                ch_host = os.environ.get('CLICKHOUSE_HOST')
+                ch_port = os.environ.get('CLICKHOUSE_PORT')
+                ch_user = os.environ.get('CLICKHOUSE_USER')
+                ch_password = os.environ.get('CLICKHOUSE_PASSWORD', '')
+                if not ch_host or not ch_port or not ch_user:
+                    flash('Please set CLICKHOUSE_HOST, CLICKHOUSE_PORT and CLICKHOUSE_USER in your environment (.env)', 'danger')
+                    return redirect(url_for('upload_csv'))
+                ch_client = CHClient(host=ch_host, port=int(ch_port), user=ch_user, password=ch_password)
+            else:
+                flash(f'Unknown target engine: {target_engine}', 'danger')
+                return redirect(url_for('upload_csv'))
 
-                    filename = secure_filename(file.filename)
-                    upload_progress[session_id]['current_file'] = filename
+            for idx, file in enumerate(files):
+                if file.filename == "":
+                    continue
 
-                    try:
-                        # Read file based on extension (read bytes first to avoid stream/seek issues)
-                        import io
-                        file_ext = filename.rsplit(".", 1)[1].lower()
-                        file_bytes = file.read()
-                        df = None
-                        text_content = None
+                if not _allowed_file(file.filename):
+                    upload_progress[session_id]['results'].append({
+                        'file': file.filename,
+                        'status': 'failed',
+                        'message': 'File type not allowed. Only CSV, XLS, XLSX, TXT are supported.'
+                    })
+                    failed_uploads += 1
+                    continue
 
-                        if file_ext == 'csv':
+                filename = secure_filename(file.filename)
+                upload_progress[session_id]['current_file'] = filename
+
+                try:
+                    # Read file based on extension (read bytes first to avoid stream/seek issues)
+                    import io
+                    file_ext = filename.rsplit(".", 1)[1].lower()
+                    file_bytes = file.read()
+                    df = None
+                    text_content = None
+
+                    if file_ext == 'csv':
+                        try:
+                            text_content = file_bytes.decode('utf-8')
+                            df = pd.read_csv(io.StringIO(text_content))
+                        except Exception:
+                            # fallback to bytes-based read
+                            df = pd.read_csv(io.BytesIO(file_bytes))
+
+                    elif file_ext in ['xlsx', 'xls']:
+                        df = pd.read_excel(io.BytesIO(file_bytes))
+
+                    elif file_ext == 'txt':
+                        # decode to text and try several delimiter strategies
+                        try:
+                            text_content = file_bytes.decode('utf-8')
+                        except Exception:
+                            text_content = file_bytes.decode('latin-1', errors='replace')
+
+                        # Try tab, then comma, then whitespace, then pandas auto
+                        try:
+                            df = pd.read_csv(io.StringIO(text_content), sep='\t')
+                            if len(df.columns) == 1:
+                                df = pd.read_csv(io.StringIO(text_content), sep=',')
+                            if len(df.columns) == 1:
+                                df = pd.read_csv(io.StringIO(text_content), sep=r'\s+', engine='python')
+                        except Exception:
                             try:
-                                text_content = file_bytes.decode('utf-8')
                                 df = pd.read_csv(io.StringIO(text_content))
                             except Exception:
-                                # fallback to bytes-based read
-                                df = pd.read_csv(io.BytesIO(file_bytes))
+                                # as last resort, store whole content as single column
+                                df = pd.DataFrame({'content': [text_content]})
 
-                        elif file_ext in ['xlsx', 'xls']:
-                            df = pd.read_excel(io.BytesIO(file_bytes))
+                    else:
+                        raise ValueError(f"Unsupported file type: {file_ext}")
 
-                        elif file_ext == 'txt':
-                            # decode to text and try several delimiter strategies
-                            try:
-                                text_content = file_bytes.decode('utf-8')
-                            except Exception:
-                                text_content = file_bytes.decode('latin-1', errors='replace')
+                    # Normalize dataframe columns and fallback if headers malformed
+                    df = _normalize_dataframe(df, file_content=text_content)
 
-                            # Try tab, then comma, then whitespace, then pandas auto
-                            try:
-                                df = pd.read_csv(io.StringIO(text_content), sep='\t')
-                                if len(df.columns) == 1:
-                                    df = pd.read_csv(io.StringIO(text_content), sep=',')
-                                if len(df.columns) == 1:
-                                    df = pd.read_csv(io.StringIO(text_content), sep=r'\s+', engine='python')
-                            except Exception:
-                                try:
-                                    df = pd.read_csv(io.StringIO(text_content))
-                                except Exception:
-                                    # as last resort, store whole content as single column
-                                    df = pd.DataFrame({'content': [text_content]})
+                    # Clean table name from file name (without extension)
+                    table_name = os.path.splitext(filename)[0]
+                    table_name = ''.join(c for c in table_name if c.isalnum() or c in '_-')
+                    table_name = table_name.lower()  # PostgreSQL convention
 
-                        else:
-                            raise ValueError(f"Unsupported file type: {file_ext}")
-
-                        # Normalize dataframe columns and fallback if headers malformed
-                        df = _normalize_dataframe(df, file_content=text_content)
-
-                        # Clean table name from file name (without extension)
-                        table_name = os.path.splitext(filename)[0]
-                        table_name = ''.join(c for c in table_name if c.isalnum() or c in '_-')
-                        table_name = table_name.lower()  # PostgreSQL convention
-
+                    # Load into target engine
+                    if target_engine == 'postgres':
                         # Load into public schema, replacing any existing table of same name
-                        df.to_sql(table_name, engine, schema="public", if_exists="replace", index=False)
+                        df.to_sql(table_name, pg_engine, schema="public", if_exists="replace", index=False)
+                    else:
+                        # ClickHouse: create table with all columns as Nullable(String) and insert rows
+                        # Sanitize column names and convert all values to strings
+                        ch_db = selected_db
+                        ch_table = table_name
+                        cols = list(df.columns)
+                        # Build CREATE TABLE statement
+                        col_defs = ", ".join([f"`{c}` Nullable(String)" for c in cols]) if cols else "`content` Nullable(String)"
+                        create_sql = f"CREATE TABLE IF NOT EXISTS `{ch_db}`.`{ch_table}` ({col_defs}) ENGINE = MergeTree() ORDER BY tuple()"
+                        ch_client.execute(create_sql)
 
-                        upload_progress[session_id]['results'].append({
-                            'file': filename,
-                            'status': 'success',
-                            'message': f"Successfully loaded to table 'public.{table_name}' ({len(df)} rows)"
-                        })
-                        successful_uploads += 1
+                        # Prepare rows as tuples of strings
+                        if cols:
+                            rows_to_insert = [tuple((None if pd.isna(v) else str(v)) for v in row) for row in df.values.tolist()]
+                            insert_sql = f"INSERT INTO `{ch_db}`.`{ch_table}` ({', '.join(['`'+c+'`' for c in cols])}) VALUES"
+                            # clickhouse-driver accepts list of tuples with execute and INSERT query without VALUES part in some versions
+                            ch_client.execute(insert_sql, rows_to_insert)
+                        else:
+                            # single content column
+                            rows_to_insert = [(None if pd.isna(v) else str(v),) for v in df['content'].tolist()]
+                            insert_sql = f"INSERT INTO `{ch_db}`.`{ch_table}` (`content`) VALUES"
+                            ch_client.execute(insert_sql, rows_to_insert)
 
-                    except Exception as e:
-                        import traceback
-                        error_details = traceback.format_exc()
-                        print(f"[UPLOAD ERROR] File: {filename}")
-                        print(f"[UPLOAD ERROR] {error_details}")
-                        
-                        upload_progress[session_id]['results'].append({
-                            'file': filename,
-                            'status': 'failed',
-                            'message': f"Error: {str(e)}"
-                        })
-                        failed_uploads += 1
+                    upload_progress[session_id]['results'].append({
+                        'file': filename,
+                        'status': 'success',
+                        'message': (f"Successfully loaded to table 'public.{table_name}' ({len(df)} rows)" if target_engine == 'postgres' else f"Successfully loaded to ClickHouse '{selected_db}.{table_name}' ({len(df)} rows)" )
+                    })
+                    successful_uploads += 1
 
-                    # Update progress
-                    upload_progress[session_id]['completed'] = idx + 1
+                except Exception as e:
+                    import traceback
+                    error_details = traceback.format_exc()
+                    print(f"[UPLOAD ERROR] File: {filename}")
+                    print(f"[UPLOAD ERROR] {error_details}")
+                    
+                    upload_progress[session_id]['results'].append({
+                        'file': filename,
+                        'status': 'failed',
+                        'message': f"Error: {str(e)}"
+                    })
+                    failed_uploads += 1
 
-                # Mark as complete
-                upload_progress[session_id]['status'] = 'complete'
-                upload_progress[session_id]['current_file'] = ''
+                # Update progress
+                upload_progress[session_id]['completed'] = idx + 1
 
-                # Flash summary message
-                if successful_uploads > 0 and failed_uploads == 0:
-                    flash(f"✅ Successfully uploaded {successful_uploads} file(s) to database '{selected_db}'.", "success")
-                elif successful_uploads > 0 and failed_uploads > 0:
-                    flash(f"⚠️ Uploaded {successful_uploads} file(s), {failed_uploads} failed. Check details below.", "warning")
-                else:
-                    flash(f"❌ All {failed_uploads} file(s) failed to upload.", "danger")
+            # Mark as complete
+            upload_progress[session_id]['status'] = 'complete'
+            upload_progress[session_id]['current_file'] = ''
 
-                return render_template("upload.html", 
-                                     postgres_dbs=postgres_dbs, 
-                                     role=session.get("role"),
-                                     upload_results=upload_progress[session_id]['results'])
+            # Flash summary message
+            if successful_uploads > 0 and failed_uploads == 0:
+                flash(f"✅ Successfully uploaded {successful_uploads} file(s) to database '{selected_db}'.", "success")
+            elif successful_uploads > 0 and failed_uploads > 0:
+                flash(f"⚠️ Uploaded {successful_uploads} file(s), {failed_uploads} failed. Check details below.", "warning")
+            else:
+                flash(f"❌ All {failed_uploads} file(s) failed to upload.", "danger")
 
-            except Exception as e:
-                upload_progress[session_id]['status'] = 'error'
-                upload_progress[session_id]['current_file'] = ''
-                flash(f"Upload process failed: {e}", "danger")
-                return redirect(url_for("upload_csv"))
+            return render_template("upload.html", 
+                                 postgres_dbs=postgres_dbs, 
+                                 clickhouse_dbs=clickhouse_dbs,
+                                 role=session.get("role"),
+                                 upload_results=upload_progress[session_id]['results'])
 
-        return render_template("upload.html", postgres_dbs=postgres_dbs, role=session.get("role"))
-    except Exception as e:
-        flash(f"Upload failed: {e}", "danger")
-        return redirect(url_for("index"))
+        except Exception as e:
+            upload_progress[session_id]['status'] = 'error'
+            upload_progress[session_id]['current_file'] = ''
+            flash(f"Upload process failed: {e}", "danger")
+            return redirect(url_for("upload_csv"))
+
+    return render_template("upload.html", postgres_dbs=postgres_dbs, clickhouse_dbs=clickhouse_dbs, role=session.get("role"))
 
 @app.route("/api/upload-progress/<session_id>")
 @require_role(["admin", "operator"])
@@ -1201,6 +1336,18 @@ def get_upload_progress(session_id):
         return jsonify(upload_progress[session_id])
     else:
         return jsonify({'status': 'not_found'}), 404
+
+
+@app.route('/api/clickhouse-dbs')
+@require_role(["admin", "operator"])
+def api_clickhouse_dbs():
+    """Return ClickHouse databases as JSON for the UI to populate selects."""
+    try:
+        dbs = load_ch_databases()
+        return jsonify({'databases': dbs})
+    except Exception as e:
+        app.logger.exception(f"Error fetching ClickHouse DBs: {e}")
+        return jsonify({'databases': [], 'error': str(e)}), 500
 
 @app.route("/view-schedules")
 @require_role(["admin", "operator", "viewer"])

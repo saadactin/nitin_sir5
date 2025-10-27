@@ -164,22 +164,43 @@
 
             <form id="uploadForm" action="{{ url_for('upload_csv') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
               
-              <!-- Target Database Selection -->
+              <!-- Target Engine & Database Selection -->
               <div>
-                <label class="block mb-2 font-medium">Target PostgreSQL Database</label>
-                <select name="pg_database" id="pgDatabase" class="w-full rounded-md border border-border-light dark:border-border-dark p-3 bg-white dark:bg-surface-dark" required>
-                  <option value="">Select target PostgreSQL database</option>
-                  {% if postgres_dbs %}
-                    {% for db in postgres_dbs %}
-                      <option value="{{ db }}">{{ db }}</option>
-                    {% endfor %}
-                  {% else %}
-                    <option value="">No PostgreSQL databases found</option>
-                  {% endif %}
+                <label class="block mb-2 font-medium">Target Engine</label>
+                <select name="target_engine" id="targetEngine" class="w-full rounded-md border border-border-light dark:border-border-dark p-3 bg-white dark:bg-surface-dark">
+                  <option value="postgres">PostgreSQL</option>
+                  <option value="clickhouse">ClickHouse</option>
                 </select>
-                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
-                  All uploaded files will be loaded into this database
-                </p>
+                <div class="mt-3">
+                  <label class="block mb-2 font-medium">Target Database</label>
+                  <!-- Postgres DB select -->
+                  <select name="target_db" id="pgDatabase" class="w-full rounded-md border border-border-light dark:border-border-dark p-3 bg-white dark:bg-surface-dark">
+                    <option value="">Select target PostgreSQL database</option>
+                    {% if postgres_dbs %}
+                      {% for db in postgres_dbs %}
+                        <option value="{{ db }}">{{ db }}</option>
+                      {% endfor %}
+                    {% else %}
+                      <option value="">No PostgreSQL databases found</option>
+                    {% endif %}
+                  </select>
+
+                  <!-- ClickHouse DB select (hidden by default) -->
+                  <select name="target_db" id="chDatabase" class="w-full rounded-md border border-border-light dark:border-border-dark p-3 bg-white dark:bg-surface-dark mt-2 hidden">
+                    <option value="">Select target ClickHouse database</option>
+                    {% if clickhouse_dbs %}
+                      {% for db in clickhouse_dbs %}
+                        <option value="{{ db }}">{{ db }}</option>
+                      {% endfor %}
+                    {% else %}
+                      <option value="">No ClickHouse databases found</option>
+                    {% endif %}
+                  </select>
+
+                  <p id="targetDbHelp" class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                    All uploaded files will be loaded into the selected database (engine: PostgreSQL)
+                  </p>
+                </div>
               </div>
 
               <!-- File Upload Dropzone -->
@@ -278,6 +299,10 @@
     const progressText = document.getElementById('progressText');
     const currentFile = document.getElementById('currentFile');
     const submitBtn = document.getElementById('submitBtn');
+  const targetEngine = document.getElementById('targetEngine');
+  const pgDatabaseSelect = document.getElementById('pgDatabase');
+  const chDatabaseSelect = document.getElementById('chDatabase');
+  const targetDbHelp = document.getElementById('targetDbHelp');
 
     // Click to upload
     dropzone.addEventListener('click', () => fileInput.click());
@@ -301,6 +326,61 @@
 
     // File selection change
     fileInput.addEventListener('change', updateFileList);
+
+    // Engine toggle: show/hide database selects
+    function updateEngineUI() {
+      const eng = targetEngine.value;
+      if (eng === 'clickhouse') {
+        pgDatabaseSelect.classList.add('hidden');
+        pgDatabaseSelect.disabled = true;  // Disable so it doesn't submit
+        chDatabaseSelect.classList.remove('hidden');
+        chDatabaseSelect.disabled = false;
+        targetDbHelp.textContent = 'All uploaded files will be loaded into the selected ClickHouse database (engine: ClickHouse)';
+      } else {
+        pgDatabaseSelect.classList.remove('hidden');
+        pgDatabaseSelect.disabled = false;
+        chDatabaseSelect.classList.add('hidden');
+        chDatabaseSelect.disabled = true;  // Disable so it doesn't submit
+        targetDbHelp.textContent = 'All uploaded files will be loaded into the selected database (engine: PostgreSQL)';
+      }
+    }
+
+    targetEngine.addEventListener('change', updateEngineUI);
+    // initialize UI
+    updateEngineUI();
+
+    // Fetch ClickHouse DBs asynchronously and populate the select
+    async function populateCHDatabases() {
+      try {
+        const resp = await fetch('/api/clickhouse-dbs');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const dbs = data.databases || [];
+        chDatabaseSelect.innerHTML = '';
+        if (dbs.length === 0) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = 'No ClickHouse databases found';
+          chDatabaseSelect.appendChild(opt);
+          return;
+        }
+        const empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = 'Select target ClickHouse database';
+        chDatabaseSelect.appendChild(empty);
+        dbs.forEach(db => {
+          const o = document.createElement('option');
+          o.value = db;
+          o.textContent = db;
+          chDatabaseSelect.appendChild(o);
+        });
+      } catch (err) {
+        console.debug('Could not load ClickHouse DBs:', err);
+      }
+    }
+
+    // Populate on load
+    populateCHDatabases();
 
     function updateFileList() {
       const files = Array.from(fileInput.files);
@@ -365,6 +445,18 @@
       const files = fileInput.files;
       if (files.length === 0) {
         alert('Please select at least one file');
+        e.preventDefault();
+        return;
+      }
+
+      // Ensure a target DB is selected for the chosen engine
+      const eng = targetEngine.value;
+      let selectedDb = '';
+      if (eng === 'clickhouse') selectedDb = chDatabaseSelect.value;
+      else selectedDb = pgDatabaseSelect.value;
+
+      if (!selectedDb) {
+        alert('Please select a target database for the chosen engine');
         e.preventDefault();
         return;
       }

@@ -5985,3 +5985,199 @@ LINE 1: SELECT password, role FROM metrics_sync_tables.users WHERE u...
 2025-10-27 13:39:48,244 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
 2025-10-27 13:39:56,187 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
 2025-10-27 13:39:56,188 - WARNING - [AUTH] Session contents: {}
+2025-10-27 14:11:19,334 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 14:11:29,937 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-27 14:11:29,939 - WARNING - [AUTH] Session contents: {}
+2025-10-27 14:11:41,051 - ERROR - WARNING: Could not load ClickHouse DBs: 'NoneType' object has no attribute 'encode'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 744, in load_ch_databases
+    rows = client.execute('SHOW DATABASES')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\client.py", line 370, in execute
+    with self.disconnect_on_error(query, settings):
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\client.py", line 313, in disconnect_on_error
+    self.establish_connection(settings)
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\client.py", line 300, in establish_connection
+    self.connection.force_connect()
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\connection.py", line 258, in force_connect
+    self.connect()
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\connection.py", line 399, in connect
+    return self._init_connection(host, port)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\connection.py", line 342, in _init_connection
+    self.send_hello()
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\connection.py", line 473, in send_hello
+    write_binary_str(self.password, self.fout)
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\writer.py", line 15, in write_binary_str
+    text = text.encode('utf-8')
+           ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'encode'
+2025-10-27 14:14:56,871 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 14:15:04,407 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-27 14:15:04,410 - WARNING - [AUTH] Session contents: {}
+2025-10-27 14:15:15,413 - ERROR - WARNING: Could not load ClickHouse DBs: Code: 516.
+DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. Stack trace:
+
+0. DB::Exception::Exception(DB::Exception::MessageMasked&&, int, bool) @ 0x00000000137a855f
+1. DB::Exception::Exception(String&&, int, String, bool) @ 0x000000000cae7e8e
+2. DB::Exception::Exception(PreformattedMessage&&, int) @ 0x000000000cae7940
+3. DB::AccessControl::authenticate(DB::Credentials const&, Poco::Net::IPAddress const&, DB::ClientInfo const&) const @ 0x0000000016c5c123
+4. DB::Session::authenticate(DB::Credentials const&, Poco::Net::SocketAddress const&, std::vector<String, std::allocator<String>> const&) @ 0x00000000184732f2
+5. DB::Session::authenticate(String const&, String const&, Poco::Net::SocketAddress const&, std::vector<String, std::allocator<String>> const&) @ 0x00000000184727b2
+6. DB::TCPHandler::receiveHello() @ 0x0000000019e38ff9
+7. DB::TCPHandler::runImpl() @ 0x0000000019e29a13
+8. DB::TCPHandler::run() @ 0x0000000019e4f119
+9. Poco::Net::TCPServerConnection::start() @ 0x000000001ef4ed07
+10. Poco::Net::TCPServerDispatcher::run() @ 0x000000001ef4f199
+11. Poco::PooledThread::run() @ 0x000000001ef15b87
+12. Poco::ThreadImpl::runnableEntry(void*) @ 0x000000001ef13f81
+13. ? @ 0x0000000000094ac3
+14. ? @ 0x0000000000125a74
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 744, in load_ch_databases
+    rows = client.execute('SHOW DATABASES')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\client.py", line 370, in execute
+    with self.disconnect_on_error(query, settings):
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\client.py", line 313, in disconnect_on_error
+    self.establish_connection(settings)
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\client.py", line 300, in establish_connection
+    self.connection.force_connect()
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\connection.py", line 258, in force_connect
+    self.connect()
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\connection.py", line 399, in connect
+    return self._init_connection(host, port)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\connection.py", line 343, in _init_connection
+    self.receive_hello()
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\site-packages\clickhouse_driver\connection.py", line 528, in receive_hello
+    raise self.receive_exception()
+clickhouse_driver.errors.ServerException: Code: 516.
+DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. Stack trace:
+
+0. DB::Exception::Exception(DB::Exception::MessageMasked&&, int, bool) @ 0x00000000137a855f
+1. DB::Exception::Exception(String&&, int, String, bool) @ 0x000000000cae7e8e
+2. DB::Exception::Exception(PreformattedMessage&&, int) @ 0x000000000cae7940
+3. DB::AccessControl::authenticate(DB::Credentials const&, Poco::Net::IPAddress const&, DB::ClientInfo const&) const @ 0x0000000016c5c123
+4. DB::Session::authenticate(DB::Credentials const&, Poco::Net::SocketAddress const&, std::vector<String, std::allocator<String>> const&) @ 0x00000000184732f2
+5. DB::Session::authenticate(String const&, String const&, Poco::Net::SocketAddress const&, std::vector<String, std::allocator<String>> const&) @ 0x00000000184727b2
+6. DB::TCPHandler::receiveHello() @ 0x0000000019e38ff9
+7. DB::TCPHandler::runImpl() @ 0x0000000019e29a13
+8. DB::TCPHandler::run() @ 0x0000000019e4f119
+9. Poco::Net::TCPServerConnection::start() @ 0x000000001ef4ed07
+10. Poco::Net::TCPServerDispatcher::run() @ 0x000000001ef4f199
+11. Poco::PooledThread::run() @ 0x000000001ef15b87
+12. Poco::ThreadImpl::runnableEntry(void*) @ 0x000000001ef13f81
+13. ? @ 0x0000000000094ac3
+14. ? @ 0x0000000000125a74
+
+2025-10-27 14:20:42,420 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 14:20:54,543 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
+2025-10-27 14:20:54,544 - WARNING - [AUTH] Session contents: {}
+2025-10-27 14:21:03,662 - ERROR - WARNING: Could not load ClickHouse DBs: Code: 516.
+DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. Stack trace:
+
+0. DB::Exception::Exception(DB::Exception::MessageMasked&&, int, bool) @ 0x00000000137a855f
+1. DB::Exception::Exception(String&&, int, String, bool) @ 0x000000000cae7e8e
+2. DB::Exception::Exception(PreformattedMessage&&, int) @ 0x000000000cae7940
+3. DB::AccessControl::authenticate(DB::Credentials const&, Poco::Net::IPAddress const&, DB::ClientInfo const&) const @ 0x0000000016c5c123
+4. DB::Session::authenticate(DB::Credentials const&, Poco::Net::SocketAddress const&, std::vector<String, std::allocator<String>> const&) @ 0x00000000184732f2
+5. DB::Session::authenticate(String const&, String const&, Poco::Net::SocketAddress const&, std::vector<String, std::allocator<String>> const&) @ 0x00000000184727b2
+6. DB::TCPHandler::receiveHello() @ 0x0000000019e38ff9
+7. DB::TCPHandler::runImpl() @ 0x0000000019e29a13
+8. DB::TCPHandler::run() @ 0x0000000019e4f119
+9. Poco::Net::TCPServerConnection::start() @ 0x000000001ef4ed07
+10. Poco::Net::TCPServerDispatcher::run() @ 0x000000001ef4f199
+11. Poco::PooledThread::run() @ 0x000000001ef15b87
+12. Poco::ThreadImpl::runnableEntry(void*) @ 0x000000001ef13f81
+13. ? @ 0x0000000000094ac3
+14. ? @ 0x0000000000125a74
+
+2025-10-27 14:21:03,973 - ERROR - WARNING: Could not load ClickHouse DBs: Code: 516.
+DB::Exception: default: Authentication failed: password is incorrect, or there is no user with such name.
+
+If you use ClickHouse Cloud, the password can be reset at https://clickhouse.cloud/
+on the settings page for the corresponding service.
+
+If you have installed ClickHouse and forgot password you can reset it in the configuration file.
+The password for default user is typically located at /etc/clickhouse-server/users.d/default-password.xml
+and deleting this file will reset the password.
+See also /etc/clickhouse-server/users.xml on the server where ClickHouse is installed.
+
+. Stack trace:
+
+0. DB::Exception::Exception(DB::Exception::MessageMasked&&, int, bool) @ 0x00000000137a855f
+1. DB::Exception::Exception(String&&, int, String, bool) @ 0x000000000cae7e8e
+2. DB::Exception::Exception(PreformattedMessage&&, int) @ 0x000000000cae7940
+3. DB::AccessControl::authenticate(DB::Credentials const&, Poco::Net::IPAddress const&, DB::ClientInfo const&) const @ 0x0000000016c5c123
+4. DB::Session::authenticate(DB::Credentials const&, Poco::Net::SocketAddress const&, std::vector<String, std::allocator<String>> const&) @ 0x00000000184732f2
+5. DB::Session::authenticate(String const&, String const&, Poco::Net::SocketAddress const&, std::vector<String, std::allocator<String>> const&) @ 0x00000000184727b2
+6. DB::TCPHandler::receiveHello() @ 0x0000000019e38ff9
+7. DB::TCPHandler::runImpl() @ 0x0000000019e29a13
+8. DB::TCPHandler::run() @ 0x0000000019e4f119
+9. Poco::Net::TCPServerConnection::start() @ 0x000000001ef4ed07
+10. Poco::Net::TCPServerDispatcher::run() @ 0x000000001ef4f199
+11. Poco::PooledThread::run() @ 0x000000001ef15b87
+12. Poco::ThreadImpl::runnableEntry(void*) @ 0x000000001ef13f81
+13. ? @ 0x0000000000094ac3
+14. ? @ 0x0000000000125a74
+
+2025-10-27 14:33:47,666 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 14:33:47,831 - ERROR - Error decrypting password: 
+2025-10-27 14:33:47,832 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-10-27 14:33:47,959 - ERROR - Error decrypting password: 
+2025-10-27 14:33:47,960 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-10-27 14:33:48,161 - ERROR - Error decrypting password: 
+2025-10-27 14:33:48,161 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-10-27 14:33:48,393 - ERROR - Error decrypting password: 
+2025-10-27 14:33:48,394 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-10-27 14:33:55,676 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
+2025-10-27 14:33:55,677 - WARNING - [AUTH] Session contents: {}
+2025-10-27 14:42:15,240 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 14:43:05,943 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
+2025-10-27 14:43:05,944 - WARNING - [AUTH] Session contents: {}
+2025-10-27 14:43:29,049 - WARNING - [UPLOAD] No database selected
+2025-10-27 14:44:08,877 - WARNING - [UPLOAD] No database selected
+2025-10-27 14:48:49,517 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 14:48:57,773 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
+2025-10-27 14:48:57,775 - WARNING - [AUTH] Session contents: {}
+2025-10-27 14:49:20,534 - WARNING - [UPLOAD] No database selected
+2025-10-27 14:54:18,432 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 14:54:22,800 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
+2025-10-27 14:54:22,801 - WARNING - [AUTH] Session contents: {}
