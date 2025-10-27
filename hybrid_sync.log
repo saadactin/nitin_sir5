@@ -6181,3 +6181,6 @@ See also /etc/clickhouse-server/users.xml on the server where ClickHouse is inst
 2025-10-27 14:54:18,432 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
 2025-10-27 14:54:22,800 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
 2025-10-27 14:54:22,801 - WARNING - [AUTH] Session contents: {}
+2025-10-27 15:14:57,563 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 15:15:05,695 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
+2025-10-27 15:15:05,697 - WARNING - [AUTH] Session contents: {}
