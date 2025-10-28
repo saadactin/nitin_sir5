@@ -424,9 +424,130 @@ def index():
             "error": error
         }
     
+    # Load data_sources from Postgres so Add Source entries appear on home page
+    data_sources = []
+    data_source_statuses = {}
+    print(f"[CONSOLE DEBUG] Starting to load data_sources...")
+    try:
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        print(f"[CONSOLE DEBUG] Pg config: db={pg_conf.get('database')}, host={pg_conf.get('host')}")
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        print(f"[CONSOLE DEBUG] Connected to PostgreSQL")
+        cur = conn.cursor()
+        cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+        rows = cur.fetchall()
+        app.logger.info(f"[DEBUG] Query returned {len(rows)} data_source rows")
+        print(f"[CONSOLE DEBUG] Query returned {len(rows)} rows")
+        for r in rows:
+            ds = {
+                'id': r[0],
+                'source_name': r[1],
+                'source_type': r[2],
+                'server_address': r[3],
+                'username': r[4],
+                'target_type': r[5],
+                'target_database': r[6],
+                'connection_details': r[7]
+            }
+            data_sources.append(ds)
+            app.logger.info(f"[DEBUG] Loaded data_source: {ds['source_name']} (ID: {ds['id']})")
+            print(f"[CONSOLE DEBUG] Loaded source: {ds['source_name']}")
+        cur.close()
+        conn.close()
+    except Exception as e:
+        app.logger.exception(f"Could not load data_sources: {e}")
+        print(f"[CONSOLE DEBUG] ERROR loading data_sources: {e}")
+        import traceback
+        traceback.print_exc()
+
+    # Determine status for each data source
+    for ds in data_sources:
+        try:
+            if ds['source_type'] == 'sql_server':
+                # Build a minimal server_conf similar to YAML config
+                server_conf = {
+                    'server': ds['server_address'],
+                    'username': ds.get('username'),
+                    'password': None,  # don't expose password here
+                }
+                # We can't test without password; mark as unknown unless password present in DB
+                # Attempt to fetch password from DB for testing (internal only)
+                try:
+                    from db_utils import load_pg_config
+                    pg_conf = load_pg_config()
+                    conn = psycopg2.connect(
+                        dbname=pg_conf.get('database', 'metrics_sync_tables'),
+                        user=pg_conf.get('username'),
+                        password=pg_conf.get('password'),
+                        host=pg_conf.get('host'),
+                        port=int(pg_conf.get('port', 5432))
+                    )
+                    cur = conn.cursor()
+                    cur.execute("SELECT password FROM data_sources WHERE id = %s", (ds['id'],))
+                    pw_row = cur.fetchone()
+                    cur.close()
+                    conn.close()
+                    if pw_row and pw_row[0]:
+                        server_conf['password'] = pw_row[0]
+                except Exception:
+                    pass
+
+                if server_conf.get('password'):
+                    success, error = test_sql_connection(server_conf)
+                    data_source_statuses[ds['id']] = {'online': success, 'error': error}
+                else:
+                    data_source_statuses[ds['id']] = {'online': False, 'error': 'Password not available for connection test'}
+            elif ds['source_type'] == 'sap_hana':
+                # Try to import hdbcli and attempt connect if credentials present
+                try:
+                    from hdbcli import dbapi as hana_dbapi
+                    # fetch password
+                    from db_utils import load_pg_config
+                    pg_conf = load_pg_config()
+                    conn = psycopg2.connect(
+                        dbname=pg_conf.get('database', 'metrics_sync_tables'),
+                        user=pg_conf.get('username'),
+                        password=pg_conf.get('password'),
+                        host=pg_conf.get('host'),
+                        port=int(pg_conf.get('port', 5432))
+                    )
+                    cur = conn.cursor()
+                    cur.execute("SELECT password, connection_details FROM data_sources WHERE id = %s", (ds['id'],))
+                    row = cur.fetchone()
+                    cur.close(); conn.close()
+                    if row and row[0]:
+                        # parse host/port from server_address if formatted as host:port
+                        host_port = ds['server_address']
+                        h, p = (host_port.split(':') + [None])[:2]
+                        port = int(p) if p else None
+                        try:
+                            conn_h = hana_dbapi.connect(address=h, port=port or 30015, user=ds['username'], password=row[0])
+                            conn_h.close()
+                            data_source_statuses[ds['id']] = {'online': True, 'error': None}
+                        except Exception as e:
+                            data_source_statuses[ds['id']] = {'online': False, 'error': str(e)}
+                    else:
+                        data_source_statuses[ds['id']] = {'online': False, 'error': 'Password not available for connection test'}
+                except Exception as e:
+                    data_source_statuses[ds['id']] = {'online': False, 'error': 'hdbcli not installed or connection failed'}
+            else:
+                data_source_statuses[ds['id']] = {'online': False, 'error': 'Unknown source type'}
+        except Exception as e:
+            app.logger.exception(f"Error checking status for source {ds.get('source_name')}: {e}")
+            data_source_statuses[ds['id']] = {'online': False, 'error': str(e)}
+
     role = session.get("role")
-    app.logger.info(f"[INFO] Loaded {len(sqlservers)} SQL servers for display")
-    return render_template("sync_servers.html", sqlservers=sqlservers, server_statuses=server_statuses, role=role)
+    app.logger.info(f"[INFO] Loaded {len(sqlservers)} SQL servers and {len(data_sources)} data sources for display")
+    print(f"[CONSOLE DEBUG] About to render: sqlservers={len(sqlservers)}, data_sources={len(data_sources)}")
+    print(f"[CONSOLE DEBUG] data_sources content: {[ds.get('source_name') for ds in data_sources]}")
+    return render_template("sync_servers.html", sqlservers=sqlservers, server_statuses=server_statuses, data_sources=data_sources, data_source_statuses=data_source_statuses, role=role)
 
 
 @app.route("/server/<server_name>")
@@ -594,6 +715,193 @@ def sync_background(server_name):
         return jsonify(result), 409
 
 
+@app.route('/source/<int:source_id>/databases', methods=['GET'])
+@require_role(["admin", "operator", "viewer"])
+def view_source_databases(source_id):
+    """Show databases for a configured source (SQL Server or HANA)"""
+    try:
+        # Load source from DB
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT id, source_name, source_type, server_address, username, password, connection_details FROM data_sources WHERE id = %s", (source_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+
+        if not row:
+            flash('Source not found', 'danger')
+            return redirect(url_for('index'))
+
+        source = {
+            'id': row[0], 'source_name': row[1], 'source_type': row[2], 'server_address': row[3], 'username': row[4], 'password': row[5], 'connection_details': row[6]
+        }
+
+        if source['source_type'] == 'sql_server':
+            server_conf = {'server': source['server_address'], 'username': source['username'], 'password': source['password']}
+            conn_sql = get_sql_connection(server_conf)
+            dbs = hs_get_all_databases(conn_sql)
+            conn_sql.close()
+            return render_template('server_databases.html', server_name=source['source_name'], databases=dbs, role=session.get('role'))
+
+        elif source['source_type'] == 'sap_hana':
+            # Attempt HANA listing if hdbcli is available
+            try:
+                from hdbcli import dbapi as hana_dbapi
+                host_port = source['server_address']
+                h, p = (host_port.split(':') + [None])[:2]
+                port = int(p) if p else 30015
+                conn_h = hana_dbapi.connect(address=h, port=port, user=source['username'], password=source['password'])
+                # Simple query to get schemas/databases
+                cur_h = conn_h.cursor()
+                cur_h.execute("SELECT SCHEMA_NAME FROM SYS.SCHEMAS")
+                dbs = [r[0] for r in cur_h.fetchall()]
+                cur_h.close(); conn_h.close()
+                return render_template('server_databases.html', server_name=source['source_name'], databases=dbs, role=session.get('role'))
+            except Exception as e:
+                flash(f"Could not list HANA databases: {e}", 'danger')
+                return redirect(url_for('index'))
+
+        else:
+            flash('Unsupported source type for database listing', 'danger')
+            return redirect(url_for('index'))
+
+    except Exception as e:
+        app.logger.exception(f"Failed to load source databases: {e}")
+        flash(f"Failed to load databases: {e}", 'danger')
+        return redirect(url_for('index'))
+
+
+@app.route('/sync_source_background/<int:source_id>', methods=['GET'])
+@require_role(["admin", "operator"])
+def sync_source_background(source_id):
+    """Start background sync for a configured source (only SQL Server supported currently)"""
+    try:
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT id, source_name, source_type, server_address, username, password FROM data_sources WHERE id = %s", (source_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+
+        if not row:
+            return jsonify({"success": False, "message": "Source not found"}), 404
+
+        source = {'id': row[0], 'source_name': row[1], 'source_type': row[2], 'server_address': row[3], 'username': row[4], 'password': row[5]}
+
+        if source['source_type'] != 'sql_server':
+            return jsonify({"success": False, "message": "Background sync only supported for SQL Server sources currently"}), 501
+
+        server_conf = {
+            'server': source['server_address'],
+            'username': source['username'],
+            'password': source['password'],
+            'target_postgres_db': None
+        }
+
+        # Use a unique name in the sync manager so we don't clash with YAML servers
+        server_key = f"source::{source['id']}"
+        result = sync_manager.start_sync(server_key, server_conf, app)
+
+        if result['success']:
+            flash(f"Background sync started for {source['source_name']}", 'success')
+            return jsonify(result), 202
+        else:
+            flash(f"Failed to start sync for {source['source_name']}: {result.get('message')}", 'warning')
+            return jsonify(result), 409
+
+    except Exception as e:
+        app.logger.exception(f"Error starting source sync: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/edit-source/<int:source_id>', methods=['GET', 'POST'])
+@require_role(["admin", "operator"])
+def edit_source(source_id):
+    """Edit an existing data source (pre-fill forms)"""
+    try:
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cur = conn.cursor()
+        if request.method == 'POST':
+            # Update record
+            form = request.form
+            source_name = form.get('source_name')
+            server = form.get('server')
+            username = form.get('username')
+            password = form.get('password')
+            target_type = form.get('target_type')
+            target_database = form.get('target_database')
+            cur.execute("UPDATE data_sources SET source_name=%s, server_address=%s, username=%s, password=%s, target_type=%s, target_database=%s, updated_at = CURRENT_TIMESTAMP WHERE id=%s",
+                        (source_name, server, username, password, target_type, target_database, source_id))
+            conn.commit()
+            cur.close(); conn.close()
+            flash('Source updated', 'success')
+            return redirect(url_for('index'))
+
+        cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE id = %s", (source_id,))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+        if not row:
+            flash('Source not found', 'danger')
+            return redirect(url_for('index'))
+
+        ds = {'id': row[0], 'source_name': row[1], 'source_type': row[2], 'server_address': row[3], 'username': row[4], 'target_type': row[5], 'target_database': row[6], 'connection_details': row[7]}
+        if ds['source_type'] == 'sql_server':
+            return render_template('add_sql_source.html', source_name=ds['source_name'], server=ds['server_address'], username=ds['username'], target_type=ds['target_type'], target_database=ds['target_database'])
+        else:
+            return render_template('add_hana_source.html', source_name=ds['source_name'], host=ds['server_address'].split(':')[0], port=ds['server_address'].split(':')[1] if ':' in ds['server_address'] else '30015', username=ds['username'], target_type=ds['target_type'], target_database=ds['target_database'])
+
+    except Exception as e:
+        app.logger.exception(f"Error editing source: {e}")
+        flash(f"Error editing source: {e}", 'danger')
+        return redirect(url_for('index'))
+
+
+@app.route('/delete-source/<int:source_id>', methods=['POST'])
+@require_role(["admin", "operator"])
+def delete_source_route(source_id):
+    try:
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cur = conn.cursor()
+        cur.execute("DELETE FROM data_sources WHERE id = %s", (source_id,))
+        conn.commit()
+        cur.close(); conn.close()
+        flash('Source deleted', 'success')
+    except Exception as e:
+        app.logger.exception(f"Failed to delete source: {e}")
+        flash(f'Failed to delete source: {e}', 'danger')
+    return redirect(url_for('index'))
+
+
 @app.route('/sync_status/<server_name>', methods=['GET'])
 @require_role(["admin", "operator", "viewer"])
 def sync_status(server_name):
@@ -666,6 +974,118 @@ def all_sync_status():
     except Exception as e:
         app.logger.exception(f"Error fetching all sync statuses: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/sync_status/source/<int:source_id>', methods=['GET'])
+@require_role(["admin", "operator", "viewer"])
+def sync_status_source(source_id):
+    """Return sync status for a source started via sync_source_background (uses sync_manager key source::<id>)"""
+    try:
+        server_key = f"source::{source_id}"
+        active_sync = sync_manager.get_sync_status(server_key)
+        if active_sync:
+            sync_status = active_sync["status"]
+            is_actually_active = sync_status not in ["completed", "failed"]
+            return jsonify({
+                "server": server_key,
+                "status": active_sync["status"],
+                "progress": active_sync.get("progress", 0),
+                "message": active_sync.get("message", ""),
+                "sync_id": active_sync.get("sync_id"),
+                "start_time": active_sync.get("start_time").isoformat() if active_sync.get("start_time") else None,
+                "current_database": active_sync.get("current_database"),
+                "databases_processed": active_sync.get("databases_processed", 0),
+                "total_databases": active_sync.get("total_databases", 0),
+                "is_active": is_actually_active
+            }), 200
+
+        # No active sync, return last recorded status if available
+        last = get_last_sync_for_server(server_key)
+        if not last:
+            return jsonify({"server": server_key, "status": "none", "is_active": False}), 200
+
+        return jsonify({
+            "server": last["server"],
+            "status": last["status"],
+            "time": last["time"],
+            "details": last["details"],
+            "is_active": False
+        }), 200
+
+    except Exception as e:
+        app.logger.exception(f"Error fetching sync status for source {source_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/debug/data_sources', methods=['GET'])
+@require_role(["admin"])
+def debug_list_data_sources():
+    """Debug endpoint: return JSON list of configured data_sources (admin-only).
+    Useful to verify the running app can read the same DB where sources are inserted.
+    """
+    try:
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, created_at FROM data_sources ORDER BY created_at DESC")
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+
+        ds_list = []
+        for r in rows:
+            ds_list.append({
+                'id': r[0],
+                'source_name': r[1],
+                'source_type': r[2],
+                'server_address': r[3],
+                'username': r[4],
+                'target_type': r[5],
+                'target_database': r[6],
+                'created_at': r[7].isoformat() if r[7] else None
+            })
+
+        return jsonify({'success': True, 'count': len(ds_list), 'data_sources': ds_list}), 200
+    except Exception as e:
+        app.logger.exception(f"Debug: could not read data_sources: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/debug/insert-sample', methods=['GET'])
+@require_role(["admin"])
+def debug_insert_sample_source():
+    """Debug helper: insert a sample data_source record and redirect to index.
+    Use query param `name` to set source_name. Protected to admin only.
+    """
+    try:
+        name = request.args.get('name') or f"debug_sample_{int(datetime.now().timestamp())}"
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cur = conn.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS data_sources (id SERIAL PRIMARY KEY, source_name VARCHAR(255) UNIQUE NOT NULL, source_type VARCHAR(50) NOT NULL, server_address TEXT NOT NULL, username TEXT NOT NULL, password TEXT NOT NULL, target_type VARCHAR(50) NOT NULL, target_database VARCHAR(255) NOT NULL, is_active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+        cur.execute("INSERT INTO data_sources (source_name, source_type, server_address, username, password, target_type, target_database) VALUES (%s,%s,%s,%s,%s,%s,%s)", (name, 'sql_server', '127.0.0.1', 'sa', 'Password123!', 'postgresql', 'postgres'))
+        conn.commit()
+        cur.close(); conn.close()
+        flash(f"Inserted debug source '{name}'", 'success')
+        app.logger.info(f"[DEBUG] Inserted sample data_source: {name}")
+        return redirect(url_for('index'))
+    except Exception as e:
+        app.logger.exception(f"Debug insert failed: {e}")
+        flash(f"Debug insert failed: {e}", 'danger')
+        return redirect(url_for('index'))
 
 
 @app.route('/sync_stop/<server_name>', methods=['POST'])
@@ -805,6 +1225,11 @@ def load_ch_databases():
             return []
 
 
+def load_clickhouse_databases():
+    """Wrapper for load_ch_databases for consistency"""
+    return load_ch_databases()
+
+
 @app.route("/add-server", methods=["GET", "POST"])
 @require_role(["admin", "operator"])
 def add_server():
@@ -930,6 +1355,44 @@ def test_connection():
         }), 500
 
 
+@app.route("/test-hana-connection", methods=["POST"])
+@require_role(["admin", "operator"])
+def test_hana_connection():
+    """Test SAP HANA connection via AJAX if hdbcli is available"""
+    try:
+        data = request.get_json()
+        host = (data.get("host") or "").strip()
+        port = (data.get("port") or "").strip() or "30015"
+        username = (data.get("username") or "").strip()
+        password = (data.get("password") or "").strip()
+
+        if not all([host, port, username, password]):
+            return jsonify({"success": False, "message": "All fields are required"}), 400
+
+        # Try importing hdbcli
+        try:
+            from hdbcli import dbapi as hana_dbapi
+        except Exception:
+            # Inform frontend that hdbcli is missing
+            return jsonify({
+                "success": False,
+                "message": "hdbcli is not installed on the server. Install the 'hdbcli' package to enable immediate HANA connection testing. Connection will be validated during first sync otherwise."
+            }), 400
+
+        # Attempt to connect
+        try:
+            conn = hana_dbapi.connect(address=host, port=int(port), user=username, password=password)
+            conn.close()
+            return jsonify({"success": True, "message": "Connection successful!"})
+        except Exception as e:
+            app.logger.exception(f"HANA connection test failed: {e}")
+            return jsonify({"success": False, "message": f"Connection failed: {str(e)}"}), 400
+
+    except Exception as e:
+        app.logger.exception(f"Error testing HANA connection: {e}")
+        return jsonify({"success": False, "message": f"Connection test error: {str(e)}"}), 500
+
+
 @app.route("/edit-server/<server_name>", methods=["GET", "POST"])
 @require_role(["admin", "operator"])
 def edit_server(server_name):
@@ -1008,7 +1471,266 @@ def delete_server_route(server_name):
     return redirect(url_for("index"))
 
 
+# ------------------ Add Source Routes ------------------
 
+@app.route("/add-source")
+@require_role(["admin", "operator"])
+def add_source_page():
+    """Show source type selection page"""
+    return render_template("add_source.html")
+
+
+@app.route("/add-source/sql", methods=["GET", "POST"])
+@require_role(["admin", "operator"])
+def add_sql_source():
+    """Add SQL Server as a data source"""
+    if request.method == "POST":
+        try:
+            source_name = request.form.get("source_name", "").strip()
+            server = request.form.get("server", "").strip()
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
+            target_type = request.form.get("target_type", "").strip()
+            target_database = request.form.get("target_database", "").strip()
+            
+            # Validate required fields
+            if not all([source_name, server, username, password, target_type, target_database]):
+                flash("All fields are required!", "danger")
+                postgres_dbs = load_pg_databases()
+                clickhouse_dbs = load_clickhouse_databases()
+                return render_template("add_sql_source.html",
+                                      postgres_dbs=postgres_dbs,
+                                      clickhouse_dbs=clickhouse_dbs,
+                                      source_name=source_name,
+                                      server=server,
+                                      username=username,
+                                      target_type=target_type)
+            
+            # Test SQL Server connection
+            server_conf = {
+                "server": server,
+                "username": username,
+                "password": password,
+            }
+            
+            app.logger.info(f"Testing SQL Server connection to {server}")
+            success, error = test_sql_connection(server_conf)
+            
+            if not success:
+                diagnostic_info = ""
+                if '\\' in server:
+                    diagnostic_info = (
+                        " For named instances, ensure SQL Browser service is running "
+                        "and UDP port 1434 is accessible."
+                    )
+                flash(f"SQL Server connection failed! {error}{diagnostic_info}", "danger")
+                postgres_dbs = load_pg_databases()
+                clickhouse_dbs = load_clickhouse_databases()
+                return render_template("add_sql_source.html",
+                                      postgres_dbs=postgres_dbs,
+                                      clickhouse_dbs=clickhouse_dbs,
+                                      source_name=source_name,
+                                      server=server,
+                                      username=username,
+                                      target_type=target_type)
+            
+            # Save source configuration to database
+            from db_utils import load_pg_config
+            pg_conf = load_pg_config()
+            conn = psycopg2.connect(
+                dbname=pg_conf.get('database', 'metrics_sync_tables'),
+                user=pg_conf.get("username"),
+                password=pg_conf.get("password"),
+                host=pg_conf.get("host"),
+                port=int(pg_conf.get("port", 5432))
+            )
+            cursor = conn.cursor()
+            
+            # Create sources table if it doesn't exist
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS data_sources (
+                    id SERIAL PRIMARY KEY,
+                    source_name VARCHAR(255) UNIQUE NOT NULL,
+                    source_type VARCHAR(50) NOT NULL,
+                    server_address TEXT NOT NULL,
+                    username TEXT NOT NULL,
+                    password TEXT NOT NULL,
+                    target_type VARCHAR(50) NOT NULL,
+                    target_database VARCHAR(255) NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Insert the new source
+            cursor.execute("""
+                INSERT INTO data_sources 
+                (source_name, source_type, server_address, username, password, target_type, target_database)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (source_name, 'sql_server', server, username, password, target_type, target_database))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            flash(f"SQL Server source '{source_name}' added successfully!", "success")
+            return redirect(url_for("add_source_page"))
+            
+        except psycopg2.IntegrityError:
+            flash(f"Source '{source_name}' already exists!", "danger")
+            postgres_dbs = load_pg_databases()
+            clickhouse_dbs = load_clickhouse_databases()
+            return render_template("add_sql_source.html",
+                                  postgres_dbs=postgres_dbs,
+                                  clickhouse_dbs=clickhouse_dbs)
+        except Exception as e:
+            app.logger.exception(f"Error adding SQL source: {e}")
+            flash(f"Error adding SQL source: {str(e)}", "danger")
+            postgres_dbs = load_pg_databases()
+            clickhouse_dbs = load_clickhouse_databases()
+            return render_template("add_sql_source.html",
+                                  postgres_dbs=postgres_dbs,
+                                  clickhouse_dbs=clickhouse_dbs)
+    
+    # GET request
+    postgres_dbs = load_pg_databases()
+    clickhouse_dbs = load_clickhouse_databases()
+    return render_template("add_sql_source.html",
+                          postgres_dbs=postgres_dbs,
+                          clickhouse_dbs=clickhouse_dbs)
+
+
+@app.route("/add-source/hana", methods=["GET", "POST"])
+@require_role(["admin", "operator"])
+def add_hana_source():
+    """Add SAP HANA as a data source"""
+    if request.method == "POST":
+        try:
+            source_name = request.form.get("source_name", "").strip()
+            host = request.form.get("host", "").strip()
+            port = request.form.get("port", "30015").strip()
+            instance = request.form.get("instance", "").strip()
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
+            target_type = request.form.get("target_type", "").strip()
+            target_database = request.form.get("target_database", "").strip()
+            
+            # Validate required fields
+            if not all([source_name, host, port, username, password, target_type, target_database]):
+                flash("All fields are required!", "danger")
+                postgres_dbs = load_pg_databases()
+                clickhouse_dbs = load_clickhouse_databases()
+                return render_template("add_hana_source.html",
+                                      postgres_dbs=postgres_dbs,
+                                      clickhouse_dbs=clickhouse_dbs,
+                                      source_name=source_name,
+                                      host=host,
+                                      port=port,
+                                      instance=instance,
+                                      username=username,
+                                      target_type=target_type)
+            
+            # Note: HANA connection testing would require hdbcli library
+            # For now, we'll save without testing (user can test separately)
+            app.logger.info(f"Adding SAP HANA source: {host}:{port}")
+            
+            # Save source configuration to database
+            from db_utils import load_pg_config
+            pg_conf = load_pg_config()
+            conn = psycopg2.connect(
+                dbname=pg_conf.get('database', 'metrics_sync_tables'),
+                user=pg_conf.get("username"),
+                password=pg_conf.get("password"),
+                host=pg_conf.get("host"),
+                port=int(pg_conf.get("port", 5432))
+            )
+            cursor = conn.cursor()
+            
+            # Create sources table if it doesn't exist (same as SQL Server route)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS data_sources (
+                    id SERIAL PRIMARY KEY,
+                    source_name VARCHAR(255) UNIQUE NOT NULL,
+                    source_type VARCHAR(50) NOT NULL,
+                    server_address TEXT NOT NULL,
+                    username TEXT NOT NULL,
+                    password TEXT NOT NULL,
+                    target_type VARCHAR(50) NOT NULL,
+                    target_database VARCHAR(255) NOT NULL,
+                    connection_details JSONB,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Store HANA-specific details in connection_details JSON
+            connection_details = {
+                "host": host,
+                "port": port,
+                "instance": instance
+            }
+            
+            # Insert the new source
+            cursor.execute("""
+                INSERT INTO data_sources 
+                (source_name, source_type, server_address, username, password, 
+                 target_type, target_database, connection_details)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (source_name, 'sap_hana', f"{host}:{port}", username, password, 
+                  target_type, target_database, json.dumps(connection_details)))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            flash(f"SAP HANA source '{source_name}' added successfully!", "success")
+            return redirect(url_for("add_source_page"))
+            
+        except psycopg2.IntegrityError:
+            flash(f"Source '{source_name}' already exists!", "danger")
+            postgres_dbs = load_pg_databases()
+            clickhouse_dbs = load_clickhouse_databases()
+            return render_template("add_hana_source.html",
+                                  postgres_dbs=postgres_dbs,
+                                  clickhouse_dbs=clickhouse_dbs)
+        except Exception as e:
+            app.logger.exception(f"Error adding HANA source: {e}")
+            flash(f"Error adding HANA source: {str(e)}", "danger")
+            postgres_dbs = load_pg_databases()
+            clickhouse_dbs = load_clickhouse_databases()
+            return render_template("add_hana_source.html",
+                                  postgres_dbs=postgres_dbs,
+                                  clickhouse_dbs=clickhouse_dbs)
+    
+    # GET request
+    postgres_dbs = load_pg_databases()
+    clickhouse_dbs = load_clickhouse_databases()
+    return render_template("add_hana_source.html",
+                          postgres_dbs=postgres_dbs,
+                          clickhouse_dbs=clickhouse_dbs)
+
+
+@app.route("/api/target/databases")
+@require_role(["admin", "operator"])
+def get_target_databases():
+    """Get list of databases from selected target (PostgreSQL or ClickHouse)"""
+    try:
+        target_type = request.args.get("target_type", "").strip()
+        
+        if target_type == "postgresql":
+            databases = load_pg_databases()
+            return jsonify({"success": True, "databases": databases})
+        elif target_type == "clickhouse":
+            databases = load_clickhouse_databases()
+            return jsonify({"success": True, "databases": databases})
+        else:
+            return jsonify({"success": False, "message": "Invalid target type"}), 400
+            
+    except Exception as e:
+        app.logger.exception(f"Error fetching target databases: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @app.route("/dashboard")

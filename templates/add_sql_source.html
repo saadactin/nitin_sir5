@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add SQL Server Source - SQL Sync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    .material-icons { font-size: 24px; vertical-align: middle; }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-y-auto">
+      <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <header class="mb-6 sm:mb-8">
+          <div class="flex items-center gap-3 sm:gap-4 mb-2">
+            <span class="material-icons text-3xl sm:text-4xl text-blue-600">storage</span>
+            <h1 class="text-2xl sm:text-3xl font-bold">Add SQL Server Source</h1>
+          </div>
+          <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark ml-0 sm:ml-12">
+            Configure SQL Server connection and select target destination
+          </p>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% elif category == 'danger' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Form Card -->
+        <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 sm:p-8">
+          <form method="POST" id="sqlSourceForm">
+            <!-- Source Name -->
+            <div class="mb-6">
+              <label for="source_name" class="block text-sm font-semibold mb-2">
+                <span class="material-icons text-sm align-middle mr-1">label</span>
+                Source Name
+              </label>
+              <input
+                type="text"
+                id="source_name"
+                name="source_name"
+                value="{{ source_name or '' }}"
+                class="w-full px-4 py-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                placeholder="e.g., Production SQL Server"
+                required
+              />
+              <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">A friendly name to identify this source</p>
+            </div>
+
+            <!-- Server Address -->
+            <div class="mb-6">
+              <label for="server" class="block text-sm font-semibold mb-2">
+                <span class="material-icons text-sm align-middle mr-1">dns</span>
+                Server Address
+              </label>
+              <input
+                type="text"
+                id="server"
+                name="server"
+                value="{{ server or '' }}"
+                class="w-full px-4 py-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                placeholder="e.g., localhost or server\\instancename"
+                required
+              />
+              <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Hostname, IP address, or named instance (e.g., SERVER\SQLEXPRESS)</p>
+            </div>
+
+            <!-- Username -->
+            <div class="mb-6">
+              <label for="username" class="block text-sm font-semibold mb-2">
+                <span class="material-icons text-sm align-middle mr-1">person</span>
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value="{{ username or '' }}"
+                class="w-full px-4 py-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                placeholder="SQL Server username"
+                required
+              />
+            </div>
+
+            <!-- Password -->
+            <div class="mb-6">
+              <label for="password" class="block text-sm font-semibold mb-2">
+                <span class="material-icons text-sm align-middle mr-1">lock</span>
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="w-full px-4 py-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                placeholder="Enter password"
+                required
+              />
+            </div>
+
+            <!-- Target System Selection -->
+            <div class="mb-6">
+              <label for="target_type" class="block text-sm font-semibold mb-2">
+                <span class="material-icons text-sm align-middle mr-1">near_me</span>
+                Target System
+              </label>
+              <select
+                id="target_type"
+                name="target_type"
+                class="w-full px-4 py-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                onchange="loadTargetDatabases()"
+                required
+              >
+                <option value="">-- Select Target --</option>
+                <option value="postgresql" {% if target_type == 'postgresql' %}selected{% endif %}>PostgreSQL</option>
+                <option value="clickhouse" {% if target_type == 'clickhouse' %}selected{% endif %}>ClickHouse</option>
+              </select>
+              <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Choose where to sync data to</p>
+            </div>
+
+            <!-- Target Database Selection -->
+            <div class="mb-6">
+              <label for="target_database" class="block text-sm font-semibold mb-2">
+                <span class="material-icons text-sm align-middle mr-1">folder</span>
+                Target Database
+              </label>
+              <select
+                id="target_database"
+                name="target_database"
+                class="w-full px-4 py-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                required
+                disabled
+              >
+                <option value="">-- Select target system first --</option>
+              </select>
+              <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Database where data will be synchronized</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8">
+              <button
+                type="button"
+                onclick="testConnection()"
+                class="w-full sm:w-auto px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium order-2 sm:order-1"
+              >
+                <span class="material-icons">wifi_tethering</span>
+                <span>Test Connection</span>
+              </button>
+              <button
+                type="submit"
+                class="w-full sm:flex-1 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 font-medium order-1 sm:order-2"
+              >
+                <span class="material-icons">add_circle</span>
+                <span>Add SQL Server Source</span>
+              </button>
+              <a
+                href="{{ url_for('add_source_page') }}"
+                class="w-full sm:w-auto px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium order-3"
+              >
+                <span class="material-icons">arrow_back</span>
+                <span>Back</span>
+              </a>
+            </div>
+          </form>
+        </div>
+
+        <!-- Info Section -->
+        <div class="mt-6 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="material-icons text-blue-600 dark:text-blue-400 mt-0.5">info</span>
+            <div class="flex-1 text-sm text-blue-800 dark:text-blue-200">
+              <strong>Note:</strong> Test your connection before adding the source to ensure credentials are correct and the server is accessible.
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Load available databases based on target type selection
+    function loadTargetDatabases() {
+      const targetType = document.getElementById('target_type').value;
+      const dbSelect = document.getElementById('target_database');
+      
+      if (!targetType) {
+        dbSelect.disabled = true;
+        dbSelect.innerHTML = '<option value="">-- Select target system first --</option>';
+        return;
+      }
+      
+      dbSelect.disabled = true;
+      dbSelect.innerHTML = '<option value="">Loading...</option>';
+      
+      fetch(`/api/target/databases?target_type=${targetType}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            dbSelect.innerHTML = '<option value="">-- Select database --</option>';
+            data.databases.forEach(db => {
+              const option = document.createElement('option');
+              option.value = db;
+              option.textContent = db;
+              dbSelect.appendChild(option);
+            });
+            dbSelect.disabled = false;
+          } else {
+            dbSelect.innerHTML = '<option value="">Error loading databases</option>';
+            alert('Failed to load databases: ' + data.message);
+          }
+        })
+        .catch(error => {
+          dbSelect.innerHTML = '<option value="">Error loading databases</option>';
+          console.error('Error:', error);
+          alert('Error loading databases: ' + error.message);
+        });
+    }
+
+    // Test SQL Server connection
+    function testConnection() {
+      const serverName = document.getElementById('source_name').value;
+      const server = document.getElementById('server').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      if (!serverName || !server || !username || !password) {
+        alert('Please fill in all SQL Server connection fields before testing');
+        return;
+      }
+
+      const button = event.target.closest('button');
+      button.disabled = true;
+      button.innerHTML = '<span class="material-icons animate-spin">refresh</span><span>Testing...</span>';
+
+      fetch('/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          server_name: serverName,
+          server: server,
+          username: username,
+          password: password
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('✅ Connection successful!');
+        } else {
+          alert('❌ Connection failed: ' + data.message);
+        }
+      })
+      .catch(error => {
+        alert('❌ Connection test error: ' + error.message);
+      })
+      .finally(() => {
+        button.disabled = false;
+        button.innerHTML = '<span class="material-icons">wifi_tethering</span><span>Test Connection</span>';
+      });
+    }
+
+    // Auto-load databases if target type is already selected (e.g., after form error)
+    window.addEventListener('DOMContentLoaded', function() {
+      const targetType = document.getElementById('target_type').value;
+      if (targetType) {
+        loadTargetDatabases();
+      }
+    });
+  </script>
+</body>
+</html>

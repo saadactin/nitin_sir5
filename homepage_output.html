@@ -58,7 +58,171 @@
 <body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
 <div class="flex h-screen">
   <!-- Sidebar -->
-  {% include 'sidebar.html' %}
+  <!-- Mobile Menu Toggle Button (Fixed Position) -->
+<button id="mobile-menu-toggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition">
+  <span class="material-icons">menu</span>
+</button>
+
+<!-- Mobile Overlay -->
+<div id="mobile-overlay" class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="w-64 bg-white dark:bg-background-dark flex flex-col border-r border-gray-200 dark:border-border-dark h-screen fixed z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+  <!-- Header -->
+  <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-border-dark">
+    <img src="/static/actin-logo.png" alt="Logo" class="h-12 w-auto object-contain">
+    <!-- Close button for mobile -->
+    <button id="mobile-menu-close" class="lg:hidden p-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto text-gray-700 dark:text-gray-300">
+    
+<a href="/"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          bg-blue-600 text-white shadow-sm">
+  <span class="material-icons">home</span>
+  <span>Home</span>
+</a>
+    
+
+    
+<a href="/add-source"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          hover:bg-blue-50 dark:hover:bg-gray-800">
+  <span class="material-icons">add_circle_outline</span>
+  <span>Add Source</span>
+</a>
+
+<a href="/schedule"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          hover:bg-blue-50 dark:hover:bg-gray-800">
+  <span class="material-icons">add_task</span>
+  <span>Create Schedule</span>
+</a>
+
+<a href="/upload"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          hover:bg-blue-50 dark:hover:bg-gray-800">
+  <span class="material-icons">upload_file</span>
+  <span>Upload</span>
+</a>
+
+    
+
+    
+<a href="/dashboard"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          hover:bg-blue-50 dark:hover:bg-gray-800">
+  <span class="material-icons">history</span>
+  <span>Sync History</span>
+</a>
+    <a href="/view-schedules"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+              hover:bg-blue-50 dark:hover:bg-gray-800">
+      <span class="material-icons">visibility</span>
+      <span>View Schedules</span>
+    </a>
+    <a href="/sync-summary"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+              hover:bg-blue-50 dark:hover:bg-gray-800">
+      <span class="material-icons">compare</span>
+      <span>Sync Summary</span>
+    </a>
+    
+    <!-- NEW: Advanced Analytics Link -->
+    <!-- <a href="/advanced-analytics"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+              hover:bg-blue-50 dark:hover:bg-gray-800">
+      <span class="material-icons">insights</span>
+      <span>Advanced Analytics</span>
+    </a> -->
+    
+    <!-- <a href="/alerts"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+              hover:bg-blue-50 dark:hover:bg-gray-800">
+      <span class="material-icons">notifications</span>
+      <span>Alerts</span>
+    </a> -->
+    
+    <!-- NEW: Log Analysis Link -->
+    <a href="/logs"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+              hover:bg-blue-50 dark:hover:bg-gray-800">
+      <span class="material-icons">analytics</span>
+      <span>Log Analysis</span>
+    </a>
+    
+
+    
+    <a href="/create-user"
+       class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+              hover:bg-blue-50 dark:hover:bg-gray-800">
+      <span class="material-icons">person_add</span>
+      <span>Create User</span>
+    </a>
+    
+  </nav>
+
+  <!-- Footer -->
+  <div class="px-4 py-4 border-t border-gray-200 dark:border-border-dark text-sm">
+    
+    <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-2">
+      <span class="material-icons">person</span>
+      <span>Logged in as <b>admin</b> (admin)</span>
+    </div>
+    <a href="/logout" 
+       class="flex items-center gap-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition">
+      <span class="material-icons">logout</span> Logout
+    </a>
+    
+  </div>
+</aside>
+
+<!-- Mobile Menu JavaScript -->
+<script>
+  (function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobile-overlay');
+    const toggleBtn = document.getElementById('mobile-menu-toggle');
+    const closeBtn = document.getElementById('mobile-menu-close');
+    
+    function openMenu() {
+      sidebar.classList.remove('-translate-x-full');
+      overlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMenu() {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    
+    if (toggleBtn) toggleBtn.addEventListener('click', openMenu);
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if (overlay) overlay.addEventListener('click', closeMenu);
+    
+    // Close menu on navigation link click (mobile)
+    const navLinks = sidebar.querySelectorAll('nav a');
+    navLinks.forEach(link => {
+      link.addEventListener('click', function() {
+        if (window.innerWidth < 1024) {
+          closeMenu();
+        }
+      });
+    });
+    
+    // Close menu on window resize to desktop
+    window.addEventListener('resize', function() {
+      if (window.innerWidth >= 1024) {
+        closeMenu();
+      }
+    });
+  })();
+</script>
 
   <!-- Main Content -->
   <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 overflow-y-auto pt-16 lg:pt-8">
@@ -70,145 +234,29 @@
       </div>
       
       <!-- Only show Add Server button for admin users -->
-      {% if role == 'admin' %}
-      <a href="{{ url_for('add_server') }}"
+      
+      <a href="/add-server"
          class="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-accent text-white rounded-lg shadow-md hover:bg-accent-hover transition-colors text-sm sm:text-base w-full sm:w-auto justify-center">
         <span class="material-icons text-lg sm:text-xl">add_circle</span>
         <span>Add New Server</span>
       </a>
-      {% endif %}
+      
     </header>
 
-    {% set any_servers = (sqlservers and sqlservers|length > 0) or (data_sources and data_sources|length > 0) %}
-    {% if any_servers %}
-    <!-- Combined Server & Source Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-      {# Render YAML-configured SQL servers first #}
-      {% if sqlservers and sqlservers|length > 0 %}
-        {% for name, conf in sqlservers.items() %}
-          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-md border border-border-light dark:border-border-dark overflow-hidden hover:shadow-lg transition-shadow">
-            <div class="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 border-b border-border-light dark:border-border-dark flex justify-between items-center">
-              <h2 class="text-base sm:text-lg font-semibold truncate">{{ name }}</h2>
-            </div>
-            <div class="p-4 sm:p-6 space-y-3 sm:space-y-4">
-              <div class="flex items-center gap-2 text-sm sm:text-base">
-                <span class="font-medium text-subtext-light dark:text-subtext-dark whitespace-nowrap">Host:</span>
-                <span class="truncate">{{ conf.server }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-sm sm:text-base">
-                <span class="font-medium text-subtext-light dark:text-subtext-dark whitespace-nowrap">Status:</span>
-                {% if server_statuses[name].online %}
-                <div class="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
-                  <span class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
-                  Online
-                </div>
-                {% else %}
-                <div class="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium" title="{{ server_statuses[name].error }}">
-                  <span class="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-                  Offline
-                </div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 dark:bg-gray-800 border-t border-border-light dark:border-border-dark flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
-              <a href="{{ url_for('view_server_databases', server_name=name) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
-                <span class="material-icons text-base sm:text-lg">dataset</span>
-                <span>Databases</span>
-              </a>
-              <a href="{{ url_for('sync_background', server_name=name) }}" id="sync-button-{{ loop.index }}" class="sync-button flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors">
-                <span class="material-icons text-base sm:text-lg">sync</span>
-                <span>Sync Server</span>
-              </a>
-              {% if role in ['admin','operator'] %}
-              <div class="flex gap-2 w-full sm:w-auto">
-                <a href="{{ url_for('edit_server', server_name=name) }}" class="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-warning border border-warning rounded-lg hover:bg-warning hover:text-white transition-colors">
-                  <span class="material-icons text-base sm:text-lg">edit</span>
-                  <span class="hidden sm:inline">Edit</span>
-                </a>
-                <form action="{{ url_for('delete_server_route', server_name=name) }}" method="POST" onsubmit="return confirm('Delete server {{ name }}?');" class="flex-1 sm:flex-none">
-                  <button type="submit" class="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-danger border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
-                    <span class="material-icons text-base sm:text-lg">delete</span>
-                    <span class="hidden sm:inline">Delete</span>
-                  </button>
-                </form>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-        {% endfor %}
-      {% endif %}
-
-      {# Render configured data_sources next #}
-      {% if data_sources and data_sources|length > 0 %}
-        {% for ds in data_sources %}
-          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-md border border-border-light dark:border-border-dark overflow-hidden hover:shadow-lg transition-shadow">
-            <div class="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 border-b border-border-light dark:border-border-dark flex justify-between items-center">
-              <h2 class="text-base sm:text-lg font-semibold truncate">{{ ds.source_name }}</h2>
-              <span class="text-sm text-subtext-light dark:text-subtext-dark">{{ ds.source_type | replace('_',' ') | title }}</span>
-            </div>
-            <div class="p-4 sm:p-6 space-y-3 sm:space-y-4">
-              <div class="flex items-center gap-2 text-sm sm:text-base">
-                <span class="font-medium text-subtext-light dark:text-subtext-dark whitespace-nowrap">Host:</span>
-                <span class="truncate">{{ ds.server_address }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-sm sm:text-base">
-                <span class="font-medium text-subtext-light dark:text-subtext-dark whitespace-nowrap">Status:</span>
-                {% if data_source_statuses[ds.id].online %}
-                <div class="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
-                  <span class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
-                  Online
-                </div>
-                {% else %}
-                <div class="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium" title="{{ data_source_statuses[ds.id].error }}">
-                  <span class="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-                  Offline
-                </div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 dark:bg-gray-800 border-t border-border-light dark:border-border-dark flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
-              <a href="{{ url_for('view_source_databases', source_id=ds.id) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
-                <span class="material-icons text-base sm:text-lg">dataset</span>
-                <span>Databases</span>
-              </a>
-              <a href="{{ url_for('sync_source_background', source_id=ds.id) }}" id="sync-source-{{ ds.id }}" data-source-id="{{ ds.id }}" class="sync-button flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors">
-                <span class="material-icons text-base sm:text-lg">sync</span>
-                <span>Sync Server</span>
-              </a>
-              {% if role in ['admin','operator'] %}
-              <div class="flex gap-2 w-full sm:w-auto">
-                <a href="{{ url_for('edit_source', source_id=ds.id) }}" class="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-warning border border-warning rounded-lg hover:bg-warning hover:text-white transition-colors">
-                  <span class="material-icons text-base sm:text-lg">edit</span>
-                  <span class="hidden sm:inline">Edit</span>
-                </a>
-                <form action="{{ url_for('delete_source_route', source_id=ds.id) }}" method="POST" onsubmit="return confirm('Delete source {{ ds.source_name }}?');" class="flex-1 sm:flex-none">
-                  <button type="submit" class="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-danger border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
-                    <span class="material-icons text-base sm:text-lg">delete</span>
-                    <span class="hidden sm:inline">Delete</span>
-                  </button>
-                </form>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-        {% endfor %}
-      {% endif %}
-    </div>
-    {% else %}
+    
+    
     <!-- Empty State -->
     <div class="mt-12 text-center">
       <div class="inline-flex items-center gap-3 px-6 py-4 rounded-lg bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
         <span class="material-icons text-blue-600 dark:text-blue-300">info</span>
         <span class="font-medium">No servers or sources configured yet. 
-          {% if role == 'admin' %}
+          
           Click <strong>Add New Server</strong> or <strong>Add Source</strong> to get started.
-          {% else %}
-          Contact an administrator to add servers or sources.
-          {% endif %}
+          
         </span>
       </div>
     </div>
-    {% endif %}
+    
   </main>
 </div>
 

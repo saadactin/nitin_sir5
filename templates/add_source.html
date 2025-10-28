@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Source - SQL Sync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    .material-icons { font-size: 24px; vertical-align: middle; }
+    .source-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .source-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-y-auto">
+      <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="mb-6 sm:mb-8">
+          <div class="flex items-center gap-3 sm:gap-4 mb-2">
+            <span class="material-icons text-3xl sm:text-4xl text-primary">source</span>
+            <h1 class="text-2xl sm:text-3xl font-bold">Add New Data Source</h1>
+          </div>
+          <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark ml-0 sm:ml-12">
+            Select the type of data source you want to add and configure
+          </p>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% elif category == 'danger' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Source Type Selection Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
+          <!-- SQL Server Card -->
+          <div class="source-card bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border-2 border-border-light dark:border-border-dark p-6 sm:p-8"
+               onclick="window.location.href='{{ url_for('add_sql_source') }}'">
+            <div class="flex flex-col items-center text-center space-y-4">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <span class="material-icons text-blue-600 dark:text-blue-300" style="font-size: 36px;">storage</span>
+              </div>
+              <h3 class="text-xl sm:text-2xl font-bold text-primary">SQL Server</h3>
+              <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark">
+                Connect to Microsoft SQL Server as a data source. Sync data to PostgreSQL or ClickHouse.
+              </p>
+              <div class="flex flex-wrap gap-2 justify-center">
+                <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
+                  PostgreSQL
+                </span>
+                <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
+                  ClickHouse
+                </span>
+              </div>
+              <button class="mt-4 w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 font-medium">
+                <span class="material-icons">add_circle</span>
+                <span>Add SQL Server</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SAP HANA Card -->
+          <div class="source-card bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border-2 border-border-light dark:border-border-dark p-6 sm:p-8"
+               onclick="window.location.href='{{ url_for('add_hana_source') }}'">
+            <div class="flex flex-col items-center text-center space-y-4">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <span class="material-icons text-green-600 dark:text-green-300" style="font-size: 36px;">hub</span>
+              </div>
+              <h3 class="text-xl sm:text-2xl font-bold text-accent">SAP HANA</h3>
+              <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark">
+                Connect to SAP HANA database as a data source. Sync data to PostgreSQL or ClickHouse.
+              </p>
+              <div class="flex flex-wrap gap-2 justify-center">
+                <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs font-medium">
+                  PostgreSQL
+                </span>
+                <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs font-medium">
+                  ClickHouse
+                </span>
+              </div>
+              <button class="mt-4 w-full px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors flex items-center justify-center gap-2 font-medium">
+                <span class="material-icons">add_circle</span>
+                <span>Add SAP HANA</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 sm:p-6">
+          <div class="flex items-start gap-3">
+            <span class="material-icons text-blue-600 dark:text-blue-400 mt-0.5">info</span>
+            <div class="flex-1">
+              <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">About Data Sources</h4>
+              <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                <li>• <strong>SQL Server:</strong> Connect to any Microsoft SQL Server instance (including named instances)</li>
+                <li>• <strong>SAP HANA:</strong> Connect to SAP HANA in-memory database for enterprise data integration</li>
+                <li>• <strong>Target Systems:</strong> Sync data to PostgreSQL for relational storage or ClickHouse for analytics</li>
+                <li>• <strong>Automated Sync:</strong> Schedule automated synchronization or trigger manual syncs as needed</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

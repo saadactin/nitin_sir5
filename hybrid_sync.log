@@ -6216,3 +6216,242 @@ See also /etc/clickhouse-server/users.xml on the server where ClickHouse is inst
 2025-10-28 13:58:35,572 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
 2025-10-28 13:58:45,032 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
 2025-10-28 13:58:45,034 - WARNING - [AUTH] Session contents: {}
+2025-10-28 15:57:42,972 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 15:57:54,079 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-28 15:57:54,079 - WARNING - [AUTH] Session contents: {}
+2025-10-28 17:20:29,633 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 17:20:48,347 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-28 17:20:48,351 - WARNING - [AUTH] Session contents: {}
+2025-10-28 17:20:48,567 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-28 17:20:48,573 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-28 17:20:49,448 - WARNING - [AUTH] BLOCKED unauthenticated access to /favicon.ico from 127.0.0.1
+2025-10-28 17:20:49,450 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-28 17:20:49,791 - WARNING - [AUTH] BLOCKED unauthenticated access to /favicon.ico from 127.0.0.1
+2025-10-28 17:20:49,792 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-10-28 17:20:59,406 - WARNING - [404] Page not found: /favicon.ico - 127.0.0.1
+2025-10-28 17:35:49,140 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 17:35:51,633 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/hana from 127.0.0.1
+2025-10-28 17:35:51,634 - WARNING - [AUTH] Session contents: {}
+2025-10-28 17:36:00,203 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:36:07,015 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:36:30,758 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:36:34,500 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:37:09,699 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:47:06,229 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 17:47:14,507 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:47:26,018 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source from 127.0.0.1
+2025-10-28 17:47:26,019 - WARNING - [AUTH] Session contents: {}
+2025-10-28 17:47:34,112 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:48:00,002 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:48:29,463 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 17:53:53,434 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 17:59:23,689 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 17:59:37,947 - WARNING - [404] Page not found: /debug/data_sources - 127.0.0.1
+2025-10-28 17:59:38,259 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 18:00:30,644 - WARNING - [404] Page not found: /debug/data_sources - 127.0.0.1
+2025-10-28 18:00:30,841 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 18:00:45,484 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:05:50,321 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:05:54,184 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 441, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 18:07:37,124 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:08:42,190 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:09:39,932 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:09:41,652 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 444, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 18:09:41,957 - ERROR - Could not load data_sources: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 444, in index
+    cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+psycopg2.errors.UndefinedColumn: column "connection_details" does not exist
+LINE 1: ..._address, username, target_type, target_database, connection...
+                                                             ^
+
+2025-10-28 18:10:48,730 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:11:03,593 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:11:17,044 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:11:55,936 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 18:12:00,866 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-28 18:12:00,867 - WARNING - [AUTH] Session contents: {}
+2025-10-28 18:12:57,485 - WARNING - Could not get PK info for dbo.Alarms: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:57,486 - WARNING - Could not get timestamp column for dbo.Alarms: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:57,487 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:57,487 - WARNING - Could not get unique identifier column for dbo.Alarms: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:57,487 - WARNING - No suitable sync column found for dbo.Alarms
+2025-10-28 18:12:57,949 - WARNING - Could not get PK info for dbo.Alarms_test: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:57,950 - WARNING - Could not get timestamp column for dbo.Alarms_test: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:57,950 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:57,951 - WARNING - Could not get unique identifier column for dbo.Alarms_test: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:57,951 - WARNING - No suitable sync column found for dbo.Alarms_test
+2025-10-28 18:12:58,342 - WARNING - Could not get PK info for dbo.Bottles: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:58,343 - WARNING - Could not get timestamp column for dbo.Bottles: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:58,343 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:58,344 - WARNING - Could not get unique identifier column for dbo.Bottles: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:58,344 - WARNING - No suitable sync column found for dbo.Bottles
+2025-10-28 18:12:59,549 - WARNING - Could not get PK info for dbo.Cakes: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:59,550 - WARNING - Could not get timestamp column for dbo.Cakes: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:59,550 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:59,551 - WARNING - Could not get unique identifier column for dbo.Cakes: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:59,551 - WARNING - No suitable sync column found for dbo.Cakes
+2025-10-28 18:12:59,901 - WARNING - Could not get PK info for dbo.IceCream_Flavors: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:59,901 - WARNING - Could not get timestamp column for dbo.IceCream_Flavors: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:59,902 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:59,903 - WARNING - Could not get unique identifier column for dbo.IceCream_Flavors: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:12:59,905 - WARNING - No suitable sync column found for dbo.IceCream_Flavors
+2025-10-28 18:13:00,189 - WARNING - Could not get PK info for dbo.Students: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:00,190 - WARNING - Could not get timestamp column for dbo.Students: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:00,191 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:00,191 - WARNING - Could not get unique identifier column for dbo.Students: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:00,192 - WARNING - No suitable sync column found for dbo.Students
+2025-10-28 18:13:00,490 - WARNING - Could not get PK info for dbo.Students1: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:00,491 - WARNING - Could not get timestamp column for dbo.Students1: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:00,492 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:00,492 - WARNING - Could not get unique identifier column for dbo.Students1: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:00,494 - WARNING - No suitable sync column found for dbo.Students1
+2025-10-28 18:13:01,519 - WARNING - Could not get PK info for dbo.Designer_Sneakers: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:01,520 - WARNING - Could not get timestamp column for dbo.Designer_Sneakers: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:01,521 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:01,521 - WARNING - Could not get unique identifier column for dbo.Designer_Sneakers: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:01,522 - WARNING - No suitable sync column found for dbo.Designer_Sneakers
+2025-10-28 18:13:01,899 - WARNING - Could not get PK info for dbo.High_Heels: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:01,900 - WARNING - Could not get timestamp column for dbo.High_Heels: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:01,900 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:01,901 - WARNING - Could not get unique identifier column for dbo.High_Heels: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:01,902 - WARNING - No suitable sync column found for dbo.High_Heels
+2025-10-28 18:13:03,358 - WARNING - Could not get PK info for dbo.Burritos: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:03,359 - WARNING - Could not get timestamp column for dbo.Burritos: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:03,360 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:03,361 - WARNING - Could not get unique identifier column for dbo.Burritos: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:03,362 - WARNING - No suitable sync column found for dbo.Burritos
+2025-10-28 18:13:03,688 - WARNING - Could not get PK info for dbo.Tacos: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:03,688 - WARNING - Could not get timestamp column for dbo.Tacos: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:03,689 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:03,690 - WARNING - Could not get unique identifier column for dbo.Tacos: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:03,691 - WARNING - No suitable sync column found for dbo.Tacos
+2025-10-28 18:13:04,951 - WARNING - Could not get PK info for dbo.Hiking_Boots: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:04,952 - WARNING - Could not get timestamp column for dbo.Hiking_Boots: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:04,953 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:04,954 - WARNING - Could not get unique identifier column for dbo.Hiking_Boots: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:04,955 - WARNING - No suitable sync column found for dbo.Hiking_Boots
+2025-10-28 18:13:05,309 - WARNING - Could not get PK info for dbo.Work_Boots: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:05,311 - WARNING - Could not get timestamp column for dbo.Work_Boots: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:05,312 - WARNING - Error finding BIGINT columns: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:05,313 - WARNING - Could not get unique identifier column for dbo.Work_Boots: 'Connection' object has no attribute 'cursor'
+2025-10-28 18:13:05,314 - WARNING - No suitable sync column found for dbo.Work_Boots
