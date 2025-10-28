@@ -1,7 +1,20 @@
-<aside class="w-64 bg-white dark:bg-background-dark flex flex-col border-r border-gray-200 dark:border-border-dark h-screen fixed">
+<!-- Mobile Menu Toggle Button (Fixed Position) -->
+<button id="mobile-menu-toggle" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition">
+  <span class="material-icons">menu</span>
+</button>
+
+<!-- Mobile Overlay -->
+<div id="mobile-overlay" class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="w-64 bg-white dark:bg-background-dark flex flex-col border-r border-gray-200 dark:border-border-dark h-screen fixed z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
   <!-- Header -->
-  <div class="flex items-center justify-center p-6 border-b border-gray-200 dark:border-border-dark">
+  <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-border-dark">
     <img src="{{ url_for('static', filename='actin-logo.png') }}" alt="Logo" class="h-12 w-auto object-contain">
+    <!-- Close button for mobile -->
+    <button id="mobile-menu-close" class="lg:hidden p-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+      <span class="material-icons">close</span>
+    </button>
   </div>
 
   <!-- Navigation -->
@@ -105,3 +118,46 @@
     {% endif %}
   </div>
 </aside>
+
+<!-- Mobile Menu JavaScript -->
+<script>
+  (function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobile-overlay');
+    const toggleBtn = document.getElementById('mobile-menu-toggle');
+    const closeBtn = document.getElementById('mobile-menu-close');
+    
+    function openMenu() {
+      sidebar.classList.remove('-translate-x-full');
+      overlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMenu() {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    
+    if (toggleBtn) toggleBtn.addEventListener('click', openMenu);
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if (overlay) overlay.addEventListener('click', closeMenu);
+    
+    // Close menu on navigation link click (mobile)
+    const navLinks = sidebar.querySelectorAll('nav a');
+    navLinks.forEach(link => {
+      link.addEventListener('click', function() {
+        if (window.innerWidth < 1024) {
+          closeMenu();
+        }
+      });
+    });
+    
+    // Close menu on window resize to desktop
+    window.addEventListener('resize', function() {
+      if (window.innerWidth >= 1024) {
+        closeMenu();
+      }
+    });
+  })();
+</script>

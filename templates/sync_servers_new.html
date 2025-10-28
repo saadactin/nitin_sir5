@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="description" content="SQL Servers Dashboard - Manage and sync your SQL Server instances"/>
+  <title>SQL Servers Dashboard | ACTIN Data Sync</title>
+  
+  <!-- Preconnect to external resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com"/>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { 
+              DEFAULT: "#1E40AF", 
+              hover: "#1D4ED8",
+              light: "#3B82F6",
+              dark: "#1E3A8A"
+            },
+            accent: { 
+              DEFAULT: "#16A34A", 
+              hover: "#15803D",
+              light: "#22C55E",
+              dark: "#166534"
+            },
+            danger: { 
+              DEFAULT: "#DC2626", 
+              hover: "#B91C1C",
+              light: "#EF4444",
+              dark: "#991B1B"
+            },
+            warning: { 
+              DEFAULT: "#D97706", 
+              hover: "#B45309",
+              light: "#F59E0B",
+              dark: "#92400E"
+            },
+            info: {
+              DEFAULT: "#0284C7",
+              hover: "#0369A1",
+              light: "#0EA5E9",
+              dark: "#075985"
+            },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#F1F5F9",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { 
+            display: ["Inter", "system-ui", "sans-serif"] 
+          },
+          boxShadow: {
+            'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+            'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          },
+          animation: {
+            'spin-slow': 'spin 1.5s linear infinite',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'bounce-slow': 'bounce 2s infinite',
+          }
+        },
+      },
+    };
+  </script>
+  
+  <style>
+    /* Material Icons sizing */
+    .material-icons { 
+      font-size: 20px; 
+      user-select: none;
+    }
+    .material-icons-lg { font-size: 24px; }
+    .material-icons-xl { font-size: 32px; }
+    .material-icons-2xl { font-size: 40px; }
+    
+    /* Custom spinner animation */
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
+    }
+    
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    /* Smooth transitions */
+    * {
+      transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 150ms;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+    
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+    
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: #64748B;
+    }
+    
+    /* Card hover effect */
+    .server-card {
+      transform: translateY(0);
+    }
+    
+    .server-card:hover {
+      transform: translateY(-4px);
+    }
+    
+    /* Button ripple effect */
+    .btn-ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-ripple::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn-ripple:active::after {
+      width: 300px;
+      height: 300px;
+    }
+    
+    /* Status indicator pulse */
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+    }
+    
+    .status-online::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: inherit;
+      animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .dark .skeleton {
+      background: linear-gradient(90deg, #2a2a2a 25%, #1a1a1a 50%, #2a2a2a 75%);
+      background-size: 200% 100%;
+    }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark antialiased">
+<div class="flex min-h-screen">
+  <!-- Sidebar -->
+  {% include 'sidebar.html' %}
+
+  <!-- Main Content -->
+  <main class="flex-1 lg:ml-64 overflow-x-hidden">
+    <div class="p-4 sm:p-6 lg:p-8">
+      <!-- Header -->
+      <header class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary">
+              <span class="material-icons material-icons-xl">dns</span>
+            </div>
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">SQL Servers</h1>
+              <p class="text-sm text-subtext-light dark:text-subtext-dark mt-1">
+                Manage and synchronize your database instances
+              </p>
+            </div>
+          </div>
+          
+          <!-- Add Server Button (Admin Only) -->
+          {% if role == 'admin' %}
+          <a href="{{ url_for('add_server') }}"
+             class="btn-ripple inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-accent text-white rounded-lg shadow-card hover:shadow-card-hover hover:bg-accent-hover font-medium transition-all focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 dark:focus:ring-offset-background-dark">
+            <span class="material-icons">add_circle</span>
+            <span class="hidden sm:inline">Add Server</span>
+            <span class="sm:hidden">Add</span>
+          </a>
+          {% endif %}
+        </div>
+      </header>
+
+      {% if sqlservers and sqlservers|length > 0 %}
+      <!-- Stats Overview (optional quick stats) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        {% set online_count = sqlservers.items()|selectattr('1', 'mapping')|list|length %}
+        {% set online_servers = namespace(count=0) %}
+        {% for name, conf in sqlservers.items() %}
+          {% if server_statuses[name].online %}
+            {% set online_servers.count = online_servers.count + 1 %}
+          {% endif %}
+        {% endfor %}
+        
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg p-4 border border-border-light dark:border-border-dark">
+          <div class="flex items-center gap-2 text-subtext-light dark:text-subtext-dark text-xs font-medium mb-1">
+            <span class="material-icons text-sm">dns</span>
+            <span>Total Servers</span>
+          </div>
+          <div class="text-2xl font-bold">{{ sqlservers|length }}</div>
+        </div>
+        
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg p-4 border border-border-light dark:border-border-dark">
+          <div class="flex items-center gap-2 text-green-600 dark:text-green-400 text-xs font-medium mb-1">
+            <span class="material-icons text-sm">check_circle</span>
+            <span>Online</span>
+          </div>
+          <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ online_servers.count }}</div>
+        </div>
+        
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg p-4 border border-border-light dark:border-border-dark">
+          <div class="flex items-center gap-2 text-red-600 dark:text-red-400 text-xs font-medium mb-1">
+            <span class="material-icons text-sm">error</span>
+            <span>Offline</span>
+          </div>
+          <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ sqlservers|length - online_servers.count }}</div>
+        </div>
+        
+        <div class="bg-surface-light dark:bg-surface-dark rounded-lg p-4 border border-border-light dark:border-border-dark">
+          <div class="flex items-center gap-2 text-info dark:text-info-light text-xs font-medium mb-1">
+            <span class="material-icons text-sm">sync</span>
+            <span>Active</span>
+          </div>
+          <div class="text-2xl font-bold text-info dark:text-info-light" id="active-syncs-count">0</div>
+        </div>
+      </div>
+
+      <!-- Server Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+        {% for name, conf in sqlservers.items() %}
+        <div class="server-card bg-surface-light dark:bg-surface-dark rounded-xl shadow-card border border-border-light dark:border-border-dark overflow-hidden hover:shadow-card-hover transition-all duration-300">
+          <!-- Card Header -->
+          <div class="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-border-light dark:border-border-dark">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+                  <span class="material-icons">storage</span>
+                </div>
+                <h2 class="text-lg font-semibold truncate">{{ name }}</h2>
+              </div>
+              
+              <!-- Status Indicator -->
+              {% if server_statuses[name].online %}
+              <div class="relative">
+                <span class="status-online w-3 h-3 bg-green-500 rounded-full block"></span>
+              </div>
+              {% else %}
+              <span class="w-3 h-3 bg-red-500 rounded-full block"></span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="p-5 space-y-4">
+            <!-- Server Host -->
+            <div class="flex items-start gap-3">
+              <span class="material-icons text-subtext-light dark:text-subtext-dark mt-0.5">computer</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-medium text-subtext-light dark:text-subtext-dark mb-0.5">Host</p>
+                <p class="text-sm font-medium truncate" title="{{ conf.server }}">{{ conf.server }}</p>
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div class="flex items-start gap-3">
+              <span class="material-icons text-subtext-light dark:text-subtext-dark mt-0.5">
+                {{ 'check_circle' if server_statuses[name].online else 'error' }}
+              </span>
+              <div class="flex-1">
+                <p class="text-xs font-medium text-subtext-light dark:text-subtext-dark mb-0.5">Status</p>
+                {% if server_statuses[name].online %}
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-semibold text-green-600 dark:text-green-400">Online</span>
+                  <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full">
+                    Connected
+                  </span>
+                </div>
+                {% else %}
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-semibold text-red-600 dark:text-red-400">Offline</span>
+                  <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full" 
+                        title="{{ server_statuses[name].error }}">
+                    Disconnected
+                  </span>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-border-light dark:border-border-dark">
+            <div class="flex flex-wrap gap-2">
+              <!-- Databases Button -->
+              <a href="{{ url_for('view_server_databases', server_name=name) }}"
+                 class="btn-ripple flex-1 min-w-[110px] inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary hover:text-white hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 dark:focus:ring-offset-gray-800">
+                <span class="material-icons text-base">dataset</span>
+                <span>Databases</span>
+              </a>
+
+              <!-- Sync Button -->
+              <a href="{{ url_for('sync_background', server_name=name) }}"
+                 id="sync-button-{{ loop.index }}"
+                 class="sync-button btn-ripple flex-1 min-w-[110px] inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 dark:focus:ring-offset-gray-800"
+                 data-server-name="{{ name }}">
+                <span class="material-icons text-base">sync</span>
+                <span>Sync</span>
+              </a>
+            </div>
+
+            {% if role in ['admin', 'operator'] %}
+            <!-- Admin Actions -->
+            <div class="flex gap-2 mt-2">
+              <!-- Edit Button -->
+              <a href="{{ url_for('edit_server', server_name=name) }}"
+                 class="btn-ripple flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-warning bg-warning/5 border border-warning/20 rounded-lg hover:bg-warning hover:text-white hover:border-warning transition-all focus:outline-none focus:ring-2 focus:ring-warning focus:ring-offset-1 dark:focus:ring-offset-gray-800">
+                <span class="material-icons text-base">edit</span>
+                <span>Edit</span>
+              </a>
+
+              <!-- Delete Button -->
+              <form action="{{ url_for('delete_server_route', server_name=name) }}" method="POST" class="flex-1"
+                    onsubmit="return confirm('Are you sure you want to delete server \'{{ name }}\'? This action cannot be undone.');">
+                <button type="submit"
+                        class="btn-ripple w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-danger bg-danger/5 border border-danger/20 rounded-lg hover:bg-danger hover:text-white hover:border-danger transition-all focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-1 dark:focus:ring-offset-gray-800">
+                  <span class="material-icons text-base">delete</span>
+                  <span>Delete</span>
+                </button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      
+      {% else %}
+      <!-- Empty State -->
+      <div class="flex items-center justify-center min-h-[400px]">
+        <div class="text-center max-w-md mx-auto px-4">
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-6">
+            <span class="material-icons material-icons-2xl text-blue-600 dark:text-blue-400">dns</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">No Servers Configured</h3>
+          <p class="text-subtext-light dark:text-subtext-dark mb-6">
+            {% if role == 'admin' %}
+            Get started by adding your first SQL Server instance. Click the "Add Server" button above to begin.
+            {% else %}
+            No SQL servers have been configured yet. Please contact an administrator to add SQL servers.
+            {% endif %}
+          </p>
+          {% if role == 'admin' %}
+          <a href="{{ url_for('add_server') }}"
+             class="btn-ripple inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg shadow-card hover:shadow-card-hover hover:bg-accent-hover font-medium transition-all focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
+            <span class="material-icons">add_circle</span>
+            <span>Add Your First Server</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<!-- Sync Status JavaScript -->
+<script>
+(function() {
+  'use strict';
+  
+  // Track active syncs
+  let activeSyncs = new Set();
+  
+  // Update active syncs counter
+  function updateActiveSyncsCount() {
+    const countElement = document.getElementById('active-syncs-count');
+    if (countElement) {
+      countElement.textContent = activeSyncs.size;
+    }
+  }
+  
+  // Check for running syncs on page load
+  async function checkRunningSync(button) {
+    const serverName = button.dataset.serverName;
+    if (!serverName) return;
+    
+    try {
+      const resp = await fetch(`/sync_status/${encodeURIComponent(serverName)}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        
+        if (data.is_active) {
+          activeSyncs.add(serverName);
+          updateActiveSyncsCount();
+          
+          // Save original button state
+          button.dataset.running = 'true';
+          button.dataset.origHtml = button.innerHTML;
+          button.dataset.origClasses = button.className;
+          
+          // Update button to show running state
+          button.classList.remove('bg-primary', 'hover:bg-primary-hover');
+          button.classList.add('bg-info', 'cursor-not-allowed');
+          button.style.pointerEvents = 'none';
+          button.innerHTML = '<span class="material-icons animate-spin text-base">sync</span><span>Running...</span>';
+          
+          // Start polling
+          startPolling(button, serverName);
+        }
+      }
+    } catch (err) {
+      console.error('Error checking sync status:', err);
+    }
+  }
+  
+  // Poll sync status
+  async function startPolling(button, serverName) {
+    const pollInterval = 2000; // 2 seconds
+    let finalStatus = null;
+
+    async function poll() {
+      try {
+        const resp = await fetch(`/sync_status/${encodeURIComponent(serverName)}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          
+          if (data.is_active) {
+            const status = data.status || 'running';
+            const message = data.message || 'Processing...';
+            const currentDb = data.current_database || '';
+            
+            // Update button with progress
+            if (status === 'running' || status === 'starting') {
+              if (currentDb) {
+                button.innerHTML = `<span class="material-icons animate-spin text-base">sync</span><span class="truncate max-w-[100px]">${currentDb}</span>`;
+              } else {
+                button.innerHTML = `<span class="material-icons animate-spin text-base">sync</span><span>${message}</span>`;
+              }
+            } else if (status === 'stopping') {
+              button.innerHTML = '<span class="material-icons text-base">stop</span><span>Stopping...</span>';
+            }
+            
+            // Continue polling
+            await new Promise(r => setTimeout(r, pollInterval));
+            return poll();
+          } else {
+            // Sync completed
+            const status = (data && data.status) ? data.status : 'none';
+            if (status && status.toLowerCase() !== 'in-progress') {
+              finalStatus = status.toLowerCase();
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Poll error:', err);
+      }
+      
+      await new Promise(r => setTimeout(r, pollInterval));
+      return poll();
+    }
+
+    await poll();
+
+    // Remove from active syncs
+    activeSyncs.delete(serverName);
+    updateActiveSyncsCount();
+
+    // Show final result
+    if (finalStatus === 'completed' || finalStatus === 'success') {
+      button.classList.remove('bg-info');
+      button.classList.add('bg-accent');
+      button.innerHTML = '<span class="material-icons text-base">check_circle</span><span>Done</span>';
+    } else if (finalStatus === 'failed') {
+      button.className = button.dataset.origClasses;
+      button.innerHTML = '<span class="material-icons text-base">error</span><span>Failed</span>';
+    } else {
+      button.className = button.dataset.origClasses;
+      button.innerHTML = '<span class="material-icons text-base">help</span><span>Unknown</span>';
+    }
+
+    // Restore original state after delay
+    setTimeout(() => {
+      button.innerHTML = button.dataset.origHtml;
+      button.className = button.dataset.origClasses;
+      button.style.pointerEvents = '';
+      button.dataset.running = 'false';
+    }, 3000);
+  }
+
+  // Handle sync button clicks
+  function handleSyncClick(e) {
+    e.preventDefault();
+    
+    const button = e.currentTarget;
+    const serverName = button.dataset.serverName;
+    
+    // Prevent double-clicks
+    if (button.dataset.running === 'true') return;
+    
+    // Start sync
+    startSync(button, serverName);
+  }
+
+  async function startSync(button, serverName) {
+    try {
+      const resp = await fetch(button.href);
+      
+      if (!resp.ok) {
+        const errorData = await resp.json();
+        if (resp.status === 409) {
+          // Sync already running
+          activeSyncs.add(serverName);
+          updateActiveSyncsCount();
+          
+          button.dataset.running = 'true';
+          button.dataset.origHtml = button.innerHTML;
+          button.dataset.origClasses = button.className;
+          
+          button.classList.remove('bg-primary', 'hover:bg-primary-hover');
+          button.classList.add('bg-info', 'cursor-not-allowed');
+          button.innerHTML = '<span class="material-icons animate-spin text-base">sync</span><span>Running...</span>';
+          button.style.pointerEvents = 'none';
+          
+          startPolling(button, serverName);
+          return;
+        }
+        throw new Error(errorData.message || 'Failed to start sync');
+      }
+
+      activeSyncs.add(serverName);
+      updateActiveSyncsCount();
+      
+      button.dataset.running = 'true';
+      button.dataset.origHtml = button.innerHTML;
+      button.dataset.origClasses = button.className;
+
+      button.classList.remove('bg-primary', 'hover:bg-primary-hover');
+      button.classList.add('bg-info', 'cursor-not-allowed');
+      button.innerHTML = '<span class="material-icons animate-spin text-base">sync</span><span>Starting...</span>';
+      button.style.pointerEvents = 'none';
+
+      startPolling(button, serverName);
+
+    } catch (err) {
+      console.error('Start error:', err);
+      button.innerHTML = '<span class="material-icons text-base">error</span><span>Failed</span>';
+      setTimeout(() => {
+        button.innerHTML = button.dataset.origHtml || '<span class="material-icons text-base">sync</span><span>Sync</span>';
+        button.className = button.dataset.origClasses;
+        button.style.pointerEvents = '';
+        button.dataset.running = 'false';
+      }, 3000);
+    }
+  }
+
+  // Initialize on DOM ready
+  document.addEventListener('DOMContentLoaded', function() {
+    // Check for running syncs
+    document.querySelectorAll('.sync-button').forEach(button => {
+      checkRunningSync(button);
+      button.addEventListener('click', handleSyncClick);
+    });
+  });
+})();
+</script>
+</body>
+</html>

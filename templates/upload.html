@@ -120,23 +120,23 @@
     {% include 'sidebar.html' %}
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto ml-64 p-8">
-      <div class="container mx-auto">
+    <main class="flex-1 overflow-y-auto lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
+      <div class="container mx-auto max-w-6xl">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-3xl font-bold flex items-center gap-2">
-            <span class="material-icons">cloud_upload</span> 
-            Upload Files to PostgreSQL
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-4">
+          <h1 class="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <span class="material-icons text-3xl sm:text-4xl">cloud_upload</span> 
+            <span>Upload Files to PostgreSQL</span>
           </h1>
-          <div class="flex gap-2">
+          <div class="flex gap-2 w-full sm:w-auto">
             <a href="{{ url_for('index') }}"
-               class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+               class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition text-sm sm:text-base text-center">
                 ← Back to Home
             </a>
           </div>
         </div>
 
-        <p class="text-subtext-light dark:text-subtext-dark mb-8">
+        <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark mb-6 sm:mb-8">
           Upload CSV, Excel, or Text files and load them directly into your PostgreSQL database. 
           <strong>Multiple files supported!</strong>
         </p>

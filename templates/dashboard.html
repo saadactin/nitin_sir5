@@ -45,17 +45,18 @@
   {% include 'sidebar.html' %}
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto ml-64 p-8 space-y-6">
+  <main class="flex-1 overflow-y-auto lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 space-y-4 sm:space-y-6">
     <div class="flex justify-between items-center">
-      <h2 class="text-3xl font-bold flex items-center gap-2">
-        <span class="material-icons">dashboard</span> Sync Dashboard
+      <h2 class="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+        <span class="material-icons text-3xl sm:text-4xl">dashboard</span> 
+        <span>Sync Dashboard</span>
       </h2>
     </div>
 
     <!-- Last Sync Details -->
-    <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-6">
-      <h3 class="text-xl font-semibold mb-4 text-primary">Last Sync Details</h3>
-      <div id="last-sync" class="space-y-2">
+    <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4 sm:p-6">
+      <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-primary">Last Sync Details</h3>
+      <div id="last-sync" class="space-y-2 text-sm sm:text-base">
         {% if last_detail %}
           <p><strong>Server:</strong> {{ last_detail.server }}</p>
           <p><strong>Time:</strong> {{ last_detail.time }}</p>
@@ -76,34 +77,34 @@
     </div>
 
     <!-- Last 10 Sync History -->
-    <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-6">
-      <h3 class="text-xl font-semibold mb-4 text-primary">Last 10 Syncs</h3>
-      <div id="sync-history" class="overflow-x-auto">
+    <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4 sm:p-6">
+      <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-primary">Last 10 Syncs</h3>
+      <div id="sync-history" class="overflow-x-auto -mx-4 sm:mx-0">
         {% if last_10 and last_10|length > 0 %}
-          <table class="min-w-full table-auto border border-border-light dark:border-border-dark">
+          <table class="min-w-full table-auto border border-border-light dark:border-border-dark text-sm sm:text-base">
             <thead class="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th class="px-4 py-2 border border-border-light dark:border-border-dark">Server</th>
-                <th class="px-4 py-2 border border-border-light dark:border-border-dark">Time</th>
-                <th class="px-4 py-2 border border-border-light dark:border-border-dark">Status</th>
-                <th class="px-4 py-2 border border-border-light dark:border-border-dark">Details</th>
+                <th class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark text-left">Server</th>
+                <th class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark text-left">Time</th>
+                <th class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark text-left">Status</th>
+                <th class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark text-left hidden sm:table-cell">Details</th>
               </tr>
             </thead>
             <tbody>
               {% for entry in last_10 %}
               <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                <td class="px-4 py-2 border border-border-light dark:border-border-dark">{{ entry.server }}</td>
-                <td class="px-4 py-2 border border-border-light dark:border-border-dark">{{ entry.time }}</td>
-                <td class="px-4 py-2 border border-border-light dark:border-border-dark">
+                <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark">{{ entry.server }}</td>
+                <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark whitespace-nowrap">{{ entry.time }}</td>
+                <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark">
                   {% if entry.status == "success" %}
-                    <span class="bg-success text-white px-2 py-1 rounded">Success</span>
+                    <span class="bg-success text-white px-2 py-1 rounded text-xs sm:text-sm">Success</span>
                   {% elif entry.status in ["in-progress", "started"] %}
-                    <span class="bg-warning text-white px-2 py-1 rounded">Started</span>
+                    <span class="bg-warning text-white px-2 py-1 rounded text-xs sm:text-sm">Started</span>
                   {% else %}
-                    <span class="bg-danger text-white px-2 py-1 rounded">Failed</span>
+                    <span class="bg-danger text-white px-2 py-1 rounded text-xs sm:text-sm">Failed</span>
                   {% endif %}
                 </td>
-                <td class="px-4 py-2 border border-border-light dark:border-border-dark">{{ entry.details }}</td>
+                <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark hidden sm:table-cell">{{ entry.details }}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -144,13 +145,13 @@ async function refreshDashboard() {
         // Update sync history
         const historyDiv = document.getElementById("sync-history");
         if (data.last_10.length > 0) {
-            let table = `<table class="min-w-full table-auto border border-border-light dark:border-border-dark">
+            let table = `<table class="min-w-full table-auto border border-border-light dark:border-border-dark text-sm sm:text-base">
                 <thead class="bg-gray-100 dark:bg-gray-700">
                     <tr>
-                        <th class="px-4 py-2 border border-border-light dark:border-border-dark">Server</th>
-                        <th class="px-4 py-2 border border-border-light dark:border-border-dark">Time</th>
-                        <th class="px-4 py-2 border border-border-light dark:border-border-dark">Status</th>
-                        <th class="px-4 py-2 border border-border-light dark:border-border-dark">Details</th>
+                        <th class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark text-left">Server</th>
+                        <th class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark text-left">Time</th>
+                        <th class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark text-left">Status</th>
+                        <th class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark text-left hidden sm:table-cell">Details</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -158,16 +159,16 @@ async function refreshDashboard() {
             data.last_10.forEach(entry => {
                 table += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td class="px-4 py-2 border border-border-light dark:border-border-dark">${entry.server}</td>
-                        <td class="px-4 py-2 border border-border-light dark:border-border-dark">${entry.time}</td>
-                        <td class="px-4 py-2 border border-border-light dark:border-border-dark">
+                        <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark">${entry.server}</td>
+                        <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark whitespace-nowrap">${entry.time}</td>
+                        <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark">
                             ${entry.status === "success"
-                                ? '<span class="bg-success text-white px-2 py-1 rounded">Success</span>'
+                                ? '<span class="bg-success text-white px-2 py-1 rounded text-xs sm:text-sm">Success</span>'
                                 : (entry.status === "in-progress" || entry.status === "started")
-                                ? '<span class="bg-warning text-white px-2 py-1 rounded">Started</span>'
-                                : '<span class="bg-danger text-white px-2 py-1 rounded">Failed</span>'}
+                                ? '<span class="bg-warning text-white px-2 py-1 rounded text-xs sm:text-sm">Started</span>'
+                                : '<span class="bg-danger text-white px-2 py-1 rounded text-xs sm:text-sm">Failed</span>'}
                         </td>
-                        <td class="px-4 py-2 border border-border-light dark:border-border-dark">${entry.details}</td>
+                        <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark hidden sm:table-cell">${entry.details}</td>
                     </tr>`;
             });
 

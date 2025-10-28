@@ -1,0 +1,302 @@
+/* 
+ * Responsive Design System
+ * Mobile-first responsive styles for all application pages
+ */
+
+/* Base Mobile Styles (320px - 640px) */
+@media (max-width: 640px) {
+  /* Typography adjustments */
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+  h3 { font-size: 1.125rem !important; }
+  
+  /* Reduce padding on mobile */
+  .container { padding-left: 1rem; padding-right: 1rem; }
+  
+  /* Stack buttons vertically on mobile */
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .button-group > * {
+    width: 100%;
+  }
+  
+  /* Make cards full width with minimal margin */
+  .card {
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 0.5rem;
+  }
+  
+  /* Adjust table font sizes */
+  table {
+    font-size: 0.875rem;
+  }
+  
+  th, td {
+    padding: 0.5rem !important;
+  }
+  
+  /* Hide less important columns on mobile */
+  .mobile-hidden {
+    display: none !important;
+  }
+  
+  /* Make forms stack properly */
+  form .form-row {
+    flex-direction: column;
+  }
+  
+  form .form-row > * {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  /* Material icons size adjustment */
+  .material-icons {
+    font-size: 18px !important;
+  }
+  
+  /* Adjust modal widths */
+  .modal-content {
+    width: 95vw !important;
+    margin: 0.5rem;
+  }
+}
+
+/* Tablet Styles (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Adjust grid layouts */
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  /* Sidebar adjustments */
+  aside {
+    width: 240px;
+  }
+  
+  /* Main content margin adjustment */
+  main {
+    margin-left: 240px;
+  }
+}
+
+/* Desktop Styles (1025px+) - Default */
+@media (min-width: 1025px) {
+  /* Full sidebar */
+  aside {
+    width: 256px;
+  }
+  
+  /* Main content with sidebar margin */
+  main {
+    margin-left: 256px;
+  }
+}
+
+/* Touch-friendly styles for mobile */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better spacing for touch */
+  .touch-spacing {
+    padding: 0.75rem;
+  }
+  
+  /* Disable hover effects on touch devices */
+  *:hover {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 896px) and (orientation: landscape) {
+  /* Reduce vertical padding in landscape */
+  .py-8 { padding-top: 1rem; padding-bottom: 1rem; }
+  .py-6 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+  
+  /* Make modals scrollable */
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Print styles */
+@media print {
+  /* Hide navigation elements */
+  aside, .sidebar, .mobile-menu-toggle, button[type="button"] {
+    display: none !important;
+  }
+  
+  /* Adjust main content */
+  main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Ensure tables fit on page */
+  table {
+    page-break-inside: auto;
+  }
+  
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  /* Remove backgrounds for better printing */
+  * {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* Accessibility: Prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    border-width: 2px !important;
+  }
+  
+  button, a {
+    text-decoration: underline;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  /* Ensure good contrast in dark mode */
+  .bg-surface-light {
+    background-color: #1E293B !important;
+  }
+  
+  .text-text-light {
+    color: #E2E8F0 !important;
+  }
+}
+
+/* Responsive utility classes */
+.mobile-only {
+  display: block;
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .mobile-only {
+    display: none;
+  }
+  
+  .desktop-only {
+    display: block;
+  }
+}
+
+/* Responsive spacing utilities */
+.responsive-padding {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-padding {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-padding {
+    padding: 2rem;
+  }
+}
+
+/* Responsive grid */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Responsive flex */
+.responsive-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-flex {
+    flex-direction: row;
+  }
+}
+
+/* Scrollable tables on mobile */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+  min-width: 600px;
+}
+
+@media (min-width: 1024px) {
+  .table-responsive table {
+    min-width: 100%;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+  
+  .sidebar {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .main-content {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}

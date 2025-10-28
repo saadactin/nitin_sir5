@@ -61,19 +61,19 @@
   {% include 'sidebar.html' %}
 
   <!-- Main Content -->
-  <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 overflow-y-auto pt-16 lg:pt-8">
+  <main class="flex-1 ml-64 p-8 overflow-y-auto">
     <!-- Header -->
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
-      <div class="flex items-center gap-3 sm:gap-4">
-        <span class="material-icons text-3xl sm:text-4xl text-primary">dns</span>
-        <h1 class="text-2xl sm:text-3xl font-bold">SQL Servers Dashboard</h1>
+    <header class="flex justify-between items-center mb-8">
+      <div class="flex items-center gap-4">
+        <span class="material-icons text-4xl text-primary">dns</span>
+        <h1 class="text-3xl font-bold">SQL Servers Dashboard</h1>
       </div>
       
       <!-- Only show Add Server button for admin users -->
       {% if role == 'admin' %}
       <a href="{{ url_for('add_server') }}"
-         class="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-accent text-white rounded-lg shadow-md hover:bg-accent-hover transition-colors text-sm sm:text-base w-full sm:w-auto justify-center">
-        <span class="material-icons text-lg sm:text-xl">add_circle</span>
+         class="flex items-center gap-2 px-5 py-2.5 bg-accent text-white rounded-lg shadow-md hover:bg-accent-hover transition-colors">
+        <span class="material-icons">add_circle</span>
         <span>Add New Server</span>
       </a>
       {% endif %}
@@ -81,23 +81,23 @@
 
     {% if sqlservers and sqlservers|length > 0 %}
     <!-- Server Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for name, conf in sqlservers.items() %}
       <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-md border border-border-light dark:border-border-dark overflow-hidden hover:shadow-lg transition-shadow">
         <!-- Card Header -->
-        <div class="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 border-b border-border-light dark:border-border-dark flex justify-between items-center">
-          <h2 class="text-base sm:text-lg font-semibold truncate">{{ name }}</h2>
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 border-b border-border-light dark:border-border-dark flex justify-between items-center">
+          <h2 class="text-lg font-semibold truncate">{{ name }}</h2>
           <!-- Port display removed - using auto-detection instead -->
         </div>
 
         <!-- Card Body -->
-        <div class="p-4 sm:p-6 space-y-3 sm:space-y-4">
-          <div class="flex items-center gap-2 text-sm sm:text-base">
-            <span class="font-medium text-subtext-light dark:text-subtext-dark whitespace-nowrap">Host:</span>
+        <div class="p-6 space-y-4">
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-subtext-light dark:text-subtext-dark">Host:</span>
             <span class="truncate">{{ conf.server }}</span>
           </div>
-          <div class="flex items-center gap-2 text-sm sm:text-base">
-            <span class="font-medium text-subtext-light dark:text-subtext-dark whitespace-nowrap">Status:</span>
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-subtext-light dark:text-subtext-dark">Status:</span>
             {% if server_statuses[name].online %}
             <div class="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
               <span class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
@@ -113,43 +113,36 @@
         </div>
 
         <!-- Card Actions -->
-        <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 dark:bg-gray-800 border-t border-border-light dark:border-border-dark flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
+        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-border-light dark:border-border-dark flex flex-wrap gap-3">
           <!-- Databases -->
           <a href="{{ url_for('view_server_databases', server_name=name) }}"
-             class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
-            <span class="material-icons text-base sm:text-lg">dataset</span> 
-            <span>Databases</span>
+             class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
+            <span class="material-icons">dataset</span> Databases
           </a>
 
           <!-- Sync -->
        <a href="{{ url_for('sync_background', server_name=name) }}"
              id="sync-button-{{ loop.index }}"
-             class="sync-button flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors"
+             class="sync-button flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors"
           >
-            <span class="material-icons text-base sm:text-lg">sync</span> 
-            <span>Sync Server</span>
+            <span class="material-icons">sync</span> Sync Server
           </a>
 
           {% if role in ['admin', 'operator'] %}
-          <!-- Edit & Delete Row for Mobile -->
-          <div class="flex gap-2 w-full sm:w-auto">
           <!-- Edit -->
          <a href="{{ url_for('edit_server', server_name=name) }}"
-   class="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-warning border border-warning rounded-lg hover:bg-warning hover:text-white transition-colors">
-  <span class="material-icons text-base sm:text-lg">edit</span> 
-  <span class="hidden sm:inline">Edit</span>
+   class="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-warning border border-warning rounded-lg hover:bg-warning hover:text-white transition-colors">
+  <span class="material-icons">edit</span> Edit
 </a>
 
           <!-- Delete -->
           <form action="{{ url_for('delete_server_route', server_name=name) }}" method="POST"
-                onsubmit="return confirm('Delete server {{ name }}?');" class="flex-1 sm:flex-none">
+                onsubmit="return confirm('Delete server {{ name }}?');">
             <button type="submit"
-                    class="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-danger border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
-              <span class="material-icons text-base sm:text-lg">delete</span> 
-              <span class="hidden sm:inline">Delete</span>
+                    class="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-danger border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
+              <span class="material-icons">delete</span> Delete
             </button>
           </form>
-          </div>
           {% endif %}
         </div>
       </div>

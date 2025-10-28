@@ -6184,3 +6184,35 @@ See also /etc/clickhouse-server/users.xml on the server where ClickHouse is inst
 2025-10-27 15:14:57,563 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
 2025-10-27 15:15:05,695 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
 2025-10-27 15:15:05,697 - WARNING - [AUTH] Session contents: {}
+2025-10-27 17:20:49,928 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 17:20:50,430 - INFO - Security features initialized
+2025-10-27 17:20:59,529 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:20:59] code 400, message Bad request version ('JJ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06sJJ\x00\x00ÿ\x01\x00\x01\x00\x00')
+2025-10-27 17:20:59,532 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:20:59] code 400, message Bad request version ("£T\x89'\x95")
+2025-10-27 17:21:01,403 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:01] code 400, message Bad request version ('¼p¬)\x00')
+2025-10-27 17:21:01,408 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:01] code 400, message Bad request version ('l\x8cU\x13D&®J\x86;\x00')
+2025-10-27 17:21:01,412 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:01] code 400, message Bad request version ('\x00\x02\x01\x00\x00+\x00\x07\x06')
+2025-10-27 17:21:01,425 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:01] code 400, message Bad request version ('ª\x7fMO¸¯fÙV\x00ðt#Ê±¯¶')
+2025-10-27 17:21:19,489 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:19] code 400, message Bad request version ('C\x80º§ýù\x87*&§¿\\k\x13\x01BWu7þ')
+2025-10-27 17:21:19,492 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:19] code 400, message Bad request version ('÷µ\x03FU\x15CÆ\x12¹HÊèV;\x8aE')
+2025-10-27 17:21:25,395 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:25] code 400, message Bad request version ('\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x003\x04ï\x04íªª\x00\x01\x00\x11ì\x04Àl\x94m/')
+2025-10-27 17:21:25,396 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:25] code 400, message Bad request version ('ZZ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06\x93\x8a\x8a\x00\x00\x00')
+2025-10-27 17:21:25,400 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:25] code 400, message Bad request version ('ÚÚ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06\x93ªª\x00\x00\x00')
+2025-10-27 17:21:25,401 - ERROR - 127.0.0.1 - - [27/Oct/2025 17:21:25] code 400, message Bad request version ('JJ\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06\x93zz\x00\x00\x00')
+2025-10-27 17:32:35,481 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 17:32:36,136 - INFO - Security features initialized
+2025-10-27 17:34:31,130 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 17:34:31,858 - INFO - Security features initialized
+2025-10-27 17:36:20,608 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 17:36:21,290 - INFO - Security features initialized
+2025-10-27 17:36:23,602 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-27 17:36:23,603 - WARNING - [AUTH] Session contents: {}
+2025-10-27 17:36:35,369 - WARNING - SECURITY EVENT: successful_login | User: {'username': 'admin', 'role': 'admin'} | IP: 127.0.0.1 | Details: 127.0.0.1
+2025-10-27 17:40:56,850 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 17:41:03,293 - WARNING - [AUTH] BLOCKED unauthenticated access to /upload from 127.0.0.1
+2025-10-27 17:41:03,295 - WARNING - [AUTH] Session contents: {}
+2025-10-27 18:08:30,282 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-27 18:08:52,307 - WARNING - [AUTH] BLOCKED unauthenticated access to /create-user from 127.0.0.1
+2025-10-27 18:08:52,307 - WARNING - [AUTH] Session contents: {}
+2025-10-28 13:58:35,572 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-28 13:58:45,032 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-28 13:58:45,034 - WARNING - [AUTH] Session contents: {}
