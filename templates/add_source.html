@@ -74,7 +74,7 @@
         {% endwith %}
 
         <!-- Source Type Selection Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <!-- SQL Server Card -->
           <div class="source-card bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border-2 border-border-light dark:border-border-dark p-6 sm:p-8"
                onclick="window.location.href='{{ url_for('add_sql_source') }}'">
@@ -126,6 +126,32 @@
               </button>
             </div>
           </div>
+
+          <!-- API Source Card -->
+          <div class="source-card bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border-2 border-border-light dark:border-border-dark p-6 sm:p-8"
+               onclick="window.location.href='{{ url_for('add_api_source') }}'">
+            <div class="flex flex-col items-center text-center space-y-4">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                <span class="material-icons text-purple-600 dark:text-purple-300" style="font-size: 36px;">api</span>
+              </div>
+              <h3 class="text-xl sm:text-2xl font-bold text-purple-600">API Endpoint</h3>
+              <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark">
+                Connect to REST API endpoints. Fetch JSON data and store in PostgreSQL or ClickHouse.
+              </p>
+              <div class="flex flex-wrap gap-2 justify-center">
+                <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-xs font-medium">
+                  PostgreSQL
+                </span>
+                <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-xs font-medium">
+                  ClickHouse
+                </span>
+              </div>
+              <button class="mt-4 w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-medium">
+                <span class="material-icons">add_circle</span>
+                <span>Add API Source</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Info Section -->
@@ -137,6 +163,7 @@
               <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                 <li>• <strong>SQL Server:</strong> Connect to any Microsoft SQL Server instance (including named instances)</li>
                 <li>• <strong>SAP HANA:</strong> Connect to SAP HANA in-memory database for enterprise data integration</li>
+                <li>• <strong>API Endpoint:</strong> Fetch data from REST APIs with support for various authentication methods</li>
                 <li>• <strong>Target Systems:</strong> Sync data to PostgreSQL for relational storage or ClickHouse for analytics</li>
                 <li>• <strong>Automated Sync:</strong> Schedule automated synchronization or trigger manual syncs as needed</li>
               </ul>

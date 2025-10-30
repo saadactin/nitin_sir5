@@ -3,6 +3,7 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 import json
 import psycopg2
+import requests
 try:
     from clickhouse_driver import Client as CHClient
 except Exception:
@@ -537,6 +538,36 @@ def index():
                         data_source_statuses[ds['id']] = {'online': False, 'error': 'Password not available for connection test'}
                 except Exception as e:
                     data_source_statuses[ds['id']] = {'online': False, 'error': 'hdbcli not installed or connection failed'}
+            elif ds['source_type'] == 'api' or ds['source_type'] == 'rest_api':
+                # Test API connection
+                try:
+                    import requests
+                    api_url = ds['server_address']
+                    connection_details = ds.get('connection_details') or {}
+                    
+                    # Check if it's an SSE stream
+                    is_sse = connection_details.get('is_sse', False)
+                    
+                    if is_sse:
+                        # For SSE, just mark as "streaming" without full test
+                        data_source_statuses[ds['id']] = {'online': True, 'error': None, 'status': 'Streaming'}
+                    else:
+                        headers = {}
+                        if connection_details.get('auth_type') == 'bearer':
+                            token = connection_details.get('auth_token', '')
+                            headers['Authorization'] = f'Bearer {token}'
+                        elif connection_details.get('auth_type') == 'apikey':
+                            key_name = connection_details.get('apikey_header', 'X-API-Key')
+                            key_value = connection_details.get('auth_token', '')
+                            headers[key_name] = key_value
+                        
+                        response = requests.get(api_url, headers=headers, timeout=5)
+                        if response.status_code == 200:
+                            data_source_statuses[ds['id']] = {'online': True, 'error': None}
+                        else:
+                            data_source_statuses[ds['id']] = {'online': False, 'error': f'HTTP {response.status_code}'}
+                except Exception as e:
+                    data_source_statuses[ds['id']] = {'online': False, 'error': str(e)}
             else:
                 data_source_statuses[ds['id']] = {'online': False, 'error': 'Unknown source type'}
         except Exception as e:
@@ -715,6 +746,133 @@ def sync_background(server_name):
         return jsonify(result), 409
 
 
+@app.route('/sync_api_source/<int:source_id>', methods=['GET', 'POST'])
+@require_role(["admin", "operator"])
+def sync_api_source(source_id):
+    """Manually trigger sync for a REST API source"""
+    app.logger.info(f"[API-SYNC] Request to sync API source ID: {source_id}")
+    
+    try:
+        # Load source details from database
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT source_name, source_type, server_address, target_type, 
+                   target_database, connection_details 
+            FROM data_sources 
+            WHERE id = %s AND is_active = true
+        """, (source_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if not row:
+            app.logger.warning(f"[API-SYNC] API source {source_id} not found or inactive")
+            flash(f"API source not found or inactive", "danger")
+            return redirect(url_for("index"))
+        
+        source_name = row[0]
+        source_type = row[1]
+        api_url = row[2]
+        target_type = row[3]
+        target_database = row[4]
+        connection_details = json.loads(row[5]) if row[5] else {}
+        
+        # Only sync REST APIs to ClickHouse
+        if source_type != 'rest_api':
+            flash(f"Source '{source_name}' is not a REST API source", "danger")
+            return redirect(url_for("index"))
+        
+        if target_type.lower() != 'clickhouse':
+            flash(f"Source '{source_name}' target is not ClickHouse", "danger")
+            return redirect(url_for("index"))
+        
+        # Extract connection details
+        auth_type = connection_details.get('auth_type', 'none')
+        auth_token = connection_details.get('auth_token', '')
+        basic_username = connection_details.get('basic_username', '')
+        basic_password = connection_details.get('basic_password', '')
+        apikey_header = connection_details.get('apikey_header', 'X-API-Key')
+        custom_headers_str = connection_details.get('custom_headers', '')
+        request_method = connection_details.get('request_method', 'GET')
+        data_path = connection_details.get('data_path', '')
+        target_table = connection_details.get('target_table', source_name.lower().replace(' ', '_'))
+        is_sse = connection_details.get('is_sse', False)
+        
+        # Parse custom headers
+        custom_headers = {}
+        if custom_headers_str:
+            try:
+                custom_headers = json.loads(custom_headers_str)
+            except:
+                pass
+        
+        # Start sync in background thread
+        import threading
+        from api_sync import sync_api_to_clickhouse_once, sync_api_to_clickhouse
+        
+        def background_sync():
+            try:
+                app.logger.info(f"Starting sync for API source: {source_name}")
+                
+                # Use one-time sync for regular REST APIs, continuous for SSE
+                if is_sse:
+                    # SSE streams need continuous monitoring
+                    sync_api_to_clickhouse(
+                        api_url=api_url,
+                        target_database=target_database,
+                        target_table=target_table,
+                        auth_type=auth_type,
+                        auth_token=auth_token,
+                        basic_username=basic_username,
+                        basic_password=basic_password,
+                        apikey_header=apikey_header,
+                        custom_headers=custom_headers,
+                        request_method=request_method,
+                        data_path=data_path,
+                        is_sse=is_sse,
+                        auto_create_table=True
+                    )
+                else:
+                    # Regular REST APIs: sync once
+                    result = sync_api_to_clickhouse_once(
+                        api_url=api_url,
+                        target_database=target_database,
+                        target_table=target_table,
+                        auth_type=auth_type,
+                        auth_token=auth_token,
+                        basic_username=basic_username,
+                        basic_password=basic_password,
+                        apikey_header=apikey_header,
+                        custom_headers=custom_headers,
+                        request_method=request_method,
+                        data_path=data_path,
+                        auto_create_table=True
+                    )
+                    app.logger.info(f"API sync result for '{source_name}': {result}")
+            except Exception as e:
+                app.logger.error(f"Error syncing API source '{source_name}': {e}")
+        
+        sync_thread = threading.Thread(target=background_sync, daemon=True)
+        sync_thread.start()
+        
+        flash(f"Sync started for API source '{source_name}'", "success")
+        return redirect(url_for("index"))
+        
+    except Exception as e:
+        app.logger.exception(f"Error initiating API source sync: {e}")
+        flash(f"Error starting sync: {str(e)}", "danger")
+        return redirect(url_for("index"))
+
+
 @app.route('/source/<int:source_id>/databases', methods=['GET'])
 @require_role(["admin", "operator", "viewer"])
 def view_source_databases(source_id):
@@ -781,7 +939,7 @@ def view_source_databases(source_id):
 @app.route('/sync_source_background/<int:source_id>', methods=['GET'])
 @require_role(["admin", "operator"])
 def sync_source_background(source_id):
-    """Start background sync for a configured source (only SQL Server supported currently)"""
+    """Start background sync for a configured source (SQL Server and REST API supported)"""
     try:
         from db_utils import load_pg_config
         pg_conf = load_pg_config()
@@ -793,35 +951,112 @@ def sync_source_background(source_id):
             port=int(pg_conf.get('port', 5432))
         )
         cur = conn.cursor()
-        cur.execute("SELECT id, source_name, source_type, server_address, username, password FROM data_sources WHERE id = %s", (source_id,))
+        cur.execute("SELECT id, source_name, source_type, server_address, username, password, target_database, connection_details FROM data_sources WHERE id = %s", (source_id,))
         row = cur.fetchone()
         cur.close(); conn.close()
 
         if not row:
             return jsonify({"success": False, "message": "Source not found"}), 404
 
-        source = {'id': row[0], 'source_name': row[1], 'source_type': row[2], 'server_address': row[3], 'username': row[4], 'password': row[5]}
-
-        if source['source_type'] != 'sql_server':
-            return jsonify({"success": False, "message": "Background sync only supported for SQL Server sources currently"}), 501
-
-        server_conf = {
-            'server': source['server_address'],
-            'username': source['username'],
-            'password': source['password'],
-            'target_postgres_db': None
+        source = {
+            'id': row[0], 
+            'source_name': row[1], 
+            'source_type': row[2], 
+            'server_address': row[3], 
+            'username': row[4], 
+            'password': row[5],
+            'target_database': row[6],
+            'connection_details': row[7]
         }
 
-        # Use a unique name in the sync manager so we don't clash with YAML servers
-        server_key = f"source::{source['id']}"
-        result = sync_manager.start_sync(server_key, server_conf, app)
-
-        if result['success']:
+        # Handle REST API sources
+        if source['source_type'] == 'rest_api':
+            from api_sync import sync_api_to_clickhouse_once, sync_api_to_clickhouse
+            import threading
+            import json
+            
+            connection_details = json.loads(source['connection_details']) if isinstance(source['connection_details'], str) else (source['connection_details'] or {})
+            is_sse = connection_details.get('is_sse', False)
+            custom_headers_str = connection_details.get('custom_headers', '')
+            custom_headers = {}
+            if custom_headers_str:
+                try:
+                    custom_headers = json.loads(custom_headers_str)
+                except:
+                    pass
+            
+            def background_sync():
+                try:
+                    # Use one-time sync for regular REST APIs, continuous for SSE
+                    if is_sse:
+                        # SSE streams need continuous monitoring
+                        sync_api_to_clickhouse(
+                            api_url=source['server_address'],
+                            target_database=source['target_database'],
+                            target_table=connection_details.get('target_table', 'api_data'),
+                            auth_type=connection_details.get('auth_type'),
+                            auth_token=connection_details.get('auth_token'),
+                            basic_username=connection_details.get('basic_username'),
+                            basic_password=connection_details.get('basic_password'),
+                            apikey_header=connection_details.get('apikey_header'),
+                            custom_headers=custom_headers,
+                            request_method=connection_details.get('request_method', 'GET'),
+                            data_path=connection_details.get('data_path', ''),
+                            is_sse=is_sse,
+                            auto_create_table=True
+                        )
+                    else:
+                        # Regular REST APIs: sync once
+                        result = sync_api_to_clickhouse_once(
+                            api_url=source['server_address'],
+                            target_database=source['target_database'],
+                            target_table=connection_details.get('target_table', 'api_data'),
+                            auth_type=connection_details.get('auth_type'),
+                            auth_token=connection_details.get('auth_token'),
+                            basic_username=connection_details.get('basic_username'),
+                            basic_password=connection_details.get('basic_password'),
+                            apikey_header=connection_details.get('apikey_header'),
+                            custom_headers=custom_headers,
+                            request_method=connection_details.get('request_method', 'GET'),
+                            data_path=connection_details.get('data_path', ''),
+                            auto_create_table=True
+                        )
+                        app.logger.info(f"API sync result for '{source['source_name']}': {result}")
+                except Exception as e:
+                    app.logger.error(f"Error syncing API source '{source['source_name']}': {e}")
+            
+            # Start sync in background thread
+            sync_thread = threading.Thread(target=background_sync, daemon=True)
+            sync_thread.start()
+            
             flash(f"Background sync started for {source['source_name']}", 'success')
-            return jsonify(result), 202
+            return jsonify({
+                "success": True, 
+                "message": f"API sync started for {source['source_name']}",
+                "source_id": source_id
+            }), 202
+        
+        # Handle SQL Server sources
+        elif source['source_type'] == 'sql_server':
+            server_conf = {
+                'server': source['server_address'],
+                'username': source['username'],
+                'password': source['password'],
+                'target_postgres_db': None
+            }
+
+            # Use a unique name in the sync manager so we don't clash with YAML servers
+            server_key = f"source::{source['id']}"
+            result = sync_manager.start_sync(server_key, server_conf, app)
+
+            if result['success']:
+                flash(f"Background sync started for {source['source_name']}", 'success')
+                return jsonify(result), 202
+            else:
+                flash(f"Failed to start sync for {source['source_name']}: {result.get('message')}", 'warning')
+                return jsonify(result), 409
         else:
-            flash(f"Failed to start sync for {source['source_name']}: {result.get('message')}", 'warning')
-            return jsonify(result), 409
+            return jsonify({"success": False, "message": f"Sync not supported for source type: {source['source_type']}"}), 501
 
     except Exception as e:
         app.logger.exception(f"Error starting source sync: {e}")
@@ -1710,6 +1945,378 @@ def add_hana_source():
     return render_template("add_hana_source.html",
                           postgres_dbs=postgres_dbs,
                           clickhouse_dbs=clickhouse_dbs)
+
+
+@app.route("/add-source/api", methods=["GET", "POST"])
+@require_role(["admin", "operator"])
+def add_api_source():
+    """Add REST API as a data source"""
+    if request.method == "POST":
+        try:
+            source_name = request.form.get("source_name", "").strip()
+            api_url = request.form.get("api_url", "").strip()
+            auth_type = request.form.get("auth_type", "none").strip()
+            auth_token = request.form.get("auth_token", "").strip()
+            basic_username = request.form.get("basic_username", "").strip()
+            basic_password = request.form.get("basic_password", "").strip()
+            apikey_header = request.form.get("apikey_header", "X-API-Key").strip()
+            custom_headers = request.form.get("custom_headers", "").strip()
+            request_method = request.form.get("request_method", "GET").strip()
+            data_path = request.form.get("data_path", "").strip()
+            target_type = request.form.get("target_type", "").strip()
+            target_database = request.form.get("target_database", "").strip()
+            is_sse = request.form.get("is_sse", "false").strip().lower() == "true"
+            
+            # Auto-generate table name from source name if not provided
+            target_table = request.form.get("target_table", "").strip()
+            if not target_table:
+                # Create table name from source name (e.g., "CRM Stream" -> "crm_stream")
+                target_table = source_name.lower().replace(' ', '_').replace('-', '_')
+            
+            # Validate required fields
+            if not all([source_name, api_url, target_type, target_database]):
+                flash("Source name, API URL, target type, and database are required!", "danger")
+                return render_template("add_api_source.html",
+                                      source_name=source_name,
+                                      api_url=api_url,
+                                      target_type=target_type)
+            
+            # Validate URL format
+            if not api_url.startswith(('http://', 'https://')):
+                flash("API URL must start with http:// or https://", "danger")
+                return render_template("add_api_source.html",
+                                      source_name=source_name,
+                                      api_url=api_url,
+                                      target_type=target_type)
+            
+            app.logger.info(f"Adding REST API source: {api_url}")
+            
+            # Save source configuration to database
+            from db_utils import load_pg_config
+            pg_conf = load_pg_config()
+            conn = psycopg2.connect(
+                dbname=pg_conf.get('database', 'metrics_sync_tables'),
+                user=pg_conf.get("username"),
+                password=pg_conf.get("password"),
+                host=pg_conf.get("host"),
+                port=int(pg_conf.get("port", 5432))
+            )
+            cursor = conn.cursor()
+            
+            # Create sources table if it doesn't exist
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS data_sources (
+                    id SERIAL PRIMARY KEY,
+                    source_name VARCHAR(255) UNIQUE NOT NULL,
+                    source_type VARCHAR(50) NOT NULL,
+                    server_address TEXT NOT NULL,
+                    username TEXT,
+                    password TEXT,
+                    target_type VARCHAR(50) NOT NULL,
+                    target_database VARCHAR(255) NOT NULL,
+                    connection_details JSONB,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Store API-specific details in connection_details JSON
+            connection_details = {
+                "api_url": api_url,
+                "auth_type": auth_type,
+                "auth_token": auth_token if auth_type in ['bearer', 'apikey'] else None,
+                "basic_username": basic_username if auth_type == 'basic' else None,
+                "basic_password": basic_password if auth_type == 'basic' else None,
+                "apikey_header": apikey_header if auth_type == 'apikey' else None,
+                "custom_headers": custom_headers,
+                "request_method": request_method,
+                "data_path": data_path,
+                "target_table": target_table,
+                "is_sse": is_sse
+            }
+            
+            # Insert the new source
+            cursor.execute("""
+                INSERT INTO data_sources 
+                (source_name, source_type, server_address, username, password, 
+                 target_type, target_database, connection_details)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (source_name, 'rest_api', api_url, None, None, 
+                  target_type, target_database, json.dumps(connection_details)))
+            
+            source_id = cursor.fetchone()[0]
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            # Start sync in background thread if target is ClickHouse
+            if target_type.lower() == "clickhouse":
+                import threading
+                from api_sync import sync_api_to_clickhouse_once, sync_api_to_clickhouse
+                
+                def background_sync():
+                    try:
+                        app.logger.info(f"Starting background sync for API source: {source_name}")
+                        
+                        # Parse custom headers
+                        headers = {}
+                        if custom_headers:
+                            try:
+                                headers = json.loads(custom_headers)
+                            except:
+                                pass
+                        
+                        # Use one-time sync for regular REST APIs, continuous sync for SSE
+                        if is_sse:
+                            # SSE streams need continuous monitoring
+                            sync_api_to_clickhouse(
+                                api_url=api_url,
+                                target_database=target_database,
+                                target_table=target_table,
+                                auth_type=auth_type,
+                                auth_token=auth_token,
+                                basic_username=basic_username,
+                                basic_password=basic_password,
+                                apikey_header=apikey_header,
+                                custom_headers=headers,
+                                request_method=request_method,
+                                data_path=data_path,
+                                is_sse=is_sse,
+                                auto_create_table=True
+                            )
+                        else:
+                            # Regular REST APIs: sync once immediately
+                            result = sync_api_to_clickhouse_once(
+                                api_url=api_url,
+                                target_database=target_database,
+                                target_table=target_table,
+                                auth_type=auth_type,
+                                auth_token=auth_token,
+                                basic_username=basic_username,
+                                basic_password=basic_password,
+                                apikey_header=apikey_header,
+                                custom_headers=headers,
+                                request_method=request_method,
+                                data_path=data_path,
+                                auto_create_table=True
+                            )
+                            app.logger.info(f"Sync result: {result}")
+                    except Exception as e:
+                        app.logger.error(f"Background sync error: {e}")
+                
+                sync_thread = threading.Thread(target=background_sync, daemon=True)
+                sync_thread.start()
+                
+                flash(f"REST API source '{source_name}' added and sync started in background!", "success")
+            else:
+                flash(f"REST API source '{source_name}' added successfully!", "success")
+            
+            return redirect(url_for("index"))
+            
+        except psycopg2.IntegrityError:
+            flash(f"Source '{source_name}' already exists!", "danger")
+            return render_template("add_api_source.html")
+        except Exception as e:
+            app.logger.exception(f"Error adding API source: {e}")
+            flash(f"Error adding API source: {str(e)}", "danger")
+            return render_template("add_api_source.html")
+    
+    # GET request
+    return render_template("add_api_source.html")
+
+
+@app.route("/test_api_connection", methods=["POST"])
+@require_role(["admin", "operator"])
+def test_api_connection():
+    """Test API connection and fetch sample data"""
+    import time
+    try:
+        data = request.get_json()
+        api_url = data.get("api_url", "").strip()
+        auth_type = data.get("auth_type", "none")
+        auth_token = data.get("auth_token", "").strip()
+        basic_username = data.get("basic_username", "").strip()
+        basic_password = data.get("basic_password", "").strip()
+        apikey_header = data.get("apikey_header", "X-API-Key").strip()
+        custom_headers_str = data.get("custom_headers", "").strip()
+        request_method = data.get("request_method", "GET")
+        data_path = data.get("data_path", "").strip()
+        target_type = data.get("target_type", "")
+        target_database = data.get("target_database", "")
+        
+        # Parse custom headers
+        headers = {}
+        if custom_headers_str:
+            try:
+                headers = json.loads(custom_headers_str)
+            except:
+                pass
+        
+        # Add authentication
+        if auth_type == "bearer" and auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+        elif auth_type == "apikey" and auth_token and apikey_header:
+            headers[apikey_header] = auth_token
+        
+        # Prepare auth for basic authentication
+        auth = None
+        if auth_type == "basic" and basic_username and basic_password:
+            auth = (basic_username, basic_password)
+        
+        # Check if this might be an SSE endpoint
+        is_sse = data.get("is_sse", False)
+        
+        # Make API request
+        start_time = time.time()
+        
+        if is_sse:
+            # For SSE streams, just check if we can connect and read first event
+            try:
+                if request_method == "GET":
+                    response = requests.get(api_url, headers=headers, auth=auth, timeout=5, stream=True)
+                else:
+                    response = requests.post(api_url, headers=headers, auth=auth, timeout=5, stream=True)
+                
+                response_time = round(time.time() - start_time, 2)
+                
+                if response.status_code != 200:
+                    return jsonify({
+                        "success": False,
+                        "error": f"HTTP {response.status_code}: {response.reason}"
+                    })
+                
+                # Try to read first SSE event
+                sample_data = None
+                for line in response.iter_lines():
+                    if line:
+                        decoded = line.decode('utf-8')
+                        if decoded.startswith('data:'):
+                            try:
+                                json_str = decoded[5:].strip()
+                                sample_data = json.loads(json_str)
+                                break
+                            except:
+                                pass
+                
+                return jsonify({
+                    "success": True,
+                    "status_code": response.status_code,
+                    "response_time": response_time,
+                    "record_count": "Streaming (continuous)",
+                    "sample_data": sample_data,
+                    "is_sse": True
+                })
+            except Exception as e:
+                return jsonify({
+                    "success": False,
+                    "error": f"SSE connection failed: {str(e)}"
+                })
+        else:
+            # Regular REST API
+            if request_method == "GET":
+                response = requests.get(api_url, headers=headers, auth=auth, timeout=10)
+            else:
+                response = requests.post(api_url, headers=headers, auth=auth, timeout=10)
+            
+            response_time = round(time.time() - start_time, 2)
+            
+            # Check if successful
+            if response.status_code != 200:
+                return jsonify({
+                    "success": False,
+                    "error": f"HTTP {response.status_code}: {response.reason}"
+                })
+            
+            # Parse JSON response
+            try:
+                json_data = response.json()
+            except:
+                return jsonify({
+                    "success": False,
+                    "error": "Response is not valid JSON"
+                })
+            
+            # Navigate to data path if specified
+            records = json_data
+            if data_path:
+                for key in data_path.split('.'):
+                    if isinstance(records, dict) and key in records:
+                        records = records[key]
+                    else:
+                        return jsonify({
+                            "success": False,
+                            "error": f"Data path '{data_path}' not found in response"
+                        })
+            
+            # Determine record count
+            record_count = 0
+            sample_data = None
+            if isinstance(records, list):
+                record_count = len(records)
+                sample_data = records[0] if records else None
+            elif isinstance(records, dict):
+                record_count = 1
+                sample_data = records
+        
+        # Test target database connection
+        target_db_status = "Not tested"
+        try:
+            if target_type.lower() == "postgresql":
+                from db_utils import load_pg_config
+                pg_conf = load_pg_config()
+                test_conn = psycopg2.connect(
+                    dbname=target_database,
+                    user=pg_conf.get("username"),
+                    password=pg_conf.get("password"),
+                    host=pg_conf.get("host"),
+                    port=int(pg_conf.get("port", 5432))
+                )
+                test_conn.close()
+                target_db_status = "Connected ✓"
+            elif target_type.lower() == "clickhouse":
+                from clickhouse_driver import Client
+                from db_utils import load_clickhouse_config
+                ch_conf = load_clickhouse_config()
+                client = Client(
+                    host=ch_conf.get('host', 'localhost'),
+                    port=int(ch_conf.get('port', 9000)),
+                    user=ch_conf.get('user', 'default'),
+                    password=ch_conf.get('password', ''),
+                    database=target_database
+                )
+                client.execute('SELECT 1')
+                target_db_status = "Connected ✓"
+        except Exception as e:
+            target_db_status = f"Failed: {str(e)}"
+        
+        return jsonify({
+            "success": True,
+            "status_code": response.status_code,
+            "response_time": response_time,
+            "record_count": record_count,
+            "sample_data": sample_data,
+            "target_db_status": target_db_status
+        })
+        
+    except requests.exceptions.Timeout:
+        return jsonify({
+            "success": False,
+            "error": "Request timed out (10s limit)"
+        })
+    except requests.exceptions.ConnectionError:
+        return jsonify({
+            "success": False,
+            "error": "Could not connect to API endpoint"
+        })
+    except Exception as e:
+        app.logger.exception(f"Error testing API connection: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
 
 
 @app.route("/api/target/databases")

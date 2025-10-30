@@ -401,3 +401,42 @@ def get_all_connections(connection_type=None):
     except Exception as e:
         logger.error(f"Error retrieving connections: {e}")
         return []
+
+
+def load_clickhouse_config():
+    """Load ClickHouse config from environment variables or YAML"""
+    try:
+        # First try environment variables
+        host = os.environ.get('CLICKHOUSE_HOST')
+        port = os.environ.get('CLICKHOUSE_PORT')
+        user = os.environ.get('CLICKHOUSE_USER')
+        password = os.environ.get('CLICKHOUSE_PASSWORD')
+        
+        if host:
+            return {
+                'host': host,
+                'port': int(port) if port else 9000,
+                'user': user or 'default',
+                'password': password or ''
+            }
+        
+        # Fallback to YAML
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f) or {}
+        ch_config = config.get("clickhouse", {})
+        
+        return {
+            'host': ch_config.get('host', 'localhost'),
+            'port': int(ch_config.get('port', 9000)),
+            'user': ch_config.get('user', 'default'),
+            'password': ch_config.get('password', '')
+        }
+    except Exception as e:
+        logger.error(f"Error loading ClickHouse config: {e}")
+        return {
+            'host': 'localhost',
+            'port': 9000,
+            'user': 'default',
+            'password': ''
+        }
+

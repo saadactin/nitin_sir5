@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add API Source - SQL Sync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    .material-icons { font-size: 24px; vertical-align: middle; }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-y-auto">
+      <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="mb-6 sm:mb-8">
+          <div class="flex items-center gap-3 sm:gap-4 mb-2">
+            <span class="material-icons text-3xl sm:text-4xl text-purple-600">api</span>
+            <h1 class="text-2xl sm:text-3xl font-bold">Add API Source</h1>
+          </div>
+          <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark ml-0 sm:ml-12">
+            Configure REST API endpoint to sync data to PostgreSQL or ClickHouse
+          </p>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% elif category == 'danger' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Form -->
+        <form method="POST" action="{{ url_for('add_api_source') }}" class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg p-6 sm:p-8 border border-border-light dark:border-border-dark">
+          
+          <!-- Source Name -->
+          <div class="mb-6">
+            <label for="source_name" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">label</span>
+              Source Name *
+            </label>
+            <input type="text" id="source_name" name="source_name" required
+                   placeholder="e.g., CRM API Stream"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">A friendly name to identify this API source</p>
+          </div>
+
+          <!-- API URL -->
+          <div class="mb-6">
+            <label for="api_url" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">link</span>
+              API Endpoint URL *
+            </label>
+            <input type="url" id="api_url" name="api_url" required
+                   placeholder="http://localhost:3000/api/crm/stream"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Full URL of the REST API endpoint (must return JSON)</p>
+          </div>
+
+          <!-- Authentication Type -->
+          <div class="mb-6">
+            <label for="auth_type" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">security</span>
+              Authentication Type *
+            </label>
+            <select id="auth_type" name="auth_type" required
+                    onchange="toggleAuthFields()"
+                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+              <option value="none">None (Public API)</option>
+              <option value="bearer">Bearer Token</option>
+              <option value="apikey">API Key</option>
+              <option value="basic">Basic Auth</option>
+            </select>
+          </div>
+
+          <!-- Auth Token/Key (Hidden by default) -->
+          <div id="auth_token_field" class="mb-6 hidden">
+            <label for="auth_token" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">vpn_key</span>
+              <span id="auth_token_label">Bearer Token</span>
+            </label>
+            <input type="text" id="auth_token" name="auth_token"
+                   placeholder="Enter your authentication token/key"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1" id="auth_token_hint">
+              The bearer token will be sent in Authorization header
+            </p>
+          </div>
+
+          <!-- Basic Auth Username (Hidden by default) -->
+          <div id="basic_username_field" class="mb-6 hidden">
+            <label for="basic_username" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">person</span>
+              Username
+            </label>
+            <input type="text" id="basic_username" name="basic_username"
+                   placeholder="Username for basic authentication"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+          </div>
+
+          <!-- Basic Auth Password (Hidden by default) -->
+          <div id="basic_password_field" class="mb-6 hidden">
+            <label for="basic_password" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">lock</span>
+              Password
+            </label>
+            <input type="password" id="basic_password" name="basic_password"
+                   placeholder="Password for basic authentication"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+          </div>
+
+          <!-- API Key Header Name (Hidden by default) -->
+          <div id="apikey_header_field" class="mb-6 hidden">
+            <label for="apikey_header" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">text_fields</span>
+              API Key Header Name
+            </label>
+            <input type="text" id="apikey_header" name="apikey_header"
+                   placeholder="e.g., X-API-Key, Authorization"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">The HTTP header name for the API key</p>
+          </div>
+
+          <!-- Custom Headers (Optional) -->
+          <div class="mb-6">
+            <label for="custom_headers" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">code</span>
+              Custom Headers (Optional)
+            </label>
+            <textarea id="custom_headers" name="custom_headers" rows="3"
+                      placeholder='{"Content-Type": "application/json", "Accept": "application/json"}'
+                      class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"></textarea>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Additional HTTP headers as JSON object (optional)</p>
+          </div>
+
+          <!-- Request Method -->
+          <div class="mb-6">
+            <label for="request_method" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">http</span>
+              HTTP Method *
+            </label>
+            <select id="request_method" name="request_method" required
+                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+            </select>
+          </div>
+
+          <!-- Data Path (for nested JSON) -->
+          <div class="mb-6">
+            <label for="data_path" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">account_tree</span>
+              Data Path (Optional)
+            </label>
+            <input type="text" id="data_path" name="data_path"
+                   placeholder="e.g., data.records or results"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Path to array in JSON response (e.g., if data is in response.data.items, enter "data.items")</p>
+          </div>
+
+          <hr class="my-8 border-border-light dark:border-border-dark"/>
+
+          <!-- Target Database Type -->
+          <div class="mb-6">
+            <label for="target_type" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">storage</span>
+              Target Database Type *
+            </label>
+            <select id="target_type" name="target_type" required onchange="loadTargetDatabases()"
+                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+              <option value="postgresql">PostgreSQL</option>
+              <option value="clickhouse">ClickHouse</option>
+            </select>
+          </div>
+
+          <!-- Target Database Name -->
+          <div class="mb-6">
+            <label for="target_database" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">database</span>
+              Target Database Name *
+            </label>
+            <select id="target_database" name="target_database" required
+                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+              <option value="">Select target database first...</option>
+            </select>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Database where API data will be stored</p>
+          </div>
+
+          <!-- Server-Sent Events (SSE) Option -->
+          <div class="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" id="is_sse" name="is_sse" value="true"
+                     class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"/>
+              <div>
+                <span class="text-sm font-semibold flex items-center gap-2">
+                  <span class="material-icons text-base">stream</span>
+                  Server-Sent Events (SSE) Stream
+                </span>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                  ⚠️ <strong>Leave UNCHECKED for regular REST APIs</strong> (like JSONPlaceholder, most public APIs)
+                </p>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                  ✅ Only enable this for real-time streaming APIs that continuously push data (rare)
+                </p>
+              </div>
+            </label>
+          </div>
+
+          <!-- Target Table Name - Optional (Auto-generated) -->
+          <div class="mb-6 hidden" id="target_table_section">
+            <label for="target_table" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">table_chart</span>
+              Target Table Name (Optional)
+            </label>
+            <input type="text" id="target_table" name="target_table"
+                   placeholder="Auto-generated from source name if left empty"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Table will be auto-created if it doesn't exist</p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8">
+            <button type="button" onclick="testConnection()" id="testBtn"
+                    class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">sync</span>
+              <span>Test Connection</span>
+            </button>
+            <button type="submit"
+                    class="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">add_circle</span>
+              <span>Add & Start Sync</span>
+            </button>
+            <a href="{{ url_for('add_source_page') }}"
+               class="flex-1 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">cancel</span>
+              <span>Cancel</span>
+            </a>
+          </div>
+        </form>
+
+        <!-- Test Results -->
+        <div id="testResults" class="mt-6 hidden">
+          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg p-6 border border-border-light dark:border-border-dark">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons">assessment</span>
+              Connection Test Results
+            </h3>
+            <div id="testResultsContent"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Load databases when target type changes
+    async function loadTargetDatabases() {
+      const targetType = document.getElementById('target_type').value;
+      const dbSelect = document.getElementById('target_database');
+      
+      // Show loading state
+      dbSelect.innerHTML = '<option value="">Loading databases...</option>';
+      dbSelect.disabled = true;
+      
+      try {
+        const response = await fetch(`/api/target/databases?target_type=${targetType}`);
+        const data = await response.json();
+        
+        if (data.success && data.databases) {
+          dbSelect.innerHTML = '<option value="">-- Select Database --</option>';
+          data.databases.forEach(db => {
+            const option = document.createElement('option');
+            option.value = db;
+            option.textContent = db;
+            dbSelect.appendChild(option);
+          });
+          dbSelect.disabled = false;
+        } else {
+          dbSelect.innerHTML = '<option value="">Error loading databases</option>';
+          console.error('Failed to load databases:', data.message);
+        }
+      } catch (error) {
+        dbSelect.innerHTML = '<option value="">Error loading databases</option>';
+        console.error('Error fetching databases:', error);
+      }
+    }
+
+    // Load databases on page load (default to PostgreSQL)
+    document.addEventListener('DOMContentLoaded', function() {
+      loadTargetDatabases();
+    });
+
+    function toggleAuthFields() {
+      const authType = document.getElementById('auth_type').value;
+      const tokenField = document.getElementById('auth_token_field');
+      const tokenLabel = document.getElementById('auth_token_label');
+      const tokenHint = document.getElementById('auth_token_hint');
+      const basicUsernameField = document.getElementById('basic_username_field');
+      const basicPasswordField = document.getElementById('basic_password_field');
+      const apikeyHeaderField = document.getElementById('apikey_header_field');
+
+      // Hide all auth fields first
+      tokenField.classList.add('hidden');
+      basicUsernameField.classList.add('hidden');
+      basicPasswordField.classList.add('hidden');
+      apikeyHeaderField.classList.add('hidden');
+
+      // Show relevant fields based on auth type
+      if (authType === 'bearer') {
+        tokenField.classList.remove('hidden');
+        tokenLabel.textContent = 'Bearer Token';
+        tokenHint.textContent = 'The bearer token will be sent in Authorization: Bearer <token> header';
+      } else if (authType === 'apikey') {
+        tokenField.classList.remove('hidden');
+        apikeyHeaderField.classList.remove('hidden');
+        tokenLabel.textContent = 'API Key';
+        tokenHint.textContent = 'The API key will be sent in the custom header you specify';
+      } else if (authType === 'basic') {
+        basicUsernameField.classList.remove('hidden');
+        basicPasswordField.classList.remove('hidden');
+      }
+    }
+
+    async function testConnection() {
+      const testBtn = document.getElementById('testBtn');
+      const resultsDiv = document.getElementById('testResults');
+      const resultsContent = document.getElementById('testResultsContent');
+      
+      // Disable button and show loading
+      testBtn.disabled = true;
+      testBtn.innerHTML = '<span class="material-icons animate-spin">sync</span><span>Testing...</span>';
+      
+      // Collect form data
+      const formData = new FormData(document.querySelector('form'));
+      const data = {};
+      formData.forEach((value, key) => { 
+        if (key === 'is_sse') {
+          data[key] = document.getElementById('is_sse').checked;
+        } else {
+          data[key] = value;
+        }
+      });
+      
+      try {
+        const response = await fetch('/test_api_connection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Server returned non-JSON response. Please check server logs.');
+        }
+        
+        const result = await response.json();
+        
+        // Show results
+        resultsDiv.classList.remove('hidden');
+        
+        if (result.success) {
+          resultsContent.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold">
+                <span class="material-icons">check_circle</span>
+                <span>Connection Successful!</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">Status Code</div>
+                  <div class="font-semibold">${result.status_code}</div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">Records Found</div>
+                  <div class="font-semibold">${result.record_count}</div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">Response Time</div>
+                  <div class="font-semibold">${result.response_time}s</div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">Target DB Status</div>
+                  <div class="font-semibold">${result.target_db_status}</div>
+                </div>
+              </div>
+              ${result.sample_data ? `
+                <div>
+                  <div class="text-sm font-semibold mb-2">Sample Data (First Record):</div>
+                  <pre class="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-xs overflow-auto">${JSON.stringify(result.sample_data, null, 2)}</pre>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        } else {
+          resultsContent.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
+                <span class="material-icons">error</span>
+                <span>Connection Failed</span>
+              </div>
+              <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <div class="text-sm font-semibold mb-2">Error:</div>
+                <div class="text-sm">${result.error}</div>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultsDiv.classList.remove('hidden');
+        resultsContent.innerHTML = `
+          <div class="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <span class="material-icons">error</span>
+            <span>Error: ${error.message}</span>
+          </div>
+        `;
+      } finally {
+        // Re-enable button
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<span class="material-icons">sync</span><span>Test Connection</span>';
+      }
+    }
+
+    // Initialize auth fields visibility
+    toggleAuthFields();
+  </script>
+</body>
+</html>
