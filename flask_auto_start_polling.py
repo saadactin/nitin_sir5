@@ -62,11 +62,16 @@ def auto_start_polling_sources(app):
             target_table = details.get('target_table', 'api_data')
             poll_interval = details.get('poll_interval', 5)
             id_column = details.get('id_column', 'id')
+            upsert_mode = details.get('upsert_mode', False)
             auth_type = details.get('auth_type')
             auth_token = details.get('auth_token')
             basic_username = details.get('basic_username')
             basic_password = details.get('basic_password')
             apikey_header = details.get('apikey_header')
+            oauth_token_url = details.get('oauth_token_url', '')
+            oauth_username = details.get('oauth_username', '')
+            oauth_password = details.get('oauth_password', '')
+            oauth_refresh_interval = details.get('oauth_refresh_interval', 3600)
             request_method = details.get('request_method', 'GET')
             data_path = details.get('data_path', '')
             
@@ -80,9 +85,32 @@ def auto_start_polling_sources(app):
                     pass
             
             # Start background thread
-            def start_sync(source_name=name, api_url=url, target_db=target_db, target_tbl=target_table, is_poll=polling_mode):
+            def start_sync(source_name=name, api_url=url, target_db=target_db, target_tbl=target_table, is_poll=polling_mode, is_upsert=upsert_mode):
                 try:
-                    if is_poll:
+                    if is_poll and is_upsert:
+                        app.logger.info(f"🚀 AUTO-START: UPSERT mode '{source_name}' every {poll_interval}s")
+                        from api_upsert import upsert_api_to_clickhouse
+                        upsert_api_to_clickhouse(
+                            api_url=api_url,
+                            target_database=target_db,
+                            target_table=target_tbl,
+                            auth_type=auth_type,
+                            auth_token=auth_token,
+                            basic_username=basic_username,
+                            basic_password=basic_password,
+                            apikey_header=apikey_header,
+                            custom_headers=custom_headers,
+                            request_method=request_method,
+                            data_path=data_path,
+                            poll_interval=poll_interval,
+                            id_column=id_column,
+                            auto_create_table=True,
+                            oauth_token_url=oauth_token_url,
+                            oauth_username=oauth_username,
+                            oauth_password=oauth_password,
+                            oauth_refresh_interval=oauth_refresh_interval
+                        )
+                    elif is_poll:
                         app.logger.info(f"🚀 AUTO-START: Polling '{source_name}' every {poll_interval}s")
                         poll_api_to_clickhouse(
                             api_url=api_url,
@@ -98,7 +126,11 @@ def auto_start_polling_sources(app):
                             data_path=data_path,
                             poll_interval=poll_interval,
                             id_column=id_column,
-                            auto_create_table=True
+                            auto_create_table=True,
+                            oauth_token_url=oauth_token_url,
+                            oauth_username=oauth_username,
+                            oauth_password=oauth_password,
+                            oauth_refresh_interval=oauth_refresh_interval
                         )
                     else:  # SSE
                         app.logger.info(f"🚀 AUTO-START: SSE stream '{source_name}'")

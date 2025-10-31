@@ -1,18 +1,15 @@
 """
-API Polling Module - Continuously checks REST API for new data and syncs to ClickHouse
+API Upserting Module - Handles INSERT + UPDATE for APIs with changing data
+For APIs that return same IDs but with updated values (like real-time price data)
 """
 import requests
-import json
 import time
 import logging
 from datetime import datetime
 from clickhouse_driver import Client
 from db_utils import load_clickhouse_config
 from api_data_detector import auto_detect_and_extract
-from api_sync import (
-    flatten_record, infer_clickhouse_type, create_clickhouse_table_from_sample,
-    send_api_sync_email
-)
+from api_sync import flatten_record, infer_clickhouse_type, create_clickhouse_table_from_sample
 
 logger = logging.getLogger(__name__)
 
@@ -60,55 +57,41 @@ def ensure_columns_exist(client, target_database, target_table, new_columns_dict
         return False
 
 
-def poll_api_to_clickhouse(api_url, target_database, target_table,
-                           auth_type="none", auth_token="",
-                           basic_username="", basic_password="",
-                           apikey_header="X-API-Key",
-                           custom_headers=None,
-                           request_method="GET",
-                           data_path="data",
-                           poll_interval=5,
-                           id_column="id",
-                           auto_create_table=True,
-                           oauth_token_url="",
-                           oauth_username="",
-                           oauth_password="",
-                           oauth_refresh_interval=3600):
+def upsert_api_to_clickhouse(api_url, target_database, target_table,
+                              auth_type="none", auth_token="",
+                              basic_username="", basic_password="",
+                              apikey_header="X-API-Key",
+                              custom_headers=None,
+                              request_method="GET",
+                              data_path="data",
+                              poll_interval=5,
+                              id_column="id",
+                              auto_create_table=True,
+                              oauth_token_url="",
+                              oauth_username="",
+                              oauth_password="",
+                              oauth_refresh_interval=3600):
     """
-    Poll REST API continuously and sync new data to ClickHouse
+    Continuously poll API and UPSERT data to ClickHouse
+    For APIs that return same IDs with updated values (e.g., cryptocurrency prices)
     
-    Args:
-        api_url: API endpoint URL
-        target_database: ClickHouse database name
-        target_table: ClickHouse table name
-        auth_type: Authentication type
-        poll_interval: Seconds between API calls (default: 5)
-        id_column: Column name to use for deduplication (default: "id")
-        data_path: JSON path to array (e.g., "data" for data['data'])
+    Strategy: Use ReplacingMergeTree which automatically handles updates
     """
     
-    sync_start_time = datetime.now()
-    total_records_synced = 0
-    poll_count = 0
-    
-    logger.info(f"Starting continuous API polling from: {api_url}")
+    logger.info(f"Starting UPSERT mode API polling from: {api_url}")
     logger.info(f"Target: {target_database}.{target_table}")
     logger.info(f"Polling interval: {poll_interval} seconds")
-    logger.info(f"ID column for deduplication: {id_column}")
+    logger.info(f"ID column: {id_column}")
+    logger.info(f"UPSERT mode: Will INSERT new records and UPDATE existing ones!")
     
-    # Initialize OAuth token manager if OAuth is enabled
+    # Initialize OAuth if needed
     token_manager = None
     if auth_type == "oauth" and oauth_token_url and oauth_username and oauth_password:
         from oauth_token_manager import get_token_manager
-        logger.info(f"OAuth authentication enabled")
-        logger.info(f"Token URL: {oauth_token_url}")
-        logger.info(f"Username: {oauth_username}")
-        logger.info(f"Token refresh interval: {oauth_refresh_interval}s")
+        logger.info(f"OAuth enabled - Token URL: {oauth_token_url}")
         token_manager = get_token_manager(
             oauth_token_url, oauth_username, oauth_password, oauth_refresh_interval
         )
-    
-    logger.info(f"Will run forever until manually stopped!")
     
     try:
         # Connect to ClickHouse with error handling
@@ -137,37 +120,30 @@ def poll_api_to_clickhouse(api_url, target_database, target_table,
         
         # Prepare headers
         headers = custom_headers.copy() if custom_headers else {}
-        
         if auth_type == "bearer" and auth_token:
             headers["Authorization"] = f"Bearer {auth_token}"
         elif auth_type == "apikey" and auth_token and apikey_header:
             headers[apikey_header] = auth_token
-        elif auth_type == "oauth" and token_manager:
-            # OAuth token will be added dynamically in the loop
-            pass
         
-        # Prepare auth
+        # Prepare basic auth
         auth = None
         if auth_type == "basic" and basic_username and basic_password:
             auth = (basic_username, basic_password)
         
         table_created = False
-        seen_ids = set()  # Track IDs we've already synced
+        poll_count = 0
         
-        while True:  # Poll forever
+        while True:
             try:
                 poll_count += 1
-                poll_start = datetime.now()
+                logger.info(f"Poll #{poll_count}: Fetching data...")
                 
-                logger.info(f"Poll #{poll_count}: Fetching data from API...")
-                
-                # Get fresh OAuth token if using OAuth
+                # Get OAuth token if needed with error handling
                 if auth_type == "oauth" and token_manager:
                     try:
                         current_token = token_manager.get_token()
                         if current_token:
                             headers["Authorization"] = f"Bearer {current_token}"
-                            logger.debug(f"Using OAuth token (expires soon: check manager)")
                         else:
                             logger.error("ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.")
                             logger.info(f"Retrying in {poll_interval}s...")
@@ -180,7 +156,7 @@ def poll_api_to_clickhouse(api_url, target_database, target_table,
                         time.sleep(poll_interval)
                         continue
                 
-                # Make API request with comprehensive error handling
+                # Fetch API data with comprehensive error handling
                 try:
                     if request_method == "GET":
                         response = requests.get(api_url, headers=headers, auth=auth, timeout=30)
@@ -266,7 +242,7 @@ def poll_api_to_clickhouse(api_url, target_database, target_table,
                     time.sleep(poll_interval)
                     continue
                 
-                # Auto-detect and extract data using smart detection
+                # Auto-detect and extract records with error handling
                 try:
                     detected_path, records = auto_detect_and_extract(json_data, data_path)
                 except Exception as extract_err:
@@ -276,6 +252,9 @@ def poll_api_to_clickhouse(api_url, target_database, target_table,
                     time.sleep(poll_interval)
                     continue
                 
+                if poll_count == 1:
+                    logger.info(f"Detected data path: '{detected_path}' with {len(records)} records")
+                
                 # Check if we got any records
                 if not records or len(records) == 0:
                     logger.warning(f"WARNING: No records found in API response")
@@ -284,131 +263,131 @@ def poll_api_to_clickhouse(api_url, target_database, target_table,
                     time.sleep(poll_interval)
                     continue
                 
-                # Log which path was used (only on first poll)
-                if poll_count == 1:
-                    logger.info(f"Using data path: '{detected_path}' for future polls")
+                # Create table on first poll (using ReplacingMergeTree for UPSERT)
+                if not table_created and auto_create_table:
+                    logger.info(f"Creating table {target_database}.{target_table} with UPSERT support...")
+                    
+                    # Get complete schema
+                    all_columns = {}
+                    for record in records[:100]:
+                        flat = flatten_record(record)
+                        for key, value in flat.items():
+                            safe_key = key.replace('.', '_').replace(' ', '_').replace('-', '_')
+                            if safe_key not in all_columns:
+                                all_columns[safe_key] = infer_clickhouse_type(value)
+                    
+                    # Add metadata
+                    all_columns['_sync_timestamp'] = 'DateTime64(3)'
+                    all_columns['_source_api'] = 'String'
+                    
+                    # Make ID column non-nullable for sorting key
+                    safe_id_column = id_column.replace('.', '_').replace(' ', '_').replace('-', '_')
+                    if safe_id_column in all_columns:
+                        # Remove Nullable wrapper if present
+                        all_columns[safe_id_column] = all_columns[safe_id_column].replace('Nullable(', '').replace(')', '')
+                        if all_columns[safe_id_column] == 'String':
+                            pass  # String is fine
+                        elif not all_columns[safe_id_column]:
+                            all_columns[safe_id_column] = 'String'  # Default to String if empty
+                    
+                    # Create database
+                    client.execute(f"CREATE DATABASE IF NOT EXISTS {target_database}")
+                    
+                    # Drop old table if exists
+                    client.execute(f"DROP TABLE IF EXISTS {target_database}.{target_table}")
+                    
+                    # Create table with ReplacingMergeTree for UPSERT
+                    columns_def = [f"`{col}` {dtype}" for col, dtype in all_columns.items()]
+                    
+                    create_query = f"""
+                    CREATE TABLE {target_database}.{target_table} (
+                        {', '.join(columns_def)}
+                    ) ENGINE = ReplacingMergeTree(_sync_timestamp)
+                    ORDER BY `{safe_id_column}`
+                    SETTINGS allow_nullable_key = 1
+                    """
+                    
+                    client.execute(create_query)
+                    logger.info(f"Created UPSERT table with {len(all_columns)} columns")
+                    table_created = True
                 
-                logger.info(f"Received {len(records)} total records from API")
-                
-                # Filter for NEW records only (not in seen_ids)
-                new_records = []
+                # Flatten and insert ALL records (ReplacingMergeTree will handle duplicates)
+                flattened_records = []
                 for record in records:
-                    flat_record = flatten_record(record)
-                    record_id = flat_record.get(id_column)
+                    flat = flatten_record(record)
+                    flat['_sync_timestamp'] = datetime.now()
+                    flat['_source_api'] = api_url
                     
-                    if record_id and str(record_id) not in seen_ids:
-                        new_records.append(record)
-                        seen_ids.add(str(record_id))
+                    # Safe column names
+                    safe_flat = {}
+                    for key, value in flat.items():
+                        safe_key = key.replace('.', '_').replace(' ', '_').replace('-', '_')
+                        safe_flat[safe_key] = value
+                    
+                    flattened_records.append(safe_flat)
                 
-                logger.info(f"Found {len(new_records)} NEW records to sync")
-                
-                if new_records:
-                    # Flatten all new records
-                    all_columns = set()
-                    flattened_records = []
-                    for record in new_records:
-                        flat_record = flatten_record(record)
-                        flat_record['_source_api'] = api_url
-                        flat_record['_sync_timestamp'] = datetime.now()
-                        all_columns.update(flat_record.keys())
-                        flattened_records.append(flat_record)
+                # Insert all records
+                if flattened_records:
+                    columns = list(flattened_records[0].keys())
                     
-                    column_list = sorted(list(all_columns))
+                    # Ensure all columns exist in the table (schema evolution)
+                    # This handles cases where the API schema changes and adds new columns
+                    if table_created:  # Only check if table already exists (was created in previous cycles)
+                        # Build dict of column_name -> sample_value for type inference
+                        sample_record = flattened_records[0]
+                        ensure_columns_exist(client, target_database, target_table, sample_record)
                     
-                    # Create table if needed (only on first poll)
-                    if not table_created and auto_create_table:
-                        complete_sample = {}
-                        for col in column_list:
-                            for flat_record in flattened_records:
-                                if col in flat_record and flat_record[col] is not None:
-                                    complete_sample[col] = flat_record[col]
-                                    break
-                            if col not in complete_sample:
-                                complete_sample[col] = None
-                        
-                        if create_clickhouse_table_from_sample(client, target_database, target_table, 
-                                                               complete_sample, already_flattened=True):
-                            table_created = True
-                            logger.info(f"Created table {target_database}.{target_table} with {len(column_list)} columns")
-                    
-                    # Insert new records as batch with comprehensive error handling
+                    insert_query = f"INSERT INTO {target_database}.{target_table} ({', '.join([f'`{c}`' for c in columns])}) VALUES"
                     try:
-                        # Ensure all columns exist in the table (schema evolution)
-                        # Always check for missing columns if table exists (handles API schema changes)
-                        if table_created and flattened_records:
+                        client.execute(insert_query, flattened_records)
+                    except Exception as insert_error:
+                        error_str = str(insert_error)
+                        # Handle specific ClickHouse errors
+                        if "No such column" in error_str:
+                            logger.warning(f"WARNING: Insert failed due to missing columns, attempting schema evolution...")
                             try:
-                                # Build dict of column_name -> sample_value for type inference
-                                sample_record = flattened_records[0]
+                                sample_record = flattened_records[0] if flattened_records else {}
                                 ensure_columns_exist(client, target_database, target_table, sample_record)
-                            except Exception as schema_err:
-                                logger.error(f"ERROR: Failed to check/add missing columns: {str(schema_err)}")
-                                logger.error("Continuing with insert anyway...")
-                        
-                        batch_values = []
-                        for flat_record in flattened_records:
-                            values = [flat_record.get(col, None) for col in column_list]
-                            batch_values.append(values)
-                        
-                        insert_sql = f"INSERT INTO {target_database}.{target_table} ({', '.join([f'`{c}`' for c in column_list])}) VALUES"
-                        try:
-                            client.execute(insert_sql, batch_values)
-                        except Exception as insert_error:
-                            error_str = str(insert_error)
-                            # Handle specific ClickHouse errors
-                            if "No such column" in error_str:
-                                logger.warning(f"WARNING: Insert failed due to missing columns, attempting schema evolution...")
-                                try:
-                                    sample_record = flattened_records[0] if flattened_records else {}
-                                    ensure_columns_exist(client, target_database, target_table, sample_record)
-                                    # Retry the insert
-                                    client.execute(insert_sql, batch_values)
-                                    logger.info(f"Successfully inserted after adding missing columns")
-                                except Exception as retry_err:
-                                    logger.error(f"ERROR: Failed to fix schema and retry insert: {str(retry_err)}")
-                                    raise
-                            elif "Connection refused" in error_str or "Unable to connect" in error_str:
-                                logger.error(f"ERROR: Cannot connect to ClickHouse database")
-                                logger.error("Please check ClickHouse server is running and connection settings are correct.")
+                                # Retry the insert
+                                client.execute(insert_query, flattened_records)
+                                logger.info(f"Successfully inserted after adding missing columns")
+                            except Exception as retry_err:
+                                logger.error(f"ERROR: Failed to fix schema and retry insert: {str(retry_err)}")
                                 raise
-                            elif "Database" in error_str and "doesn't exist" in error_str:
-                                logger.error(f"ERROR: ClickHouse database '{target_database}' does not exist")
-                                logger.error("Attempting to create database...")
-                                try:
-                                    client.execute(f"CREATE DATABASE IF NOT EXISTS {target_database}")
-                                    logger.info(f"Database '{target_database}' created successfully")
-                                    # Retry insert
-                                    client.execute(insert_sql, batch_values)
-                                    logger.info(f"Successfully inserted after creating database")
-                                except Exception as db_err:
-                                    logger.error(f"ERROR: Failed to create database: {str(db_err)}")
-                                    raise
-                            else:
-                                logger.error(f"ERROR: ClickHouse insert failed: {error_str}")
+                        elif "Connection refused" in error_str or "Unable to connect" in error_str:
+                            logger.error(f"ERROR: Cannot connect to ClickHouse database")
+                            logger.error("Please check ClickHouse server is running and connection settings are correct.")
+                            raise
+                        elif "Database" in error_str and "doesn't exist" in error_str:
+                            logger.error(f"ERROR: ClickHouse database '{target_database}' does not exist")
+                            logger.error("Attempting to create database...")
+                            try:
+                                client.execute(f"CREATE DATABASE IF NOT EXISTS {target_database}")
+                                logger.info(f"Database '{target_database}' created successfully")
+                                # Retry insert
+                                client.execute(insert_query, flattened_records)
+                                logger.info(f"Successfully inserted after creating database")
+                            except Exception as db_err:
+                                logger.error(f"ERROR: Failed to create database: {str(db_err)}")
                                 raise
-                        
-                        total_records_synced += len(batch_values)
-                        logger.info(f"Inserted {len(batch_values)} new records | Total synced: {total_records_synced}")
-                        
-                    except Exception as insert_exception:
-                        logger.error(f"ERROR: Failed to insert data batch into ClickHouse")
-                        logger.error(f"Error details: {str(insert_exception)}")
-                        logger.error(f"Target: {target_database}.{target_table}")
-                        logger.error(f"Records affected: {len(flattened_records) if 'flattened_records' in locals() else 0}")
-                        # Don't break the loop, just log and continue
-                        logger.info(f"Continuing polling, will retry on next cycle...")
-                else:
-                    logger.info(f"No new records found (all records already synced)")
+                        else:
+                            logger.error(f"ERROR: ClickHouse insert failed: {error_str}")
+                            raise
+                    
+                    # OPTIMIZE to merge duplicates immediately
+                    client.execute(f"OPTIMIZE TABLE {target_database}.{target_table} FINAL")
+                    
+                    logger.info(f"Upserted {len(flattened_records)} records (new + updated)")
                 
-                # Wait before next poll
-                poll_duration = (datetime.now() - poll_start).total_seconds()
-                sleep_time = max(0, poll_interval - poll_duration)
+                # Show stats
+                result = client.execute(f"SELECT count() FROM {target_database}.{target_table}")
+                logger.info(f"Total rows: {result[0][0]}")
                 
-                if sleep_time > 0:
-                    logger.info(f"Waiting {sleep_time:.1f}s until next poll...")
-                    time.sleep(sleep_time)
+                # Sleep before next poll
+                time.sleep(poll_interval)
                 
             except KeyboardInterrupt:
-                logger.info(f"\nPolling stopped by user")
+                logger.info(f"\nUPSERT polling stopped by user")
                 break
             except requests.exceptions.RequestException as req_ex:
                 logger.error(f"ERROR: Network/HTTP error in poll cycle: {str(req_ex)}")
@@ -420,17 +399,8 @@ def poll_api_to_clickhouse(api_url, target_database, target_table,
                 logger.exception("Full error traceback:")
                 logger.info(f"Retrying in {poll_interval}s...")
                 time.sleep(poll_interval)
-        
-        # Summary
-        duration = (datetime.now() - sync_start_time).total_seconds()
-        logger.info(f"\nPolling Summary:")
-        logger.info(f"  Total polls: {poll_count}")
-        logger.info(f"  Total records synced: {total_records_synced}")
-        logger.info(f"  Duration: {duration:.1f}s")
-        
-        return {"success": True, "records_synced": total_records_synced, "polls": poll_count, "error": None}
-        
+                
     except Exception as e:
-        logger.exception(f"Fatal error in API polling: {e}")
-        return {"success": False, "records_synced": total_records_synced, "polls": poll_count, "error": str(e)}
+        logger.error(f"Fatal error in upsert polling: {e}")
+        raise
 

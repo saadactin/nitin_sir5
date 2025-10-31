@@ -1,0 +1,146 @@
+================================================================================
+OAUTH API SYNC - AUTOMATIC FLOW DIAGRAM
+================================================================================
+
+YOU CONFIGURE ONCE (Via Web Interface):
+┌────────────────────────────────────────────────────────────┐
+│  Form Fields You Fill In:                                  │
+│  ─────────────────────────────────────────────────────     │
+│  • Auth Type: OAuth 2.0 (Auto-Refresh)                     │
+│  • OAuth Token URL: http://localhost:4010/pass             │
+│  • OAuth Username: your_username                           │
+│  • OAuth Password: your_password                           │
+│  • API URL: http://localhost:4010/data                     │
+│  • Enable Polling: ✓ (if you want continuous sync)         │
+│  • Poll Interval: 5 seconds                                │
+│  ─────────────────────────────────────────────────────     │
+│  [Click "Add Source" Button]                               │
+└────────────────────────────────────────────────────────────┘
+                            ▼
+================================================================================
+SYSTEM AUTOMATICALLY DOES EVERYTHING BELOW (FOREVER):
+================================================================================
+
+INITIAL SETUP (Happens Once):
+┌────────────────────────────────────────────────────────────┐
+│  1. System creates OAuth Token Manager                     │
+│     ├─ Stores your username/password (encrypted)           │
+│     ├─ Knows token URL                                     │
+│     └─ Knows refresh interval (3600 seconds)               │
+│                                                             │
+│  2. System immediately requests token:                     │
+│     POST http://localhost:4010/pass                        │
+│     Body: {                                                │
+│       "username": "your_username",                         │
+│       "password": "your_password"                          │
+│     }                                                       │
+│                                                             │
+│  3. Receives token:                                        │
+│     Response: {                                            │
+│       "token": "abc123xyz..."                              │
+│     }                                                       │
+│                                                             │
+│  4. Stores token in memory                                 │
+│  5. Starts background refresh thread                       │
+│  6. Starts polling thread                                  │
+└────────────────────────────────────────────────────────────┘
+                            ▼
+
+EVERY 5 SECONDS (Continuous Polling):
+┌────────────────────────────────────────────────────────────┐
+│  Poll #1, #2, #3... (Forever)                              │
+│  ─────────────────────────────────────────────────────     │
+│  1. Check if token is still valid                          │
+│     │                                                       │
+│     ├─ If valid → Use current token                        │
+│     └─ If expired/expiring → Refresh token first           │
+│                                                             │
+│  2. Make API request with token:                           │
+│     GET http://localhost:4010/data                         │
+│     Headers: {                                             │
+│       "Authorization": "Bearer abc123xyz..."               │
+│     }                                                       │
+│                                                             │
+│  3. Receive data:                                          │
+│     Response: {                                            │
+│       "data": [                                            │
+│         {"id": 1, "name": "Item 1", ...},                  │
+│         {"id": 2, "name": "Item 2", ...}                   │
+│       ]                                                     │
+│     }                                                       │
+│                                                             │
+│  4. Auto-detect JSON structure ("data" path)               │
+│  5. Flatten nested objects                                 │
+│  6. Infer data types                                       │
+│  7. Insert into ClickHouse                                 │
+│                                                             │
+│  8. Wait 5 seconds... then repeat!                         │
+└────────────────────────────────────────────────────────────┘
+                            ▼
+                    (Loops Forever)
+                            ▼
+
+EVERY HOUR (Before Token Expires):
+┌────────────────────────────────────────────────────────────┐
+│  Background Refresh Thread (Automatic)                     │
+│  ─────────────────────────────────────────────────────     │
+│  At 59 minutes (60 seconds before expiry):                 │
+│                                                             │
+│  1. POST http://localhost:4010/pass                        │
+│     Body: {                                                │
+│       "username": "your_username",                         │
+│       "password": "your_password"                          │
+│     }                                                       │
+│                                                             │
+│  2. Get NEW token:                                         │
+│     Response: {                                            │
+│       "token": "xyz789new..."                              │
+│     }                                                       │
+│                                                             │
+│  3. Replace old token with new one                         │
+│  4. Polling continues with new token                       │
+│  5. Wait another hour... repeat!                           │
+└────────────────────────────────────────────────────────────┘
+
+================================================================================
+
+RESULT: DATA IN CLICKHOUSE (AUTOMATICALLY UPDATED!)
+┌────────────────────────────────────────────────────────────┐
+│  SELECT * FROM test1.my_oauth_api LIMIT 5;                 │
+│  ─────────────────────────────────────────────────────     │
+│  │ id │ name    │ value │ _sync_timestamp      │           │
+│  ├────┼─────────┼───────┼──────────────────────┤           │
+│  │ 1  │ Item 1  │ 100   │ 2025-10-31 11:00:05  │           │
+│  │ 2  │ Item 2  │ 200   │ 2025-10-31 11:00:05  │           │
+│  │ 3  │ Item 3  │ 300   │ 2025-10-31 11:00:05  │           │
+│  │ 4  │ Item 4  │ 400   │ 2025-10-31 11:00:10  │           │
+│  │ 5  │ Item 5  │ 500   │ 2025-10-31 11:00:10  │           │
+└────────────────────────────────────────────────────────────┘
+
+Data keeps growing automatically!
+Tokens refresh automatically!
+You do NOTHING! 🎉
+
+================================================================================
+SUMMARY
+================================================================================
+
+YOU PROVIDE (ONCE):
+  • Token URL (where to POST for token)
+  • Username
+  • Password
+  • Data URL (where to GET data)
+
+SYSTEM HANDLES (FOREVER):
+  ✅ Token generation
+  ✅ Token refresh (every hour)
+  ✅ Token injection into requests
+  ✅ Data fetching
+  ✅ Schema detection
+  ✅ ClickHouse sync
+  ✅ Continuous polling
+
+NO MANUAL TOKEN WORK EVER AGAIN! 🚀
+
+================================================================================
+

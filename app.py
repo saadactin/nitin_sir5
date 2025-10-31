@@ -553,14 +553,59 @@ def index():
                         data_source_statuses[ds['id']] = {'online': True, 'error': None, 'status': 'Streaming'}
                     else:
                         headers = {}
-                        if connection_details.get('auth_type') == 'bearer':
+                        auth_type = connection_details.get('auth_type', 'none')
+                        
+                        # Handle OAuth authentication
+                        if auth_type == 'oauth':
+                            oauth_token_url = connection_details.get('oauth_token_url', '')
+                            oauth_username = connection_details.get('oauth_username', '')
+                            oauth_password = connection_details.get('oauth_password', '')
+                            
+                            if oauth_token_url and oauth_username and oauth_password:
+                                try:
+                                    app.logger.info(f"Status check OAuth: Requesting token from {oauth_token_url}")
+                                    token_response = requests.post(
+                                        oauth_token_url,
+                                        json={"username": oauth_username, "password": oauth_password},
+                                        timeout=10
+                                    )
+                                    
+                                    if token_response.status_code == 200:
+                                        token_data = token_response.json()
+                                        oauth_token = token_data.get('token') or token_data.get('access_token') or token_data.get('oauth_token')
+                                        
+                                        if not oauth_token:
+                                            # Try to find any string field that looks like a token
+                                            for key, value in token_data.items():
+                                                if isinstance(value, str) and len(value) > 20:
+                                                    oauth_token = value
+                                                    break
+                                        
+                                        if oauth_token:
+                                            headers["Authorization"] = f"Bearer {oauth_token}"
+                                            app.logger.info(f"Status check: OAuth token obtained successfully")
+                                        else:
+                                            data_source_statuses[ds['id']] = {'online': False, 'error': 'No token found in OAuth response'}
+                                            continue
+                                    else:
+                                        data_source_statuses[ds['id']] = {'online': False, 'error': f'OAuth token request failed: HTTP {token_response.status_code}'}
+                                        continue
+                                except Exception as e:
+                                    app.logger.exception(f"OAuth token request failed in status check: {e}")
+                                    data_source_statuses[ds['id']] = {'online': False, 'error': f'OAuth token request failed: {str(e)}'}
+                                    continue
+                            else:
+                                data_source_statuses[ds['id']] = {'online': False, 'error': 'OAuth credentials missing'}
+                                continue
+                        elif auth_type == 'bearer':
                             token = connection_details.get('auth_token', '')
                             headers['Authorization'] = f'Bearer {token}'
-                        elif connection_details.get('auth_type') == 'apikey':
+                        elif auth_type == 'apikey':
                             key_name = connection_details.get('apikey_header', 'X-API-Key')
                             key_value = connection_details.get('auth_token', '')
                             headers[key_name] = key_value
                         
+                        # Make the status check request
                         response = requests.get(api_url, headers=headers, timeout=5)
                         if response.status_code == 200:
                             data_source_statuses[ds['id']] = {'online': True, 'error': None}
@@ -827,8 +872,33 @@ def sync_api_source(source_id):
                 polling_mode = connection_details.get('polling_mode', False)
                 poll_interval = connection_details.get('poll_interval', 5)
                 id_column = connection_details.get('id_column', 'id')
+                upsert_mode = connection_details.get('upsert_mode', False)
                 
-                if polling_mode:
+                if polling_mode and upsert_mode:
+                    # UPSERT mode: Update existing records + insert new ones
+                    app.logger.info(f"Starting UPSERT mode for '{source_name}' (every {poll_interval}s)")
+                    from api_upsert import upsert_api_to_clickhouse
+                    upsert_api_to_clickhouse(
+                        api_url=api_url,
+                        target_database=target_database,
+                        target_table=target_table,
+                        auth_type=auth_type,
+                        auth_token=auth_token,
+                        basic_username=basic_username,
+                        basic_password=basic_password,
+                        apikey_header=apikey_header,
+                        custom_headers=custom_headers,
+                        request_method=request_method,
+                        data_path=data_path,
+                        poll_interval=poll_interval,
+                        id_column=id_column,
+                        auto_create_table=True,
+                        oauth_token_url=connection_details.get('oauth_token_url', ''),
+                        oauth_username=connection_details.get('oauth_username', ''),
+                        oauth_password=connection_details.get('oauth_password', ''),
+                        oauth_refresh_interval=connection_details.get('oauth_refresh_interval', 3600)
+                    )
+                elif polling_mode:
                     # Polling mode: Continuously check API for new data
                     app.logger.info(f"Starting POLLING mode for '{source_name}' (every {poll_interval}s)")
                     from api_polling import poll_api_to_clickhouse
@@ -846,7 +916,11 @@ def sync_api_source(source_id):
                         data_path=data_path,
                         poll_interval=poll_interval,
                         id_column=id_column,
-                        auto_create_table=True
+                        auto_create_table=True,
+                        oauth_token_url=connection_details.get('oauth_token_url', ''),
+                        oauth_username=connection_details.get('oauth_username', ''),
+                        oauth_password=connection_details.get('oauth_password', ''),
+                        oauth_refresh_interval=connection_details.get('oauth_refresh_interval', 3600)
                     )
                 elif is_sse:
                     # True SSE streams (text/event-stream)
@@ -1007,6 +1081,7 @@ def sync_source_background(source_id):
             polling_mode = connection_details.get('polling_mode', False)
             poll_interval = connection_details.get('poll_interval', 5)
             id_column = connection_details.get('id_column', 'id')
+            upsert_mode = connection_details.get('upsert_mode', False)
             custom_headers_str = connection_details.get('custom_headers', '')
             custom_headers = {}
             if custom_headers_str:
@@ -1017,8 +1092,32 @@ def sync_source_background(source_id):
             
             def background_sync():
                 try:
-                    # Determine sync mode: polling, SSE, or one-time
-                    if polling_mode:
+                    # Determine sync mode: upsert, polling, SSE, or one-time
+                    if polling_mode and upsert_mode:
+                        # UPSERT mode: Insert new + update existing records
+                        app.logger.info(f"Starting UPSERT mode for '{source['source_name']}' (every {poll_interval}s)")
+                        from api_upsert import upsert_api_to_clickhouse
+                        upsert_api_to_clickhouse(
+                            api_url=source['server_address'],
+                            target_database=source['target_database'],
+                            target_table=connection_details.get('target_table', 'api_data'),
+                            auth_type=connection_details.get('auth_type'),
+                            auth_token=connection_details.get('auth_token'),
+                            basic_username=connection_details.get('basic_username'),
+                            basic_password=connection_details.get('basic_password'),
+                            apikey_header=connection_details.get('apikey_header'),
+                            custom_headers=custom_headers,
+                            request_method=connection_details.get('request_method', 'GET'),
+                            data_path=connection_details.get('data_path', ''),
+                            poll_interval=poll_interval,
+                            id_column=id_column,
+                            auto_create_table=True,
+                            oauth_token_url=connection_details.get('oauth_token_url', ''),
+                            oauth_username=connection_details.get('oauth_username', ''),
+                            oauth_password=connection_details.get('oauth_password', ''),
+                            oauth_refresh_interval=connection_details.get('oauth_refresh_interval', 3600)
+                        )
+                    elif polling_mode:
                         # Polling mode: Continuously check API for new data
                         app.logger.info(f"Starting POLLING mode for '{source['source_name']}' (every {poll_interval}s)")
                         poll_api_to_clickhouse(
@@ -1035,7 +1134,11 @@ def sync_source_background(source_id):
                             data_path=connection_details.get('data_path', ''),
                             poll_interval=poll_interval,
                             id_column=id_column,
-                            auto_create_table=True
+                            auto_create_table=True,
+                            oauth_token_url=connection_details.get('oauth_token_url', ''),
+                            oauth_username=connection_details.get('oauth_username', ''),
+                            oauth_password=connection_details.get('oauth_password', ''),
+                            oauth_refresh_interval=connection_details.get('oauth_refresh_interval', 3600)
                         )
                     elif is_sse:
                         # SSE streams need continuous monitoring
@@ -2019,6 +2122,12 @@ def add_api_source():
             target_database = request.form.get("target_database", "").strip()
             is_sse = request.form.get("is_sse", "false").strip().lower() == "true"
             
+            # OAuth parameters
+            oauth_token_url = request.form.get("oauth_token_url", "").strip()
+            oauth_username = request.form.get("oauth_username", "").strip()
+            oauth_password = request.form.get("oauth_password", "").strip()
+            oauth_refresh_interval = int(request.form.get("oauth_refresh_interval", "3600"))
+            
             # Auto-generate table name from source name if not provided
             target_table = request.form.get("target_table", "").strip()
             if not target_table:
@@ -2077,6 +2186,7 @@ def add_api_source():
             polling_mode = request.form.get("polling_mode", "false") == "true"
             poll_interval = int(request.form.get("poll_interval", "5"))
             id_column = request.form.get("id_column", "id")
+            upsert_mode = request.form.get("upsert_mode", "false") == "true"
             
             connection_details = {
                 "api_url": api_url,
@@ -2085,6 +2195,10 @@ def add_api_source():
                 "basic_username": basic_username if auth_type == 'basic' else None,
                 "basic_password": basic_password if auth_type == 'basic' else None,
                 "apikey_header": apikey_header if auth_type == 'apikey' else None,
+                "oauth_token_url": oauth_token_url if auth_type == 'oauth' else None,
+                "oauth_username": oauth_username if auth_type == 'oauth' else None,
+                "oauth_password": oauth_password if auth_type == 'oauth' else None,
+                "oauth_refresh_interval": oauth_refresh_interval if auth_type == 'oauth' else 3600,
                 "custom_headers": custom_headers,
                 "request_method": request_method,
                 "data_path": data_path,
@@ -2092,7 +2206,8 @@ def add_api_source():
                 "is_sse": is_sse,
                 "polling_mode": polling_mode,
                 "poll_interval": poll_interval,
-                "id_column": id_column
+                "id_column": id_column,
+                "upsert_mode": upsert_mode
             }
             
             # Insert the new source
@@ -2129,8 +2244,32 @@ def add_api_source():
                             except:
                                 pass
                         
-                        # Determine sync mode: polling, SSE, or one-time
-                        if polling_mode:
+                        # Determine sync mode: upsert, polling, SSE, or one-time
+                        if polling_mode and upsert_mode:
+                            # UPSERT mode: Insert new + update existing
+                            app.logger.info(f"Starting UPSERT mode for '{source_name}' (every {poll_interval}s)")
+                            from api_upsert import upsert_api_to_clickhouse
+                            upsert_api_to_clickhouse(
+                                api_url=api_url,
+                                target_database=target_database,
+                                target_table=target_table,
+                                auth_type=auth_type,
+                                auth_token=auth_token,
+                                basic_username=basic_username,
+                                basic_password=basic_password,
+                                apikey_header=apikey_header,
+                                custom_headers=headers,
+                                request_method=request_method,
+                                data_path=data_path,
+                                poll_interval=poll_interval,
+                                id_column=id_column,
+                                auto_create_table=True,
+                                oauth_token_url=oauth_token_url,
+                                oauth_username=oauth_username,
+                                oauth_password=oauth_password,
+                                oauth_refresh_interval=oauth_refresh_interval
+                            )
+                        elif polling_mode:
                             # Polling mode: Continuously check API for new data
                             app.logger.info(f"Starting POLLING mode for '{source_name}' (every {poll_interval}s)")
                             poll_api_to_clickhouse(
@@ -2147,7 +2286,11 @@ def add_api_source():
                                 data_path=data_path,
                                 poll_interval=poll_interval,
                                 id_column=id_column,
-                                auto_create_table=True
+                                auto_create_table=True,
+                                oauth_token_url=oauth_token_url,
+                                oauth_username=oauth_username,
+                                oauth_password=oauth_password,
+                                oauth_refresh_interval=oauth_refresh_interval
                             )
                         elif is_sse:
                             # SSE streams need continuous monitoring
@@ -2231,6 +2374,11 @@ def test_api_connection():
         target_type = data.get("target_type", "")
         target_database = data.get("target_database", "")
         
+        # OAuth parameters
+        oauth_token_url = data.get("oauth_token_url", "").strip()
+        oauth_username = data.get("oauth_username", "").strip()
+        oauth_password = data.get("oauth_password", "").strip()
+        
         # Parse custom headers
         headers = {}
         if custom_headers_str:
@@ -2244,6 +2392,48 @@ def test_api_connection():
             headers["Authorization"] = f"Bearer {auth_token}"
         elif auth_type == "apikey" and auth_token and apikey_header:
             headers[apikey_header] = auth_token
+        elif auth_type == "oauth" and oauth_token_url and oauth_username and oauth_password:
+            # For OAuth, get token first
+            try:
+                app.logger.info(f"Testing OAuth: Requesting token from {oauth_token_url}")
+                token_response = requests.post(
+                    oauth_token_url,
+                    json={"username": oauth_username, "password": oauth_password},
+                    timeout=10
+                )
+                
+                if token_response.status_code != 200:
+                    return jsonify({
+                        "success": False,
+                        "error": f"OAuth token request failed: HTTP {token_response.status_code}",
+                        "details": token_response.text
+                    })
+                
+                token_data = token_response.json()
+                oauth_token = token_data.get('token') or token_data.get('access_token') or token_data.get('oauth_token')
+                
+                if not oauth_token:
+                    # Try to find any string field that looks like a token
+                    for key, value in token_data.items():
+                        if isinstance(value, str) and len(value) > 20:
+                            oauth_token = value
+                            break
+                
+                if oauth_token:
+                    headers["Authorization"] = f"Bearer {oauth_token}"
+                    app.logger.info(f"OAuth token obtained successfully")
+                else:
+                    return jsonify({
+                        "success": False,
+                        "error": "No token found in OAuth response",
+                        "response": token_data
+                    })
+                    
+            except Exception as e:
+                return jsonify({
+                    "success": False,
+                    "error": f"OAuth token request failed: {str(e)}"
+                })
         
         # Prepare auth for basic authentication
         auth = None

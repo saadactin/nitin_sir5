@@ -105,6 +105,7 @@
               <option value="bearer">Bearer Token</option>
               <option value="apikey">API Key</option>
               <option value="basic">Basic Auth</option>
+              <option value="oauth">OAuth 2.0 (Auto-Refresh)</option>
             </select>
           </div>
 
@@ -154,6 +155,52 @@
                    placeholder="e.g., X-API-Key, Authorization"
                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
             <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">The HTTP header name for the API key</p>
+          </div>
+
+          <!-- OAuth Token URL (Hidden by default) -->
+          <div id="oauth_token_url_field" class="mb-6 hidden">
+            <label for="oauth_token_url" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">vpn_key</span>
+              OAuth Token URL *
+            </label>
+            <input type="text" id="oauth_token_url" name="oauth_token_url"
+                   placeholder="e.g., http://localhost:4010/pass"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">URL to POST to get OAuth token</p>
+          </div>
+
+          <!-- OAuth Username (Hidden by default) -->
+          <div id="oauth_username_field" class="mb-6 hidden">
+            <label for="oauth_username" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">person</span>
+              OAuth Username *
+            </label>
+            <input type="text" id="oauth_username" name="oauth_username"
+                   placeholder="Username for OAuth token"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+          </div>
+
+          <!-- OAuth Password (Hidden by default) -->
+          <div id="oauth_password_field" class="mb-6 hidden">
+            <label for="oauth_password" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">lock</span>
+              OAuth Password *
+            </label>
+            <input type="password" id="oauth_password" name="oauth_password"
+                   placeholder="Password for OAuth token"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+          </div>
+
+          <!-- OAuth Token Refresh Interval (Hidden by default) -->
+          <div id="oauth_refresh_interval_field" class="mb-6 hidden">
+            <label for="oauth_refresh_interval" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+              <span class="material-icons text-base">schedule</span>
+              Token Refresh Interval (seconds)
+            </label>
+            <input type="number" id="oauth_refresh_interval" name="oauth_refresh_interval"
+                   value="3600" min="60" max="86400"
+                   class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">How often to refresh the token (default: 3600 = 1 hour)</p>
           </div>
 
           <!-- Custom Headers (Optional) -->
@@ -282,6 +329,22 @@
                        class="w-48 px-3 py-2 rounded border border-border-light dark:border-border-dark bg-white dark:bg-background-dark text-sm"/>
                 <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Column used to identify unique records (for deduplication)</p>
               </div>
+              
+              <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="upsert_mode" name="upsert_mode" value="true"
+                         class="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"/>
+                  <span class="text-xs font-semibold">
+                    🔄 UPSERT Mode (Update existing records)
+                  </span>
+                </label>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                  ✅ <strong>Use for APIs with SAME IDs but CHANGING VALUES</strong> (e.g., cryptocurrency prices, stock data)
+                </p>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                  Will update existing records instead of skipping them
+                </p>
+              </div>
             </div>
 
             <!-- SSE Mode (Advanced) -->
@@ -404,12 +467,20 @@
       const basicUsernameField = document.getElementById('basic_username_field');
       const basicPasswordField = document.getElementById('basic_password_field');
       const apikeyHeaderField = document.getElementById('apikey_header_field');
+      const oauthTokenUrlField = document.getElementById('oauth_token_url_field');
+      const oauthUsernameField = document.getElementById('oauth_username_field');
+      const oauthPasswordField = document.getElementById('oauth_password_field');
+      const oauthRefreshIntervalField = document.getElementById('oauth_refresh_interval_field');
 
       // Hide all auth fields first
       tokenField.classList.add('hidden');
       basicUsernameField.classList.add('hidden');
       basicPasswordField.classList.add('hidden');
       apikeyHeaderField.classList.add('hidden');
+      oauthTokenUrlField.classList.add('hidden');
+      oauthUsernameField.classList.add('hidden');
+      oauthPasswordField.classList.add('hidden');
+      oauthRefreshIntervalField.classList.add('hidden');
 
       // Show relevant fields based on auth type
       if (authType === 'bearer') {
@@ -424,6 +495,11 @@
       } else if (authType === 'basic') {
         basicUsernameField.classList.remove('hidden');
         basicPasswordField.classList.remove('hidden');
+      } else if (authType === 'oauth') {
+        oauthTokenUrlField.classList.remove('hidden');
+        oauthUsernameField.classList.remove('hidden');
+        oauthPasswordField.classList.remove('hidden');
+        oauthRefreshIntervalField.classList.remove('hidden');
       }
     }
 
