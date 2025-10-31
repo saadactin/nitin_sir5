@@ -823,9 +823,34 @@ def sync_api_source(source_id):
             try:
                 app.logger.info(f"Starting sync for API source: {source_name}")
                 
-                # Use one-time sync for regular REST APIs, continuous for SSE
-                if is_sse:
-                    # SSE streams need continuous monitoring
+                # Check if this is a polling API (continuous checks) or SSE stream or one-time
+                polling_mode = connection_details.get('polling_mode', False)
+                poll_interval = connection_details.get('poll_interval', 5)
+                id_column = connection_details.get('id_column', 'id')
+                
+                if polling_mode:
+                    # Polling mode: Continuously check API for new data
+                    app.logger.info(f"Starting POLLING mode for '{source_name}' (every {poll_interval}s)")
+                    from api_polling import poll_api_to_clickhouse
+                    poll_api_to_clickhouse(
+                        api_url=api_url,
+                        target_database=target_database,
+                        target_table=target_table,
+                        auth_type=auth_type,
+                        auth_token=auth_token,
+                        basic_username=basic_username,
+                        basic_password=basic_password,
+                        apikey_header=apikey_header,
+                        custom_headers=custom_headers,
+                        request_method=request_method,
+                        data_path=data_path,
+                        poll_interval=poll_interval,
+                        id_column=id_column,
+                        auto_create_table=True
+                    )
+                elif is_sse:
+                    # True SSE streams (text/event-stream)
+                    app.logger.info(f"Starting SSE mode for '{source_name}'")
                     sync_api_to_clickhouse(
                         api_url=api_url,
                         target_database=target_database,
@@ -843,6 +868,7 @@ def sync_api_source(source_id):
                     )
                 else:
                     # Regular REST APIs: sync once
+                    app.logger.info(f"Starting ONE-TIME sync for '{source_name}'")
                     result = sync_api_to_clickhouse_once(
                         api_url=api_url,
                         target_database=target_database,
@@ -972,11 +998,15 @@ def sync_source_background(source_id):
         # Handle REST API sources
         if source['source_type'] == 'rest_api':
             from api_sync import sync_api_to_clickhouse_once, sync_api_to_clickhouse
+            from api_polling import poll_api_to_clickhouse
             import threading
             import json
             
             connection_details = json.loads(source['connection_details']) if isinstance(source['connection_details'], str) else (source['connection_details'] or {})
             is_sse = connection_details.get('is_sse', False)
+            polling_mode = connection_details.get('polling_mode', False)
+            poll_interval = connection_details.get('poll_interval', 5)
+            id_column = connection_details.get('id_column', 'id')
             custom_headers_str = connection_details.get('custom_headers', '')
             custom_headers = {}
             if custom_headers_str:
@@ -987,9 +1017,29 @@ def sync_source_background(source_id):
             
             def background_sync():
                 try:
-                    # Use one-time sync for regular REST APIs, continuous for SSE
-                    if is_sse:
+                    # Determine sync mode: polling, SSE, or one-time
+                    if polling_mode:
+                        # Polling mode: Continuously check API for new data
+                        app.logger.info(f"Starting POLLING mode for '{source['source_name']}' (every {poll_interval}s)")
+                        poll_api_to_clickhouse(
+                            api_url=source['server_address'],
+                            target_database=source['target_database'],
+                            target_table=connection_details.get('target_table', 'api_data'),
+                            auth_type=connection_details.get('auth_type'),
+                            auth_token=connection_details.get('auth_token'),
+                            basic_username=connection_details.get('basic_username'),
+                            basic_password=connection_details.get('basic_password'),
+                            apikey_header=connection_details.get('apikey_header'),
+                            custom_headers=custom_headers,
+                            request_method=connection_details.get('request_method', 'GET'),
+                            data_path=connection_details.get('data_path', ''),
+                            poll_interval=poll_interval,
+                            id_column=id_column,
+                            auto_create_table=True
+                        )
+                    elif is_sse:
                         # SSE streams need continuous monitoring
+                        app.logger.info(f"Starting SSE mode for '{source['source_name']}'")
                         sync_api_to_clickhouse(
                             api_url=source['server_address'],
                             target_database=source['target_database'],
@@ -1007,6 +1057,7 @@ def sync_source_background(source_id):
                         )
                     else:
                         # Regular REST APIs: sync once
+                        app.logger.info(f"Starting ONE-TIME sync for '{source['source_name']}'")
                         result = sync_api_to_clickhouse_once(
                             api_url=source['server_address'],
                             target_database=source['target_database'],
@@ -1029,10 +1080,11 @@ def sync_source_background(source_id):
             sync_thread = threading.Thread(target=background_sync, daemon=True)
             sync_thread.start()
             
-            flash(f"Background sync started for {source['source_name']}", 'success')
+            sync_mode = "continuous polling" if polling_mode else ("SSE stream" if is_sse else "one-time")
+            flash(f"Background sync started for {source['source_name']} ({sync_mode})", 'success')
             return jsonify({
                 "success": True, 
-                "message": f"API sync started for {source['source_name']}",
+                "message": f"API sync started for {source['source_name']} ({sync_mode})",
                 "source_id": source_id
             }), 202
         
@@ -2022,6 +2074,10 @@ def add_api_source():
             """)
             
             # Store API-specific details in connection_details JSON
+            polling_mode = request.form.get("polling_mode", "false") == "true"
+            poll_interval = int(request.form.get("poll_interval", "5"))
+            id_column = request.form.get("id_column", "id")
+            
             connection_details = {
                 "api_url": api_url,
                 "auth_type": auth_type,
@@ -2033,7 +2089,10 @@ def add_api_source():
                 "request_method": request_method,
                 "data_path": data_path,
                 "target_table": target_table,
-                "is_sse": is_sse
+                "is_sse": is_sse,
+                "polling_mode": polling_mode,
+                "poll_interval": poll_interval,
+                "id_column": id_column
             }
             
             # Insert the new source
@@ -2056,6 +2115,7 @@ def add_api_source():
             if target_type.lower() == "clickhouse":
                 import threading
                 from api_sync import sync_api_to_clickhouse_once, sync_api_to_clickhouse
+                from api_polling import poll_api_to_clickhouse
                 
                 def background_sync():
                     try:
@@ -2069,9 +2129,29 @@ def add_api_source():
                             except:
                                 pass
                         
-                        # Use one-time sync for regular REST APIs, continuous sync for SSE
-                        if is_sse:
+                        # Determine sync mode: polling, SSE, or one-time
+                        if polling_mode:
+                            # Polling mode: Continuously check API for new data
+                            app.logger.info(f"Starting POLLING mode for '{source_name}' (every {poll_interval}s)")
+                            poll_api_to_clickhouse(
+                                api_url=api_url,
+                                target_database=target_database,
+                                target_table=target_table,
+                                auth_type=auth_type,
+                                auth_token=auth_token,
+                                basic_username=basic_username,
+                                basic_password=basic_password,
+                                apikey_header=apikey_header,
+                                custom_headers=headers,
+                                request_method=request_method,
+                                data_path=data_path,
+                                poll_interval=poll_interval,
+                                id_column=id_column,
+                                auto_create_table=True
+                            )
+                        elif is_sse:
                             # SSE streams need continuous monitoring
+                            app.logger.info(f"Starting SSE mode for '{source_name}'")
                             sync_api_to_clickhouse(
                                 api_url=api_url,
                                 target_database=target_database,
@@ -2089,6 +2169,7 @@ def add_api_source():
                             )
                         else:
                             # Regular REST APIs: sync once immediately
+                            app.logger.info(f"Starting ONE-TIME sync for '{source_name}'")
                             result = sync_api_to_clickhouse_once(
                                 api_url=api_url,
                                 target_database=target_database,
@@ -2110,7 +2191,10 @@ def add_api_source():
                 sync_thread = threading.Thread(target=background_sync, daemon=True)
                 sync_thread.start()
                 
-                flash(f"REST API source '{source_name}' added and sync started in background!", "success")
+                if polling_mode:
+                    flash(f"REST API source '{source_name}' added with continuous polling (every {poll_interval}s)!", "success")
+                else:
+                    flash(f"REST API source '{source_name}' added and sync started in background!", "success")
             else:
                 flash(f"REST API source '{source_name}' added successfully!", "success")
             
@@ -3594,6 +3678,11 @@ if __name__ == "__main__":
         use_reloader = os.environ.get('APP_USE_RELOADER', '0') in ('1', 'true', 'True')
 
         app.logger.info(f"Starting Flask app host={app_host} port={app_port} debug={flask_debug} debugger={use_debugger}")
+        
+        # Auto-start polling for all API sources with polling_mode=True
+        from flask_auto_start_polling import auto_start_polling_sources
+        auto_start_polling_sources(app)
+        
         app.run(debug=flask_debug, host=app_host, port=app_port, use_reloader=use_reloader, use_debugger=use_debugger)
     except Exception as e:
         app.logger.error(f"[ERROR] STARTUP ERROR: {e}")

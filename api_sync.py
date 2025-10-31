@@ -9,6 +9,7 @@ from datetime import datetime
 from dateutil import parser as dateutil_parser
 from clickhouse_driver import Client
 from db_utils import load_clickhouse_config
+from api_data_detector import auto_detect_and_extract
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -165,30 +166,33 @@ def send_api_sync_email(api_url, target_database, target_table, records_synced, 
 
 
 def infer_clickhouse_type(value):
-    """Infer ClickHouse data type from a Python value"""
+    """Infer ClickHouse data type from a Python value
+    
+    Note: We use Float64 for all numeric types to handle both integers and decimals
+    This avoids type mismatch errors when a column might contain both.
+    """
     if value is None:
         return "Nullable(String)"
     elif isinstance(value, bool):
         return "UInt8"
-    elif isinstance(value, int):
-        return "Int64"
-    elif isinstance(value, float):
-        return "Float64"
+    elif isinstance(value, (int, float)):
+        # Use Float64 for ALL numeric types to handle mixed int/float/null values
+        return "Nullable(Float64)"
     elif isinstance(value, str):
         # Check if it looks like a datetime
         if 'T' in value and 'Z' in value:
             try:
                 datetime.fromisoformat(value.replace('Z', '+00:00'))
-                return "DateTime64(3)"
+                return "Nullable(String)"  # Store as string for simplicity
             except:
                 pass
-        return "String"
+        return "Nullable(String)"  # Use Nullable for all strings
     elif isinstance(value, dict):
-        return "String"  # Store as JSON string
+        return "Nullable(String)"  # Store as JSON string
     elif isinstance(value, list):
-        return "String"  # Store as JSON string
+        return "Nullable(String)"  # Store as JSON string
     else:
-        return "String"
+        return "Nullable(String)"
 
 
 def create_clickhouse_table_from_sample(client, database, table_name, sample_data, already_flattened=False):
@@ -259,14 +263,15 @@ def create_clickhouse_table_from_sample(client, database, table_name, sample_dat
 
 
 def convert_datetime_values(value):
-    """Convert ISO datetime strings to Python datetime objects"""
+    """Convert ISO datetime strings to Python datetime objects, then to strings for ClickHouse"""
     if isinstance(value, str):
         # Check if it looks like a datetime string
         if 'T' in value and ('Z' in value or '+' in value or value.endswith(':00')):
             try:
-                # Parse ISO format datetime string
+                # Parse ISO format datetime string and convert back to string for ClickHouse
                 dt = dateutil_parser.isoparse(value.replace('Z', '+00:00'))
-                return dt
+                # Return as string in ClickHouse-compatible format
+                return dt.strftime('%Y-%m-%d %H:%M:%S')
             except:
                 pass
     return value
@@ -383,20 +388,9 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
             logger.error(error_msg)
             return {"success": False, "records_synced": 0, "error": error_msg}
         
-        # Navigate to data path if specified
-        records = json_data
-        if data_path:
-            for key in data_path.split('.'):
-                if isinstance(records, dict) and key in records:
-                    records = records[key]
-                else:
-                    error_msg = f"Data path '{data_path}' not found in response"
-                    logger.error(error_msg)
-                    return {"success": False, "records_synced": 0, "error": error_msg}
-        
-        # Ensure records is a list
-        if not isinstance(records, list):
-            records = [records]
+        # Auto-detect and extract data using smart detection
+        detected_path, records = auto_detect_and_extract(json_data, data_path)
+        logger.info(f"📊 Using data path: '{detected_path}' (found {len(records)} records)")
         
         if not records:
             logger.info("No records found in API response")
@@ -442,19 +436,37 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
                 logger.error(error_msg)
                 return {"success": False, "records_synced": 0, "error": error_msg}
         
-        # Insert all records with consistent column structure
-        for flat_record in flattened_records:
-            try:
+        # Insert all records as a batch with consistent column structure
+        try:
+            # Prepare all rows for batch insert
+            batch_values = []
+            for flat_record in flattened_records:
                 # Ensure all columns are present (fill missing with None)
                 values = [flat_record.get(col, None) for col in column_list]
-                
-                insert_sql = f"INSERT INTO {target_database}.{target_table} ({', '.join([f'`{c}`' for c in column_list])}) VALUES"
-                client.execute(insert_sql, [values])
-                
-                records_synced += 1
-            except Exception as e:
-                logger.error(f"Error inserting record: {e}")
-                # Continue with other records
+                batch_values.append(values)
+            
+            # Execute batch insert
+            insert_sql = f"INSERT INTO {target_database}.{target_table} ({', '.join([f'`{c}`' for c in column_list])}) VALUES"
+            client.execute(insert_sql, batch_values)
+            records_synced = len(batch_values)
+            logger.info(f"✅ Successfully inserted {records_synced} records in batch")
+            
+        except Exception as e:
+            logger.error(f"Batch insert failed: {e}")
+            # Fallback to row-by-row insert with error handling
+            logger.info("Falling back to row-by-row insert...")
+            for i, flat_record in enumerate(flattened_records):
+                try:
+                    # Ensure all columns are present (fill missing with None)
+                    values = [flat_record.get(col, None) for col in column_list]
+                    
+                    insert_sql = f"INSERT INTO {target_database}.{target_table} ({', '.join([f'`{c}`' for c in column_list])}) VALUES"
+                    client.execute(insert_sql, [values])
+                    
+                    records_synced += 1
+                except Exception as row_error:
+                    logger.error(f"Error inserting record {i+1}: {row_error}")
+                    # Continue with other records
         
         sync_end_time = datetime.now()
         duration = (sync_end_time - sync_start_time).total_seconds()
@@ -736,16 +748,9 @@ def sync_api_to_clickhouse(api_url, target_database, target_table,
                     # Parse JSON response
                     json_data = response.json()
                     
-                    # Navigate to data path if specified
-                    records = json_data
-                    if data_path:
-                        for key in data_path.split('.'):
-                            if isinstance(records, dict) and key in records:
-                                records = records[key]
-                    
-                    # Ensure records is a list
-                    if not isinstance(records, list):
-                        records = [records]
+                    # Auto-detect and extract data using smart detection
+                    detected_path, records = auto_detect_and_extract(json_data, data_path)
+                    logger.info(f"📊 Using data path: '{detected_path}' (found {len(records)} records)")
                     
                     if not records:
                         logger.info(f"No records found, waiting {poll_interval}s...")

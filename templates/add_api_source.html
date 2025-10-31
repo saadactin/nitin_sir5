@@ -186,11 +186,27 @@
             <label for="data_path" class="block text-sm font-semibold mb-2 flex items-center gap-2">
               <span class="material-icons text-base">account_tree</span>
               Data Path (Optional)
+              <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-800 bg-green-100 dark:bg-green-900 dark:text-green-200 rounded-full">
+                🤖 Auto-detect
+              </span>
             </label>
             <input type="text" id="data_path" name="data_path"
-                   placeholder="e.g., data.records or results"
+                   placeholder="e.g., data, results, data.items (leave empty for auto-detection)"
                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
-            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Path to array in JSON response (e.g., if data is in response.data.items, enter "data.items")</p>
+            <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+              <strong>🤖 Smart Detection:</strong> Leave empty to automatically find your data! The system will intelligently search for arrays in your JSON response.
+              <br/>
+              <strong>Manual Override:</strong> Enter path only if auto-detection doesn't work (e.g., "data" for response.data, "results.items" for nested paths)
+            </p>
+            <div class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded text-xs">
+              <strong class="text-blue-800 dark:text-blue-200">💡 Examples:</strong>
+              <ul class="mt-1 space-y-1 text-blue-700 dark:text-blue-300">
+                <li>• <code>{"data": [...]}</code> → Leave empty or enter "data"</li>
+                <li>• <code>{"results": [...]}</code> → Leave empty or enter "results"</li>
+                <li>• <code>[{...}, {...}]</code> → Leave empty (array at root)</li>
+                <li>• <code>{"response": {"items": [...]}}</code> → Leave empty or enter "response.items"</li>
+              </ul>
+            </div>
           </div>
 
           <hr class="my-8 border-border-light dark:border-border-dark"/>
@@ -221,21 +237,64 @@
             <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Database where API data will be stored</p>
           </div>
 
-          <!-- Server-Sent Events (SSE) Option -->
-          <div class="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
-            <label class="flex items-center gap-3 cursor-pointer">
+          <!-- Continuous Sync Options -->
+          <div class="mb-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
+            <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+              <span class="material-icons text-base">autorenew</span>
+              Continuous Sync Mode (Optional)
+            </h3>
+            
+            <!-- Polling Mode -->
+            <label class="flex items-center gap-3 cursor-pointer mb-3">
+              <input type="checkbox" id="polling_mode" name="polling_mode" value="true"
+                     class="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                     onchange="togglePollingOptions()"/>
+              <div>
+                <span class="text-sm font-semibold flex items-center gap-2">
+                  <span class="material-icons text-base">update</span>
+                  Enable Polling (Check API every N seconds)
+                </span>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                  ✅ <strong>Use this for APIs that add new data over time</strong> (like your localhost:4000/api/data)
+                </p>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
+                  Automatically checks for new records and syncs only the new ones
+                </p>
+              </div>
+            </label>
+
+            <!-- Polling Options (hidden by default) -->
+            <div id="polling_options" class="ml-8 space-y-3 hidden">
+              <div>
+                <label for="poll_interval" class="block text-xs font-semibold mb-1">
+                  Poll Interval (seconds)
+                </label>
+                <input type="number" id="poll_interval" name="poll_interval" value="5" min="1" max="3600"
+                       class="w-32 px-3 py-2 rounded border border-border-light dark:border-border-dark bg-white dark:bg-background-dark text-sm"/>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">How often to check for new data (default: 5 seconds)</p>
+              </div>
+
+              <div>
+                <label for="id_column" class="block text-xs font-semibold mb-1">
+                  ID Column Name
+                </label>
+                <input type="text" id="id_column" name="id_column" value="id" placeholder="id"
+                       class="w-48 px-3 py-2 rounded border border-border-light dark:border-border-dark bg-white dark:bg-background-dark text-sm"/>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Column used to identify unique records (for deduplication)</p>
+              </div>
+            </div>
+
+            <!-- SSE Mode (Advanced) -->
+            <label class="flex items-center gap-3 cursor-pointer mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
               <input type="checkbox" id="is_sse" name="is_sse" value="true"
                      class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"/>
               <div>
                 <span class="text-sm font-semibold flex items-center gap-2">
                   <span class="material-icons text-base">stream</span>
-                  Server-Sent Events (SSE) Stream
+                  Server-Sent Events (SSE) Stream (Advanced)
                 </span>
                 <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
-                  ⚠️ <strong>Leave UNCHECKED for regular REST APIs</strong> (like JSONPlaceholder, most public APIs)
-                </p>
-                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">
-                  ✅ Only enable this for real-time streaming APIs that continuously push data (rare)
+                  ⚠️ <strong>Only for true SSE streams</strong> (Content-Type: text/event-stream) - very rare
                 </p>
               </div>
             </label>
@@ -288,6 +347,18 @@
   </div>
 
   <script>
+    // Toggle polling options visibility
+    function togglePollingOptions() {
+      const pollingCheckbox = document.getElementById('polling_mode');
+      const pollingOptions = document.getElementById('polling_options');
+      
+      if (pollingCheckbox.checked) {
+        pollingOptions.classList.remove('hidden');
+      } else {
+        pollingOptions.classList.add('hidden');
+      }
+    }
+
     // Load databases when target type changes
     async function loadTargetDatabases() {
       const targetType = document.getElementById('target_type').value;
