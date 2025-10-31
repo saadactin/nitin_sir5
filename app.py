@@ -849,7 +849,9 @@ def sync_api_source(source_id):
         custom_headers_str = connection_details.get('custom_headers', '')
         request_method = connection_details.get('request_method', 'GET')
         data_path = connection_details.get('data_path', '')
-        target_table = connection_details.get('target_table', source_name.lower().replace(' ', '_'))
+        # Get target_table from connection_details, or generate with "crm_" prefix
+        clean_source_name = source_name.lower().replace(' ', '_').replace('-', '_')
+        target_table = connection_details.get('target_table', f"crm_{clean_source_name}")
         is_sse = connection_details.get('is_sse', False)
         
         # Parse custom headers
@@ -2131,8 +2133,9 @@ def add_api_source():
             # Auto-generate table name from source name if not provided
             target_table = request.form.get("target_table", "").strip()
             if not target_table:
-                # Create table name from source name (e.g., "CRM Stream" -> "crm_stream")
-                target_table = source_name.lower().replace(' ', '_').replace('-', '_')
+                # Create table name from source name with "crm_" prefix (e.g., "crm1" -> "crm_crm1")
+                clean_source_name = source_name.lower().replace(' ', '_').replace('-', '_')
+                target_table = f"crm_{clean_source_name}"
             
             # Validate required fields
             if not all([source_name, api_url, target_type, target_database]):
