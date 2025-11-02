@@ -471,7 +471,37 @@ def index():
     # Determine status for each data source
     for ds in data_sources:
         try:
-            if ds['source_type'] == 'sql_server':
+            if ds['source_type'] == 'sap_hana':
+                # Test HANA connection
+                try:
+                    import hdbcli.dbapi as hana_dbapi
+                    connection_details = json.loads(ds['connection_details']) if isinstance(ds['connection_details'], str) else (ds['connection_details'] or {})
+                    
+                    # Parse server address
+                    if ':' in ds['server_address']:
+                        host, port = ds['server_address'].split(':', 1)
+                    else:
+                        host = ds['server_address']
+                        port = connection_details.get('port', '30015')
+                    
+                    # Try to connect
+                    conn = hana_dbapi.connect(
+                        address=host,
+                        port=int(port),
+                        user=ds['username'],
+                        password=ds['password'],
+                        encrypt=True,
+                        sslValidateCertificate=False,
+                        timeout=5
+                    )
+                    conn.close()
+                    data_source_statuses[ds['id']] = {'online': True, 'error': None}
+                except ImportError:
+                    # hdbcli not installed - can't test connection
+                    data_source_statuses[ds['id']] = {'online': None, 'error': 'hdbcli library not installed'}
+                except Exception as e:
+                    data_source_statuses[ds['id']] = {'online': False, 'error': str(e)}
+            elif ds['source_type'] == 'sql_server':
                 # Build a minimal server_conf similar to YAML config
                 server_conf = {
                     'server': ds['server_address'],
@@ -505,39 +535,6 @@ def index():
                     data_source_statuses[ds['id']] = {'online': success, 'error': error}
                 else:
                     data_source_statuses[ds['id']] = {'online': False, 'error': 'Password not available for connection test'}
-            elif ds['source_type'] == 'sap_hana':
-                # Try to import hdbcli and attempt connect if credentials present
-                try:
-                    from hdbcli import dbapi as hana_dbapi
-                    # fetch password
-                    from db_utils import load_pg_config
-                    pg_conf = load_pg_config()
-                    conn = psycopg2.connect(
-                        dbname=pg_conf.get('database', 'metrics_sync_tables'),
-                        user=pg_conf.get('username'),
-                        password=pg_conf.get('password'),
-                        host=pg_conf.get('host'),
-                        port=int(pg_conf.get('port', 5432))
-                    )
-                    cur = conn.cursor()
-                    cur.execute("SELECT password, connection_details FROM data_sources WHERE id = %s", (ds['id'],))
-                    row = cur.fetchone()
-                    cur.close(); conn.close()
-                    if row and row[0]:
-                        # parse host/port from server_address if formatted as host:port
-                        host_port = ds['server_address']
-                        h, p = (host_port.split(':') + [None])[:2]
-                        port = int(p) if p else None
-                        try:
-                            conn_h = hana_dbapi.connect(address=h, port=port or 30015, user=ds['username'], password=row[0])
-                            conn_h.close()
-                            data_source_statuses[ds['id']] = {'online': True, 'error': None}
-                        except Exception as e:
-                            data_source_statuses[ds['id']] = {'online': False, 'error': str(e)}
-                    else:
-                        data_source_statuses[ds['id']] = {'online': False, 'error': 'Password not available for connection test'}
-                except Exception as e:
-                    data_source_statuses[ds['id']] = {'online': False, 'error': 'hdbcli not installed or connection failed'}
             elif ds['source_type'] == 'api' or ds['source_type'] == 'rest_api':
                 # Test API connection
                 try:
@@ -1188,8 +1185,110 @@ def sync_source_background(source_id):
             sync_mode = "continuous polling" if polling_mode else ("SSE stream" if is_sse else "one-time")
             flash(f"Background sync started for {source['source_name']} ({sync_mode})", 'success')
             return jsonify({
+                "success": True,
+                "message": f"Sync started for {source['source_name']}",
+                "source_id": source_id
+            }), 202
+        
+        # Handle HANA sources - perform incremental sync
+        elif source['source_type'] == 'sap_hana':
+            from hana_sync import HanaToClickHouseSync
+            import threading
+            
+            connection_details = json.loads(source['connection_details']) if isinstance(source['connection_details'], str) else (source['connection_details'] or {})
+            
+            # Parse server address (format: host:port)
+            if ':' in source['server_address']:
+                host, port = source['server_address'].split(':', 1)
+            else:
+                host = source['server_address']
+                port = connection_details.get('port', '30015')
+            
+            # Prepare configs
+            hana_config = {
+                'host': host,
+                'port': int(port),
+                'username': source['username'],
+                'password': source['password']
+            }
+            
+            clickhouse_config = {
+                'host': os.getenv('CLICKHOUSE_HOST', 'localhost'),
+                'port': int(os.getenv('CLICKHOUSE_PORT', '9000')),
+                'user': os.getenv('CLICKHOUSE_USER', 'default'),
+                'password': os.getenv('CLICKHOUSE_PASSWORD', ''),
+                'database': source['target_database'] if source['target_database'] else 'hana_migrated'
+            }
+            
+            def background_incremental_sync():
+                try:
+                    sync_engine = HanaToClickHouseSync(hana_config, clickhouse_config)
+                    
+                    if not (sync_engine.connect_hana() and sync_engine.connect_clickhouse()):
+                        app.logger.error(f"Failed to connect to HANA or ClickHouse for source {source_id}")
+                        return
+                    
+                    try:
+                        # Get all tables that have been synced before (from sync_metadata)
+                        database_name = clickhouse_config['database']
+                        
+                        # Check if sync_metadata table exists
+                        try:
+                            sync_metadata = sync_engine.ch_client.execute(f"""
+                            SELECT source_schema, source_table 
+                            FROM {database_name}.sync_metadata 
+                            WHERE sync_enabled = 1
+                            """)
+                        except Exception as e:
+                            app.logger.warning(f"No sync_metadata table found or no tables configured for incremental sync: {e}")
+                            app.logger.info("Performing initial full sync for all tables in configured schemas")
+                            # If no metadata, do initial full sync - get all schemas and tables
+                            schemas = sync_engine.get_hana_schemas()
+                            sync_metadata = []
+                            for schema in schemas[:10]:  # Limit to first 10 schemas
+                                tables = sync_engine.get_hana_tables(schema)
+                                for table in tables:
+                                    sync_metadata.append((schema, table['name']))
+                                    # Setup sync metadata for future incremental syncs
+                                    sync_engine.setup_incremental_sync(schema, table['name'])
+                        
+                        results = []
+                        for schema, table in sync_metadata:
+                            app.logger.info(f"Performing incremental sync for {schema}.{table}")
+                            
+                            # Try incremental sync first
+                            result = sync_engine.perform_incremental_sync(schema, table)
+                            
+                            if result.get('status') == 'error':
+                                # If incremental sync fails (e.g., no timestamp column), do full sync
+                                app.logger.info(f"Incremental sync not available for {schema}.{table}, performing full sync")
+                                
+                                # Get table schema and create if needed
+                                columns = sync_engine.get_hana_table_schema(schema, table)
+                                if columns:
+                                    sync_engine.create_clickhouse_table(schema, table, columns)
+                                    result = sync_engine.migrate_table_data(schema, table)
+                                else:
+                                    app.logger.warning(f"No columns found for {schema}.{table}, skipping")
+                                    continue
+                            
+                            results.append(result)
+                            app.logger.info(f"Sync result for {schema}.{table}: {result.get('status', 'unknown')}")
+                        
+                        app.logger.info(f"HANA incremental sync completed for {len(results)} tables from source {source_id}")
+                    finally:
+                        sync_engine.close_connections()
+                except Exception as e:
+                    app.logger.exception(f"Error in HANA incremental sync for source {source_id}: {e}")
+            
+            # Start sync in background thread
+            sync_thread = threading.Thread(target=background_incremental_sync, daemon=True)
+            sync_thread.start()
+            
+            flash(f"Incremental sync started for HANA source '{source['source_name']}'", 'success')
+            return jsonify({
                 "success": True, 
-                "message": f"API sync started for {source['source_name']} ({sync_mode})",
+                "message": f"Incremental sync started for HANA source '{source['source_name']}'",
                 "source_id": source_id
             }), 202
         
@@ -1284,10 +1383,36 @@ def delete_source_route(source_id):
             port=int(pg_conf.get('port', 5432))
         )
         cur = conn.cursor()
+        
+        # First, get the source name before deletion
+        cur.execute("SELECT source_name FROM data_sources WHERE id = %s", (source_id,))
+        result = cur.fetchone()
+        source_name = result[0] if result else None
+        
+        # Delete all related data before deleting the source
+        # 1. Delete from schedules table
+        cur.execute("DELETE FROM metrics_sync_tables.schedules WHERE server_name = %s", (source_name,))
+        app.logger.info(f"[DELETE] Deleted {cur.rowcount} schedule(s) for source {source_name}")
+        
+        # 2. Delete from sync_history table
+        cur.execute("DELETE FROM metrics_sync_tables.sync_history WHERE server_name = %s", (source_name,))
+        app.logger.info(f"[DELETE] Deleted {cur.rowcount} sync history record(s) for source {source_name}")
+        
+        # 3. Delete from sync_database_status table
+        cur.execute("DELETE FROM sync_database_status WHERE server_name = %s", (source_name,))
+        app.logger.info(f"[DELETE] Deleted {cur.rowcount} database status record(s) for source {source_name}")
+        
+        # 4. Delete from sync_table_status table
+        cur.execute("DELETE FROM sync_table_status WHERE server_name = %s", (source_name,))
+        app.logger.info(f"[DELETE] Deleted {cur.rowcount} table status record(s) for source {source_name}")
+        
+        # 5. Finally, delete the source itself
         cur.execute("DELETE FROM data_sources WHERE id = %s", (source_id,))
+        
         conn.commit()
         cur.close(); conn.close()
-        flash('Source deleted', 'success')
+        flash('Source and all related data deleted successfully', 'success')
+        app.logger.info(f"[DELETE] Successfully deleted source {source_name} (ID: {source_id}) and all related data")
     except Exception as e:
         app.logger.exception(f"Failed to delete source: {e}")
         flash(f'Failed to delete source: {e}', 'danger')
@@ -1771,11 +1896,23 @@ def test_hana_connection():
                 "message": "hdbcli is not installed on the server. Install the 'hdbcli' package to enable immediate HANA connection testing. Connection will be validated during first sync otherwise."
             }), 400
 
-        # Attempt to connect
+        # Attempt to connect and fetch database list
         try:
             conn = hana_dbapi.connect(address=host, port=int(port), user=username, password=password)
+            cursor = conn.cursor()
+            
+            # Query to get all schemas/databases
+            cursor.execute("SELECT SCHEMA_NAME FROM SYS.SCHEMAS WHERE SCHEMA_NAME NOT IN ('_SYS_BIC', '_SYS_EPM', 'SYS', 'SYSTEM', '_SYS_REPO') ORDER BY SCHEMA_NAME")
+            databases = [row[0] for row in cursor.fetchall()]
+            
+            cursor.close()
             conn.close()
-            return jsonify({"success": True, "message": "Connection successful!"})
+            
+            return jsonify({
+                "success": True, 
+                "message": "Connection successful!",
+                "databases": databases
+            })
         except Exception as e:
             app.logger.exception(f"HANA connection test failed: {e}")
             return jsonify({"success": False, "message": f"Connection failed: {str(e)}"}), 400
@@ -2005,12 +2142,13 @@ def add_hana_source():
             instance = request.form.get("instance", "").strip()
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "").strip()
+            hana_database = request.form.get("hana_database", "").strip()
             target_type = request.form.get("target_type", "").strip()
             target_database = request.form.get("target_database", "").strip()
             
             # Validate required fields
             if not all([source_name, host, port, username, password, target_type, target_database]):
-                flash("All fields are required!", "danger")
+                flash("All required fields must be filled!", "danger")
                 postgres_dbs = load_pg_databases()
                 clickhouse_dbs = load_clickhouse_databases()
                 return render_template("add_hana_source.html",
@@ -2061,7 +2199,8 @@ def add_hana_source():
             connection_details = {
                 "host": host,
                 "port": port,
-                "instance": instance
+                "instance": instance,
+                "hana_database": hana_database
             }
             
             # Insert the new source
@@ -2102,6 +2241,242 @@ def add_hana_source():
     return render_template("add_hana_source.html",
                           postgres_dbs=postgres_dbs,
                           clickhouse_dbs=clickhouse_dbs)
+
+
+@app.route("/view-hana-tables/<int:source_id>")
+@require_role(["admin", "operator", "viewer"])
+def view_hana_tables_page(source_id):
+    """Render HANA tables browser page"""
+    try:
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get("username"),
+            password=pg_conf.get("password"),
+            host=pg_conf.get("host"),
+            port=int(pg_conf.get("port", 5432))
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT source_name FROM data_sources WHERE id = %s", (source_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not row:
+            flash("Source not found", "danger")
+            return redirect(url_for("index"))
+        
+        return render_template("view_hana_tables.html", source_id=source_id, source_name=row[0])
+    except Exception as e:
+        app.logger.exception(f"Error loading HANA tables page: {e}")
+        flash(f"Error: {str(e)}", "danger")
+        return redirect(url_for("index"))
+
+
+@app.route("/api/view-hana-tables/<int:source_id>")
+@require_role(["admin", "operator", "viewer"])
+def view_hana_tables(source_id):
+    """Get schemas and tables from HANA source (JSON API)"""
+    try:
+        from hana_sync import HanaToClickHouseSync
+        
+        # Get source from database
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get("username"),
+            password=pg_conf.get("password"),
+            host=pg_conf.get("host"),
+            port=int(pg_conf.get("port", 5432))
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT source_name, server_address, username, password, connection_details, target_database FROM data_sources WHERE id = %s", (source_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not row:
+            return jsonify({'status': 'error', 'message': 'Source not found'}), 404
+        
+        source_name, server_address, username, password, connection_details_json, target_database = row
+        connection_details = json.loads(connection_details_json) if connection_details_json else {}
+        
+        # Parse server address (format: host:port)
+        if ':' in server_address:
+            host, port = server_address.split(':', 1)
+        else:
+            host = server_address
+            port = connection_details.get('port', '30015')
+        
+        # Prepare HANA config
+        hana_config = {
+            'host': host,
+            'port': int(port),
+            'username': username,
+            'password': password
+        }
+        
+        # Get ClickHouse config
+        clickhouse_config = {
+            'host': os.getenv('CLICKHOUSE_HOST', 'localhost'),
+            'port': int(os.getenv('CLICKHOUSE_PORT', '9000')),
+            'user': os.getenv('CLICKHOUSE_USER', 'default'),
+            'password': os.getenv('CLICKHOUSE_PASSWORD', ''),
+            'database': target_database if target_database else 'hana_migrated'
+        }
+        
+        # Create sync engine and connect
+        sync_engine = HanaToClickHouseSync(hana_config, clickhouse_config)
+        
+        if not sync_engine.connect_hana():
+            return jsonify({'status': 'error', 'message': 'Failed to connect to HANA database'}), 400
+        
+        try:
+            # Get schemas
+            schemas = sync_engine.get_hana_schemas()
+            tables_by_schema = {}
+            
+            # Limit to first 20 schemas for performance
+            for schema in schemas[:20]:
+                tables = sync_engine.get_hana_tables(schema)
+                # Add ClickHouse target table names
+                for table in tables:
+                    ch_table_name = sync_engine.create_clickhouse_table_name(schema, table['name'])
+                    table['clickhouse_table'] = f"{clickhouse_config['database']}.{ch_table_name}"
+                tables_by_schema[schema] = tables
+            
+            return jsonify({
+                'status': 'success',
+                'schemas': schemas,
+                'tables_by_schema': tables_by_schema,
+                'source_id': source_id,
+                'source_name': source_name
+            })
+        finally:
+            sync_engine.close_connections()
+            
+    except Exception as e:
+        app.logger.exception(f"Error loading HANA tables: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route("/sync-hana-source/<int:source_id>", methods=["POST"])
+@require_role(["admin", "operator"])
+def sync_hana_source(source_id):
+    """Trigger HANA to ClickHouse sync"""
+    try:
+        from hana_sync import HanaToClickHouseSync
+        import threading
+        
+        data = request.get_json() if request.is_json else {}
+        tables_to_sync = data.get('tables', [])
+        enable_incremental = data.get('enable_incremental', False)
+        
+        if not tables_to_sync:
+            return jsonify({'status': 'error', 'message': 'No tables selected for sync'}), 400
+        
+        # Get source from database
+        from db_utils import load_pg_config
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get("username"),
+            password=pg_conf.get("password"),
+            host=pg_conf.get("host"),
+            port=int(pg_conf.get("port", 5432))
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT source_name, server_address, username, password, connection_details, target_database FROM data_sources WHERE id = %s", (source_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not row:
+            return jsonify({'status': 'error', 'message': 'Source not found'}), 404
+        
+        source_name, server_address, username, password, connection_details_json, target_database = row
+        connection_details = json.loads(connection_details_json) if connection_details_json else {}
+        
+        # Parse server address
+        if ':' in server_address:
+            host, port = server_address.split(':', 1)
+        else:
+            host = server_address
+            port = connection_details.get('port', '30015')
+        
+        # Prepare configs
+        hana_config = {
+            'host': host,
+            'port': int(port),
+            'username': username,
+            'password': password
+        }
+        
+        clickhouse_config = {
+            'host': os.getenv('CLICKHOUSE_HOST', 'localhost'),
+            'port': int(os.getenv('CLICKHOUSE_PORT', '9000')),
+            'user': os.getenv('CLICKHOUSE_USER', 'default'),
+            'password': os.getenv('CLICKHOUSE_PASSWORD', ''),
+            'database': target_database if target_database else 'hana_migrated'
+        }
+        
+        # Run sync in background thread
+        def background_sync():
+            try:
+                sync_engine = HanaToClickHouseSync(hana_config, clickhouse_config)
+                
+                if not (sync_engine.connect_hana() and sync_engine.connect_clickhouse()):
+                    app.logger.error("Failed to connect to HANA or ClickHouse")
+                    return
+                
+                try:
+                    results = []
+                    for table_spec in tables_to_sync:
+                        schema = table_spec.get('schema') or table_spec.get('source_schema')
+                        table = table_spec.get('table') or table_spec.get('source_table')
+                        
+                        if not schema or not table:
+                            continue
+                        
+                        app.logger.info(f"Syncing {schema}.{table} from HANA source {source_id}")
+                        
+                        # Get table schema and create in ClickHouse
+                        columns = sync_engine.get_hana_table_schema(schema, table)
+                        if not columns:
+                            app.logger.warning(f"No columns found for {schema}.{table}")
+                            continue
+                        
+                        sync_engine.create_clickhouse_table(schema, table, columns)
+                        
+                        # Migrate data
+                        result = sync_engine.migrate_table_data(schema, table)
+                        results.append(result)
+                        
+                        # Setup incremental sync if requested
+                        if enable_incremental or table_spec.get('enable_incremental', False):
+                            sync_engine.setup_incremental_sync(schema, table)
+                    
+                    app.logger.info(f"HANA sync completed for {len(results)} tables")
+                finally:
+                    sync_engine.close_connections()
+            except Exception as e:
+                app.logger.exception(f"Error in HANA background sync: {e}")
+        
+        # Start background thread
+        thread = threading.Thread(target=background_sync, daemon=True)
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Sync started for {len(tables_to_sync)} tables. Check logs for progress.',
+            'tables_count': len(tables_to_sync)
+        })
+        
+    except Exception as e:
+        app.logger.exception(f"Error starting HANA sync: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @app.route("/add-source/api", methods=["GET", "POST"])

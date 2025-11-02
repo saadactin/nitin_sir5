@@ -175,6 +175,23 @@
               />
             </div>
 
+            <!-- HANA Source Database -->
+            <div class="mb-6">
+              <label for="hana_database" class="block text-sm font-semibold mb-2">
+                <span class="material-icons text-sm align-middle mr-1">storage</span>
+                HANA Source Database
+              </label>
+              <select
+                id="hana_database"
+                name="hana_database"
+                class="w-full px-4 py-3 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent transition"
+                disabled
+              >
+                <option value="">Click "Test Connection" to load databases</option>
+              </select>
+              <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Select which database/schema to sync from HANA</p>
+            </div>
+
             <!-- Target System Selection -->
             <div class="mb-6">
               <label for="target_type" class="block text-sm font-semibold mb-2">
@@ -337,7 +354,23 @@
       .then(async response => {
         const data = await response.json().catch(() => ({}));
         if (response.ok && data.success) {
-          alert('✅ HANA connection successful!');
+          // Populate HANA database dropdown
+          const hanaDbSelect = document.getElementById('hana_database');
+          if (data.databases && data.databases.length > 0) {
+            hanaDbSelect.innerHTML = '<option value="">-- Select HANA database --</option>';
+            data.databases.forEach(db => {
+              const option = document.createElement('option');
+              option.value = db;
+              option.textContent = db;
+              hanaDbSelect.appendChild(option);
+            });
+            hanaDbSelect.disabled = false;
+            alert('✅ HANA connection successful! ' + data.databases.length + ' database(s) found.');
+          } else {
+            hanaDbSelect.innerHTML = '<option value="">No databases found</option>';
+            hanaDbSelect.disabled = true;
+            alert('✅ HANA connection successful, but no databases found!');
+          }
         } else if (data && data.message) {
           alert('❌ ' + data.message);
         } else {

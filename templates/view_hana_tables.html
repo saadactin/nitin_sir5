@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HANA Tables - {{ source_name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    .material-icons { font-size: 24px; vertical-align: middle; }
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-y-auto">
+      <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <span class="material-icons text-3xl text-green-600">storage</span>
+              <div>
+                <h1 class="text-2xl sm:text-3xl font-bold">HANA Tables</h1>
+                <p class="text-sm text-subtext-light dark:text-subtext-dark">Source: {{ source_name }}</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="loadHanaTables()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <span class="material-icons text-sm">refresh</span>
+                <span>Refresh</span>
+              </button>
+              <a href="{{ url_for('index') }}" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2">
+                <span class="material-icons text-sm">arrow_back</span>
+                <span>Back</span>
+              </a>
+            </div>
+          </div>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          <p class="text-subtext-light dark:text-subtext-dark">Loading HANA schemas and tables...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg p-4 mb-6">
+          <p class="text-red-800 dark:text-red-200" id="errorMessage"></p>
+        </div>
+
+        <!-- Tables Browser -->
+        <div id="tablesSection" class="hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Schema List -->
+            <div class="lg:col-span-1">
+              <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-4">
+                <h3 class="font-semibold mb-3 flex items-center gap-2">
+                  <span class="material-icons text-sm">folder</span>
+                  Schemas
+                </h3>
+                <div id="schemasList" class="space-y-1 max-h-96 overflow-y-auto">
+                  <!-- Schemas will be loaded here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Tables List -->
+            <div class="lg:col-span-3">
+              <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-semibold text-lg" id="selectedSchemaTitle">Select a schema to view tables</h3>
+                  <div class="flex gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="enableIncremental" class="rounded">
+                      <span class="text-sm">Enable Incremental Sync</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div id="tablesList" class="mb-4">
+                  <p class="text-subtext-light dark:text-subtext-dark text-center py-8">Select a schema from the left to view tables</p>
+                </div>
+
+                <!-- Sync Button -->
+                <div class="border-t border-border-light dark:border-border-dark pt-4 mt-4">
+                  <button 
+                    id="syncButton"
+                    onclick="syncSelectedTables()" 
+                    disabled
+                    class="w-full px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
+                  >
+                    <span class="material-icons">sync</span>
+                    <span>Sync Selected Tables (<span id="selectedCount">0</span>)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const sourceId = {{ source_id }};
+    let schemasData = {};
+    let selectedTables = new Set();
+
+    // Load HANA tables on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      loadHanaTables();
+    });
+
+    function loadHanaTables() {
+      document.getElementById('loadingState').classList.remove('hidden');
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('tablesSection').classList.add('hidden');
+
+      fetch(`/api/view-hana-tables/${sourceId}`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('loadingState').classList.add('hidden');
+          
+          if (data.status === 'success') {
+            schemasData = data.tables_by_schema || {};
+            displaySchemas(data.schemas || []);
+            document.getElementById('tablesSection').classList.remove('hidden');
+          } else {
+            showError(data.message || 'Failed to load HANA tables');
+          }
+        })
+        .catch(error => {
+          document.getElementById('loadingState').classList.add('hidden');
+          showError('Error loading tables: ' + error.message);
+        });
+    }
+
+    function displaySchemas(schemas) {
+      const schemasList = document.getElementById('schemasList');
+      schemasList.innerHTML = '';
+
+      schemas.forEach(schema => {
+        const schemaItem = document.createElement('button');
+        schemaItem.className = 'w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors';
+        schemaItem.textContent = schema;
+        schemaItem.onclick = () => showSchemaTables(schema);
+        schemasList.appendChild(schemaItem);
+      });
+
+      // Auto-select first schema if available
+      if (schemas.length > 0) {
+        showSchemaTables(schemas[0]);
+      }
+    }
+
+    function showSchemaTables(schema) {
+      document.getElementById('selectedSchemaTitle').textContent = `Tables in ${schema}`;
+      const tables = schemasData[schema] || [];
+      const tablesList = document.getElementById('tablesList');
+
+      if (tables.length === 0) {
+        tablesList.innerHTML = '<p class="text-subtext-light dark:text-subtext-dark text-center py-8">No tables found in this schema</p>';
+        return;
+      }
+
+      let html = `
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border-light dark:border-border-dark">
+                <th class="text-left py-2 px-2"><input type="checkbox" onclick="toggleAllTables(this, '${schema}')"></th>
+                <th class="text-left py-2 px-2">Table Name</th>
+                <th class="text-left py-2 px-2">Type</th>
+                <th class="text-left py-2 px-2">ClickHouse Target</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      tables.forEach(table => {
+        const tableKey = `${schema}|${table.name}`;
+        const isSelected = selectedTables.has(tableKey);
+        html += `
+          <tr class="border-b border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-800">
+            <td class="py-2 px-2">
+              <input type="checkbox" 
+                     class="table-checkbox" 
+                     data-schema="${schema}" 
+                     data-table="${table.name}"
+                     ${isSelected ? 'checked' : ''}
+                     onchange="toggleTableSelection('${schema}', '${table.name}')">
+            </td>
+            <td class="py-2 px-2 font-medium">${table.name}</td>
+            <td class="py-2 px-2"><span class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">${table.type || 'TABLE'}</span></td>
+            <td class="py-2 px-2">
+              <code class="text-xs text-blue-600 dark:text-blue-400">${table.clickhouse_table || 'N/A'}</code>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      tablesList.innerHTML = html;
+      updateSelectedCount();
+    }
+
+    function toggleAllTables(checkbox, schema) {
+      const tables = schemasData[schema] || [];
+      const tableCheckboxes = document.querySelectorAll(`.table-checkbox[data-schema="${schema}"]`);
+      
+      tableCheckboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+        const table = cb.getAttribute('data-table');
+        if (checkbox.checked) {
+          selectedTables.add(`${schema}|${table}`);
+        } else {
+          selectedTables.delete(`${schema}|${table}`);
+        }
+      });
+      
+      updateSelectedCount();
+    }
+
+    function toggleTableSelection(schema, table) {
+      const tableKey = `${schema}|${table}`;
+      const checkbox = document.querySelector(`.table-checkbox[data-schema="${schema}"][data-table="${table}"]`);
+      
+      if (checkbox.checked) {
+        selectedTables.add(tableKey);
+      } else {
+        selectedTables.delete(tableKey);
+      }
+      
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      const count = selectedTables.size;
+      document.getElementById('selectedCount').textContent = count;
+      document.getElementById('syncButton').disabled = count === 0;
+    }
+
+    function syncSelectedTables() {
+      if (selectedTables.size === 0) {
+        alert('Please select at least one table to sync');
+        return;
+      }
+
+      const tables = Array.from(selectedTables).map(key => {
+        const [schema, table] = key.split('|');
+        return { schema, table };
+      });
+
+      const enableIncremental = document.getElementById('enableIncremental').checked;
+
+      if (!confirm(`Sync ${tables.length} table(s)? This will start the migration process.`)) {
+        return;
+      }
+
+      const syncButton = document.getElementById('syncButton');
+      syncButton.disabled = true;
+      syncButton.innerHTML = '<span class="material-icons animate-spin">refresh</span><span>Starting Sync...</span>';
+
+      fetch(`/sync-hana-source/${sourceId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tables: tables,
+          enable_incremental: enableIncremental
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          alert(`✅ ${data.message}\n\nSync started for ${data.tables_count} tables. Check server logs for progress.`);
+          // Reset button
+          syncButton.disabled = false;
+          syncButton.innerHTML = '<span class="material-icons">sync</span><span>Sync Selected Tables (<span id="selectedCount">' + selectedTables.size + '</span>)</span>';
+        } else {
+          alert('❌ Sync failed: ' + (data.message || 'Unknown error'));
+          syncButton.disabled = false;
+          syncButton.innerHTML = '<span class="material-icons">sync</span><span>Sync Selected Tables (<span id="selectedCount">' + selectedTables.size + '</span>)</span>';
+        }
+      })
+      .catch(error => {
+        alert('❌ Error starting sync: ' + error.message);
+        syncButton.disabled = false;
+        syncButton.innerHTML = '<span class="material-icons">sync</span><span>Sync Selected Tables (<span id="selectedCount">' + selectedTables.size + '</span>)</span>';
+      });
+    }
+
+    function showError(message) {
+      document.getElementById('errorMessage').textContent = message;
+      document.getElementById('errorState').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
+

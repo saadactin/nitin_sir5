@@ -18727,3 +18727,269 @@ DB::Exception: No such column address in table test44.crm2 (3d65e621-7faf-487e-8
 2025-10-31 15:26:14,992 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
 2025-10-31 15:26:22,464 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
 2025-10-31 15:26:22,465 - WARNING - [AUTH] Session contents: {}
+2025-10-31 16:17:01,738 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-31 16:21:30,643 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-10-31 16:21:30,643 - ERROR - OAuth credentials are invalid or expired. Please check:
+2025-10-31 16:21:30,644 - ERROR -   - OAuth Token URL
+2025-10-31 16:21:30,644 - ERROR -   - OAuth Username
+2025-10-31 16:21:30,645 - ERROR -   - OAuth Password
+2025-10-31 16:21:37,682 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-10-31 16:21:37,684 - ERROR - OAuth credentials are invalid or expired. Please check:
+2025-10-31 16:21:37,686 - ERROR -   - OAuth Token URL
+2025-10-31 16:21:37,688 - ERROR -   - OAuth Username
+2025-10-31 16:21:37,690 - ERROR -   - OAuth Password
+2025-10-31 18:05:59,541 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-31 18:06:52,924 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-31 18:06:55,970 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:06:56,369 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-31 18:06:56,370 - WARNING - [AUTH] Session contents: {}
+2025-10-31 18:06:58,147 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:06:58,149 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:07:05,212 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:07:05,216 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:07:12,271 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:07:12,272 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:07:19,346 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:07:19,348 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:07:26,395 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:07:26,397 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:07:33,467 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:07:33,469 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:07:40,536 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:07:40,537 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:07:47,606 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:07:47,608 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:07:54,722 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:07:54,728 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:01,794 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:01,796 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:08,841 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:08,842 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:15,922 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:15,923 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:22,991 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:22,993 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:30,056 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:30,058 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:37,111 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:37,112 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:44,193 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:44,194 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:51,252 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:51,253 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:08:58,306 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:08:58,310 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:09:05,392 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:09:05,397 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:09:12,459 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:09:12,461 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:09:19,504 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:09:19,504 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:09:26,629 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:09:26,634 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:09:33,669 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:09:33,673 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:09:40,753 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:09:40,756 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:09:47,813 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:09:47,814 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:09:54,863 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:09:54,864 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:01,954 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:01,955 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:09,022 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:09,025 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:16,100 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:16,103 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:23,187 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:23,194 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:30,227 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:30,231 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:37,311 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:37,313 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:44,356 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:44,357 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:51,422 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:51,426 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:10:58,521 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:10:58,526 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:11:05,592 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:11:05,593 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:11:12,664 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:11:12,665 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:11:19,757 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:11:19,760 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:11:26,826 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:11:26,828 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:11:33,894 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:11:33,896 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:11:40,942 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:11:40,944 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:11:48,012 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:11:48,014 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:11:55,109 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:11:55,113 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:02,174 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:02,180 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:09,257 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:09,259 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:16,335 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:16,339 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:23,394 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:23,397 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:30,468 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:30,469 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:37,496 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:37,497 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:44,574 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:44,575 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:51,648 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:51,648 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:12:58,725 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:12:58,727 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:13:05,814 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:13:05,817 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:13:12,895 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:13:12,897 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:13:19,969 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:13:19,970 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:13:27,044 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:13:27,045 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:13:34,103 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:13:34,104 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:13:41,154 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:13:41,155 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:13:48,216 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:13:48,218 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:13:55,262 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:13:55,264 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:02,320 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:02,322 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:09,374 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:09,374 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:16,452 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:16,453 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:23,516 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:23,518 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:30,575 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:30,576 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:37,616 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:37,616 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:44,688 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:44,689 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:51,721 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:51,721 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:14:58,800 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:14:58,802 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:15:05,895 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:15:05,897 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:15:12,971 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:15:12,972 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:15:20,045 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:15:20,046 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:15:27,114 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:15:27,116 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:15:34,186 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:15:34,187 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:15:41,258 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:15:41,259 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:15:48,324 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:15:48,325 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:15:55,402 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:15:55,403 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:02,475 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:02,476 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:09,559 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:09,561 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:16,624 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:16,625 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:23,680 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:23,681 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:30,741 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:30,742 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:37,805 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:37,806 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:44,903 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:44,904 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:51,961 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:51,963 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:16:59,008 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:16:59,009 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:17:06,087 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:17:06,088 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:17:13,151 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:17:13,152 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:17:20,222 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:17:20,223 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:17:27,282 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:17:27,283 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:17:34,358 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:17:34,359 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:17:41,392 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:17:41,393 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:17:48,467 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:17:48,470 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:17:55,530 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:17:55,533 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:18:02,602 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:18:02,603 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 18:58:03,703 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 18:58:03,757 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:28:02,378 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:28:02,380 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:28:17,412 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:28:17,414 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:28:32,436 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:28:32,438 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:28:47,469 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:28:47,470 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:29:02,493 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:29:02,494 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:29:17,525 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:29:17,526 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:29:32,543 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:29:32,544 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:29:40,644 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:29:40,646 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:29:47,713 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:29:47,714 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:29:54,768 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:29:54,768 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:01,826 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:01,827 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:08,898 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:08,900 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:15,958 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:15,959 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:23,003 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:23,004 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:30,088 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:30,089 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:37,173 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:37,174 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:44,251 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:44,252 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:51,312 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:51,313 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:30:58,371 - ERROR - ERROR: Failed to refresh OAuth token: 401 Client Error: UNAUTHORIZED for url: http://localhost:4010/pass
+2025-10-31 19:30:58,372 - ERROR - ERROR: Failed to get OAuth token - Authentication failed. Check OAuth credentials.
+2025-10-31 19:31:07,795 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-31 19:39:42,771 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-10-31 19:43:44,300 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-10-31 19:43:44,301 - WARNING - [AUTH] Session contents: {}
+2025-10-31 19:45:51,972 - ERROR - HANA connection test failed: (-10709, "Connection failed (RTE:[89006] System call 'connect' failed, rc=10060:A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond {192.168.16.62:30015} (192.168.16.62:30015))")
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 1901, in test_hana_connection
+    conn = hana_dbapi.connect(address=host, port=int(port), user=username, password=password)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hdbcli.dbapi.Error: (-10709, "Connection failed (RTE:[89006] System call 'connect' failed, rc=10060:A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond {192.168.16.62:30015} (192.168.16.62:30015))")
+2025-11-01 00:44:22,279 - ERROR - Error generating daily summary: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\daily_summary_scheduler.py", line 39, in send_daily_summary
+    from dashboard import get_all_sync_history
+ImportError: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
+2025-11-02 00:54:48,605 - ERROR - Error generating daily summary: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\daily_summary_scheduler.py", line 39, in send_daily_summary
+    from dashboard import get_all_sync_history
+ImportError: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
