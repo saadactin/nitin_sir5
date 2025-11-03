@@ -105,7 +105,8 @@
               <option value="bearer">Bearer Token</option>
               <option value="apikey">API Key</option>
               <option value="basic">Basic Auth</option>
-              <option value="oauth">OAuth 2.0 (Auto-Refresh)</option>
+              <option value="oauth">OAuth 2.0 (Generic)</option>
+              <option value="zoho_oauth">Zoho OAuth 2.0 (Auto-Refresh)</option>
             </select>
           </div>
 
@@ -201,6 +202,60 @@
                    value="3600" min="60" max="86400"
                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
             <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">How often to refresh the token (default: 3600 = 1 hour)</p>
+          </div>
+
+          <!-- Zoho OAuth Fields (Hidden by default) -->
+          <div id="zoho_oauth_section" class="mb-6 hidden">
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-4">
+              <h3 class="text-sm font-semibold mb-3 flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                <span class="material-icons text-base">account_circle</span>
+                Zoho OAuth 2.0 Configuration
+              </h3>
+              <p class="text-xs text-blue-700 dark:text-blue-300 mb-4">
+                Configure Zoho OAuth credentials. The system will automatically refresh the access token every hour (3600 seconds).
+              </p>
+              
+              <!-- Refresh Token -->
+              <div class="mb-4">
+                <label for="zoho_refresh_token" class="block text-xs font-semibold mb-1">
+                  Refresh Token *
+                </label>
+                <input type="text" id="zoho_refresh_token" name="zoho_refresh_token"
+                       placeholder="1000.2cbaa36345c6d04b699b0cb6740c21ef.149922195c479d83c84826653ff84ff4"
+                       class="w-full px-3 py-2 rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-background-dark text-sm focus:ring-2 focus:ring-blue-500"/>
+                <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">Your Zoho refresh token (never expires)</p>
+              </div>
+
+              <!-- Client ID -->
+              <div class="mb-4">
+                <label for="zoho_client_id" class="block text-xs font-semibold mb-1">
+                  Client ID *
+                </label>
+                <input type="text" id="zoho_client_id" name="zoho_client_id"
+                       placeholder="1000.0L3LLVLEKE9ELW7CE0I0KJ3K4FKBBT"
+                       class="w-full px-3 py-2 rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-background-dark text-sm focus:ring-2 focus:ring-blue-500"/>
+              </div>
+
+              <!-- Client Secret -->
+              <div class="mb-4">
+                <label for="zoho_client_secret" class="block text-xs font-semibold mb-1">
+                  Client Secret *
+                </label>
+                <input type="password" id="zoho_client_secret" name="zoho_client_secret"
+                       placeholder="d99c479d4c0db451c653d8c380bf6a4c557a73528c"
+                       class="w-full px-3 py-2 rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-background-dark text-sm focus:ring-2 focus:ring-blue-500"/>
+              </div>
+
+              <div class="mt-3 p-2 bg-blue-100 dark:bg-blue-900/30 rounded text-xs">
+                <strong class="text-blue-800 dark:text-blue-200">📋 Token Refresh Details:</strong>
+                <ul class="mt-1 space-y-1 text-blue-700 dark:text-blue-300">
+                  <li>• Access tokens expire every 1 hour (3600 seconds)</li>
+                  <li>• System automatically refreshes tokens before expiry</li>
+                  <li>• Refresh token is used to obtain new access tokens</li>
+                  <li>• API domain is automatically detected from token response</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           <!-- Custom Headers (Optional) -->
@@ -471,6 +526,7 @@
       const oauthUsernameField = document.getElementById('oauth_username_field');
       const oauthPasswordField = document.getElementById('oauth_password_field');
       const oauthRefreshIntervalField = document.getElementById('oauth_refresh_interval_field');
+      const zohoOAuthSection = document.getElementById('zoho_oauth_section');
 
       // Hide all auth fields first
       tokenField.classList.add('hidden');
@@ -481,6 +537,7 @@
       oauthUsernameField.classList.add('hidden');
       oauthPasswordField.classList.add('hidden');
       oauthRefreshIntervalField.classList.add('hidden');
+      if (zohoOAuthSection) zohoOAuthSection.classList.add('hidden');
 
       // Show relevant fields based on auth type
       if (authType === 'bearer') {
@@ -500,6 +557,8 @@
         oauthUsernameField.classList.remove('hidden');
         oauthPasswordField.classList.remove('hidden');
         oauthRefreshIntervalField.classList.remove('hidden');
+      } else if (authType === 'zoho_oauth') {
+        if (zohoOAuthSection) zohoOAuthSection.classList.remove('hidden');
       }
     }
 
@@ -522,6 +581,14 @@
           data[key] = value;
         }
       });
+      
+      // Explicitly collect Zoho OAuth fields if Zoho OAuth is selected
+      const authType = document.getElementById('auth_type').value;
+      if (authType === 'zoho_oauth') {
+        data['zoho_refresh_token'] = document.getElementById('zoho_refresh_token')?.value || '';
+        data['zoho_client_id'] = document.getElementById('zoho_client_id')?.value || '';
+        data['zoho_client_secret'] = document.getElementById('zoho_client_secret')?.value || '';
+      }
       
       try {
         const response = await fetch('/test_api_connection', {

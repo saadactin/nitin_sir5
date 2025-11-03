@@ -313,7 +313,14 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
                                 custom_headers=None,
                                 request_method="GET",
                                 data_path="",
-                                auto_create_table=True):
+                                auto_create_table=True,
+                                source_id=None,
+                                zoho_refresh_token=None,
+                                zoho_client_id=None,
+                                zoho_client_secret=None,
+                                stored_access_token=None,
+                                stored_token_expiry=None,
+                                stored_api_domain=None):
     """
     Sync data from REST API to ClickHouse ONE TIME (not continuous/polling)
     This is used when user clicks "Add & Start Sync" or "Sync Server" for REST APIs
@@ -369,7 +376,72 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
         # Prepare headers
         headers = custom_headers.copy() if custom_headers else {}
         
-        if auth_type == "bearer" and auth_token:
+        # Handle Zoho OAuth authentication
+        if auth_type == "zoho_oauth" and source_id and zoho_refresh_token:
+            try:
+                from zoho_oauth_manager import ZohoOAuthManager
+                token_result = ZohoOAuthManager.get_valid_token(
+                    source_id=source_id,
+                    refresh_token=zoho_refresh_token,
+                    client_id=zoho_client_id,
+                    client_secret=zoho_client_secret,
+                    stored_access_token=stored_access_token,
+                    stored_expiry=stored_token_expiry,
+                    stored_api_domain=stored_api_domain
+                )
+                
+                if token_result:
+                    # Use the API domain from token response if different from URL
+                    if stored_api_domain and api_url.startswith('https://www.zohoapis.com'):
+                        # Replace domain in URL if needed
+                        api_url = api_url.replace('https://www.zohoapis.com', stored_api_domain)
+                        logger.info(f"Using API domain from token: {stored_api_domain}")
+                    
+                    headers["Authorization"] = f"{token_result['token_type']} {token_result['access_token']}"
+                    logger.info(f"Using Zoho OAuth token (expires in {token_result['expires_in']}s)")
+                    
+                    # Update token in database if it was refreshed
+                    if token_result.get('needs_refresh'):
+                        try:
+                            from db_utils import load_pg_config
+                            import psycopg2
+                            from datetime import timedelta
+                            
+                            pg_conf = load_pg_config()
+                            conn = psycopg2.connect(
+                                dbname=pg_conf.get('database'),
+                                user=pg_conf.get('username'),
+                                password=pg_conf.get('password'),
+                                host=pg_conf.get('host'),
+                                port=int(pg_conf.get('port', 5432))
+                            )
+                            cursor = conn.cursor()
+                            
+                            new_expiry = datetime.now() + timedelta(seconds=token_result['expires_in'])
+                            cursor.execute("""
+                                UPDATE data_sources 
+                                SET oauth_access_token = %s,
+                                    oauth_token_expiry = %s,
+                                    oauth_api_domain = %s,
+                                    updated_at = CURRENT_TIMESTAMP
+                                WHERE id = %s
+                            """, (token_result['access_token'], new_expiry, 
+                                  token_result['api_domain'], source_id))
+                            
+                            conn.commit()
+                            cursor.close()
+                            conn.close()
+                            logger.info(f"Updated token in database for source {source_id}")
+                        except Exception as e:
+                            logger.warning(f"Could not update token in database: {e}")
+                else:
+                    error_msg = "Failed to obtain Zoho access token"
+                    logger.error(error_msg)
+                    return {"success": False, "records_synced": 0, "error": error_msg}
+            except Exception as e:
+                logger.exception(f"Error handling Zoho OAuth: {e}")
+                return {"success": False, "records_synced": 0, "error": f"Zoho OAuth error: {str(e)}"}
+        elif auth_type == "bearer" and auth_token:
             headers["Authorization"] = f"Bearer {auth_token}"
         elif auth_type == "apikey" and auth_token and apikey_header:
             headers[apikey_header] = auth_token
@@ -386,10 +458,50 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
         else:
             response = requests.post(api_url, headers=headers, auth=auth, timeout=30)
         
-        # Check response
-        if response.status_code != 200:
-            error_msg = f"API returned status {response.status_code}: {response.reason}"
-            logger.error(error_msg)
+        # Check response - handle different status codes with detailed messages
+        status_code = response.status_code
+        if status_code != 200:
+            # Handle successful 2xx but with no content (204)
+            if status_code == 204:
+                error_msg = (f"HTTP 204: No Content - The API request was successful but returned no data. "
+                           f"This typically means the specified record IDs don't exist or the endpoint has no data to return. "
+                           f"URL: {api_url}")
+                logger.warning(f"[API_SYNC] {error_msg}")
+                return {"success": False, "records_synced": 0, "error": error_msg}
+            
+            # Handle other status codes (4xx, 5xx)
+            error_details = ""
+            try:
+                if response.text:
+                    error_response = response.json()
+                    if isinstance(error_response, dict):
+                        error_details = error_response.get('message') or error_response.get('error') or error_response.get('details') or str(error_response)
+                    else:
+                        error_details = str(error_response)
+            except:
+                error_details = response.text[:200] if response.text else ""
+            
+            # Build detailed error message
+            if status_code == 400:
+                error_msg = f"HTTP 400: Bad Request - Invalid request parameters or malformed URL"
+            elif status_code == 401:
+                error_msg = f"HTTP 401: Unauthorized - Authentication failed. Token may be expired or invalid"
+            elif status_code == 403:
+                error_msg = f"HTTP 403: Forbidden - Insufficient permissions to access this resource"
+            elif status_code == 404:
+                error_msg = f"HTTP 404: Not Found - The API endpoint or specified records don't exist"
+            elif status_code == 429:
+                error_msg = f"HTTP 429: Too Many Requests - Rate limit exceeded. Please wait before retrying"
+            elif status_code >= 500:
+                error_msg = f"HTTP {status_code}: Server Error - The API server encountered an error"
+            else:
+                error_msg = f"HTTP {status_code}: {response.reason}"
+            
+            if error_details:
+                error_msg += f" | Details: {error_details}"
+            
+            error_msg += f" | URL: {api_url}"
+            logger.error(f"[API_SYNC] API Error: {error_msg}")
             return {"success": False, "records_synced": 0, "error": error_msg}
         
         # Parse JSON response

@@ -444,7 +444,12 @@ def index():
         )
         print(f"[CONSOLE DEBUG] Connected to PostgreSQL")
         cur = conn.cursor()
-        cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE is_active = true ORDER BY created_at DESC")
+        cur.execute("""
+            SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details,
+                   oauth_refresh_token, oauth_client_id, oauth_client_secret,
+                   oauth_access_token, oauth_token_expiry, oauth_api_domain
+            FROM data_sources WHERE is_active = true ORDER BY created_at DESC
+        """)
         rows = cur.fetchall()
         app.logger.info(f"[DEBUG] Query returned {len(rows)} data_source rows")
         print(f"[CONSOLE DEBUG] Query returned {len(rows)} rows")
@@ -457,7 +462,13 @@ def index():
                 'username': r[4],
                 'target_type': r[5],
                 'target_database': r[6],
-                'connection_details': r[7]
+                'connection_details': r[7],
+                'oauth_refresh_token': r[8] if len(r) > 8 else None,
+                'oauth_client_id': r[9] if len(r) > 9 else None,
+                'oauth_client_secret': r[10] if len(r) > 10 else None,
+                'oauth_access_token': r[11] if len(r) > 11 else None,
+                'oauth_token_expiry': r[12] if len(r) > 12 else None,
+                'oauth_api_domain': r[13] if len(r) > 13 else None
             }
             data_sources.append(ds)
             app.logger.info(f"[DEBUG] Loaded data_source: {ds['source_name']} (ID: {ds['id']})")
@@ -554,8 +565,49 @@ def index():
                         headers = {}
                         auth_type = connection_details.get('auth_type', 'none')
                         
+                        # Handle Zoho OAuth authentication
+                        if auth_type == 'zoho_oauth':
+                            zoho_refresh_token = ds.get('oauth_refresh_token') or connection_details.get('zoho_refresh_token')
+                            zoho_client_id = ds.get('oauth_client_id') or connection_details.get('zoho_client_id')
+                            zoho_client_secret = ds.get('oauth_client_secret') or connection_details.get('zoho_client_secret')
+                            stored_access_token = ds.get('oauth_access_token')
+                            stored_token_expiry = ds.get('oauth_token_expiry')
+                            stored_api_domain = ds.get('oauth_api_domain')
+                            
+                            if zoho_refresh_token and zoho_client_id and zoho_client_secret:
+                                try:
+                                    from zoho_oauth_manager import ZohoOAuthManager
+                                    token_result = ZohoOAuthManager.get_valid_token(
+                                        source_id=ds['id'],
+                                        refresh_token=zoho_refresh_token,
+                                        client_id=zoho_client_id,
+                                        client_secret=zoho_client_secret,
+                                        stored_access_token=stored_access_token,
+                                        stored_expiry=stored_token_expiry,
+                                        stored_api_domain=stored_api_domain
+                                    )
+                                    
+                                    if token_result:
+                                        # Use correct API domain
+                                        if stored_api_domain and not api_url.startswith(stored_api_domain):
+                                            for domain in ['https://www.zohoapis.com', 'https://www.zohoapis.eu', 'https://www.zohoapis.in']:
+                                                if api_url.startswith(domain):
+                                                    api_url = api_url.replace(domain, stored_api_domain)
+                                                    break
+                                        
+                                        headers['Authorization'] = f"{token_result.get('token_type', 'Bearer')} {token_result['access_token']}"
+                                    else:
+                                        data_source_statuses[ds['id']] = {'online': False, 'error': 'Failed to obtain Zoho access token'}
+                                        continue
+                                except Exception as oauth_error:
+                                    app.logger.exception(f"Error checking Zoho OAuth status: {oauth_error}")
+                                    data_source_statuses[ds['id']] = {'online': False, 'error': f'OAuth error: {str(oauth_error)}'}
+                                    continue
+                            else:
+                                data_source_statuses[ds['id']] = {'online': False, 'error': 'Zoho OAuth credentials missing'}
+                                continue
                         # Handle OAuth authentication
-                        if auth_type == 'oauth':
+                        elif auth_type == 'oauth':
                             oauth_token_url = connection_details.get('oauth_token_url', '')
                             oauth_username = connection_details.get('oauth_username', '')
                             oauth_password = connection_details.get('oauth_password', '')
@@ -810,7 +862,9 @@ def sync_api_source(source_id):
         cur = conn.cursor()
         cur.execute("""
             SELECT source_name, source_type, server_address, target_type, 
-                   target_database, connection_details 
+                   target_database, connection_details,
+                   oauth_refresh_token, oauth_client_id, oauth_client_secret,
+                   oauth_access_token, oauth_token_expiry, oauth_api_domain
             FROM data_sources 
             WHERE id = %s AND is_active = true
         """, (source_id,))
@@ -829,6 +883,14 @@ def sync_api_source(source_id):
         target_type = row[3]
         target_database = row[4]
         connection_details = json.loads(row[5]) if row[5] else {}
+        
+        # Get OAuth credentials if available (for Zoho OAuth)
+        zoho_refresh_token = row[6] if len(row) > 6 else None
+        zoho_client_id = row[7] if len(row) > 7 else None
+        zoho_client_secret = row[8] if len(row) > 8 else None
+        oauth_access_token = row[9] if len(row) > 9 else None
+        oauth_token_expiry = row[10] if len(row) > 10 else None
+        oauth_api_domain = row[11] if len(row) > 11 else None
         
         # Only sync REST APIs to ClickHouse
         if source_type != 'rest_api':
@@ -956,7 +1018,14 @@ def sync_api_source(source_id):
                         custom_headers=custom_headers,
                         request_method=request_method,
                         data_path=data_path,
-                        auto_create_table=True
+                        auto_create_table=True,
+                        source_id=source_id if auth_type == 'zoho_oauth' else None,
+                        zoho_refresh_token=zoho_refresh_token if auth_type == 'zoho_oauth' else None,
+                        zoho_client_id=zoho_client_id if auth_type == 'zoho_oauth' else None,
+                        zoho_client_secret=zoho_client_secret if auth_type == 'zoho_oauth' else None,
+                        stored_access_token=oauth_access_token if auth_type == 'zoho_oauth' else None,
+                        stored_token_expiry=oauth_token_expiry if auth_type == 'zoho_oauth' else None,
+                        stored_api_domain=oauth_api_domain if auth_type == 'zoho_oauth' else None
                     )
                     app.logger.info(f"API sync result for '{source_name}': {result}")
             except Exception as e:
@@ -1052,22 +1121,34 @@ def sync_source_background(source_id):
             port=int(pg_conf.get('port', 5432))
         )
         cur = conn.cursor()
-        cur.execute("SELECT id, source_name, source_type, server_address, username, password, target_database, connection_details FROM data_sources WHERE id = %s", (source_id,))
+        cur.execute("""
+            SELECT id, source_name, source_type, server_address, username, password, 
+                   target_database, connection_details,
+                   oauth_refresh_token, oauth_client_id, oauth_client_secret,
+                   oauth_access_token, oauth_token_expiry, oauth_api_domain
+            FROM data_sources WHERE id = %s
+        """, (source_id,))
         row = cur.fetchone()
         cur.close(); conn.close()
 
         if not row:
             return jsonify({"success": False, "message": "Source not found"}), 404
-
+        
         source = {
-            'id': row[0], 
-            'source_name': row[1], 
-            'source_type': row[2], 
-            'server_address': row[3], 
-            'username': row[4], 
+            'id': row[0],
+            'source_name': row[1],
+            'source_type': row[2],
+            'server_address': row[3],
+            'username': row[4],
             'password': row[5],
             'target_database': row[6],
-            'connection_details': row[7]
+            'connection_details': row[7],
+            'oauth_refresh_token': row[8] if len(row) > 8 else None,
+            'oauth_client_id': row[9] if len(row) > 9 else None,
+            'oauth_client_secret': row[10] if len(row) > 10 else None,
+            'oauth_access_token': row[11] if len(row) > 11 else None,
+            'oauth_token_expiry': row[12] if len(row) > 12 else None,
+            'oauth_api_domain': row[13] if len(row) > 13 else None
         }
 
         # Handle REST API sources
@@ -1162,6 +1243,22 @@ def sync_source_background(source_id):
                     else:
                         # Regular REST APIs: sync once
                         app.logger.info(f"Starting ONE-TIME sync for '{source['source_name']}'")
+                        # Get OAuth credentials if Zoho OAuth
+                        zoho_refresh_token = None
+                        zoho_client_id = None
+                        zoho_client_secret = None
+                        stored_access_token = None
+                        stored_token_expiry = None
+                        stored_api_domain = None
+                        
+                        if connection_details.get('auth_type') == 'zoho_oauth':
+                            zoho_refresh_token = source.get('oauth_refresh_token') or connection_details.get('zoho_refresh_token')
+                            zoho_client_id = source.get('oauth_client_id') or connection_details.get('zoho_client_id')
+                            zoho_client_secret = source.get('oauth_client_secret') or connection_details.get('zoho_client_secret')
+                            stored_access_token = source.get('oauth_access_token')
+                            stored_token_expiry = source.get('oauth_token_expiry')
+                            stored_api_domain = source.get('oauth_api_domain')
+                        
                         result = sync_api_to_clickhouse_once(
                             api_url=source['server_address'],
                             target_database=source['target_database'],
@@ -1174,7 +1271,14 @@ def sync_source_background(source_id):
                             custom_headers=custom_headers,
                             request_method=connection_details.get('request_method', 'GET'),
                             data_path=connection_details.get('data_path', ''),
-                            auto_create_table=True
+                            auto_create_table=True,
+                            source_id=source['id'] if connection_details.get('auth_type') == 'zoho_oauth' else None,
+                            zoho_refresh_token=zoho_refresh_token,
+                            zoho_client_id=zoho_client_id,
+                            zoho_client_secret=zoho_client_secret,
+                            stored_access_token=stored_access_token,
+                            stored_token_expiry=stored_token_expiry,
+                            stored_api_domain=stored_api_domain
                         )
                         app.logger.info(f"API sync result for '{source['source_name']}': {result}")
                 except Exception as e:
@@ -2565,6 +2669,20 @@ def add_api_source():
             oauth_password = request.form.get("oauth_password", "").strip()
             oauth_refresh_interval = int(request.form.get("oauth_refresh_interval", "3600"))
             
+            # Zoho OAuth parameters
+            zoho_refresh_token = request.form.get("zoho_refresh_token", "").strip()
+            zoho_client_id = request.form.get("zoho_client_id", "").strip()
+            zoho_client_secret = request.form.get("zoho_client_secret", "").strip()
+            
+            # If Zoho OAuth is selected, validate required fields
+            if auth_type == "zoho_oauth":
+                if not all([zoho_refresh_token, zoho_client_id, zoho_client_secret]):
+                    flash("Zoho OAuth requires refresh_token, client_id, and client_secret!", "danger")
+                    return render_template("add_api_source.html",
+                                          source_name=source_name,
+                                          api_url=api_url,
+                                          target_type=target_type)
+            
             # Auto-generate table name from source name if not provided
             target_table = request.form.get("target_table", "").strip()
             if not target_table:
@@ -2637,6 +2755,9 @@ def add_api_source():
                 "oauth_username": oauth_username if auth_type == 'oauth' else None,
                 "oauth_password": oauth_password if auth_type == 'oauth' else None,
                 "oauth_refresh_interval": oauth_refresh_interval if auth_type == 'oauth' else 3600,
+                "zoho_refresh_token": zoho_refresh_token if auth_type == 'zoho_oauth' else None,
+                "zoho_client_id": zoho_client_id if auth_type == 'zoho_oauth' else None,
+                "zoho_client_secret": zoho_client_secret if auth_type == 'zoho_oauth' else None,
                 "custom_headers": custom_headers,
                 "request_method": request_method,
                 "data_path": data_path,
@@ -2648,15 +2769,53 @@ def add_api_source():
                 "upsert_mode": upsert_mode
             }
             
-            # Insert the new source
-            cursor.execute("""
-                INSERT INTO data_sources 
-                (source_name, source_type, server_address, username, password, 
-                 target_type, target_database, connection_details)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-            """, (source_name, 'rest_api', api_url, None, None, 
-                  target_type, target_database, json.dumps(connection_details)))
+            # Store Zoho OAuth credentials in explicit columns for easier access
+            oauth_access_token = None
+            oauth_token_expiry = None
+            oauth_api_domain = None
+            
+            # If Zoho OAuth, get initial token
+            if auth_type == "zoho_oauth":
+                try:
+                    from zoho_oauth_manager import ZohoOAuthManager
+                    from datetime import timedelta
+                    token_result = ZohoOAuthManager.refresh_token(
+                        zoho_refresh_token, zoho_client_id, zoho_client_secret
+                    )
+                    if token_result:
+                        oauth_access_token = token_result['access_token']
+                        oauth_api_domain = token_result['api_domain']
+                        oauth_token_expiry = datetime.now() + timedelta(seconds=token_result['expires_in'])
+                        app.logger.info(f"Initial Zoho token obtained for source: {source_name}")
+                    else:
+                        flash("Failed to obtain initial Zoho access token. Check your credentials.", "warning")
+                except Exception as e:
+                    app.logger.exception(f"Error obtaining initial Zoho token: {e}")
+                    flash(f"Warning: Could not obtain initial token: {str(e)}", "warning")
+            
+            # Insert the new source (with OAuth columns if Zoho OAuth)
+            if auth_type == "zoho_oauth":
+                cursor.execute("""
+                    INSERT INTO data_sources 
+                    (source_name, source_type, server_address, username, password, 
+                     target_type, target_database, connection_details,
+                     oauth_refresh_token, oauth_client_id, oauth_client_secret,
+                     oauth_access_token, oauth_token_expiry, oauth_api_domain)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (source_name, 'rest_api', api_url, None, None, 
+                      target_type, target_database, json.dumps(connection_details),
+                      zoho_refresh_token, zoho_client_id, zoho_client_secret,
+                      oauth_access_token, oauth_token_expiry, oauth_api_domain))
+            else:
+                cursor.execute("""
+                    INSERT INTO data_sources 
+                    (source_name, source_type, server_address, username, password, 
+                     target_type, target_database, connection_details)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (source_name, 'rest_api', api_url, None, None, 
+                      target_type, target_database, json.dumps(connection_details)))
             
             source_id = cursor.fetchone()[0]
             
@@ -2751,6 +2910,42 @@ def add_api_source():
                         else:
                             # Regular REST APIs: sync once immediately
                             app.logger.info(f"Starting ONE-TIME sync for '{source_name}'")
+                            
+                            # Get OAuth credentials from database if Zoho OAuth
+                            zoho_refresh_token = None
+                            zoho_client_id = None
+                            zoho_client_secret = None
+                            stored_access_token = None
+                            stored_token_expiry = None
+                            stored_api_domain = None
+                            
+                            if auth_type == "zoho_oauth":
+                                try:
+                                    from db_utils import load_pg_config
+                                    import psycopg2
+                                    pg_conf = load_pg_config()
+                                    conn = psycopg2.connect(
+                                        dbname=pg_conf.get('database'),
+                                        user=pg_conf.get('username'),
+                                        password=pg_conf.get('password'),
+                                        host=pg_conf.get('host'),
+                                        port=int(pg_conf.get('port', 5432))
+                                    )
+                                    cursor = conn.cursor()
+                                    cursor.execute("""
+                                        SELECT oauth_refresh_token, oauth_client_id, oauth_client_secret,
+                                               oauth_access_token, oauth_token_expiry, oauth_api_domain
+                                        FROM data_sources WHERE id = %s
+                                    """, (source_id,))
+                                    row = cursor.fetchone()
+                                    if row:
+                                        zoho_refresh_token, zoho_client_id, zoho_client_secret, \
+                                        stored_access_token, stored_token_expiry, stored_api_domain = row
+                                    cursor.close()
+                                    conn.close()
+                                except Exception as e:
+                                    app.logger.warning(f"Could not load OAuth credentials: {e}")
+                            
                             result = sync_api_to_clickhouse_once(
                                 api_url=api_url,
                                 target_database=target_database,
@@ -2763,7 +2958,14 @@ def add_api_source():
                                 custom_headers=headers,
                                 request_method=request_method,
                                 data_path=data_path,
-                                auto_create_table=True
+                                auto_create_table=True,
+                                source_id=source_id if auth_type == "zoho_oauth" else None,
+                                zoho_refresh_token=zoho_refresh_token,
+                                zoho_client_id=zoho_client_id,
+                                zoho_client_secret=zoho_client_secret,
+                                stored_access_token=stored_access_token,
+                                stored_token_expiry=stored_token_expiry,
+                                stored_api_domain=stored_api_domain
                             )
                             app.logger.info(f"Sync result: {result}")
                     except Exception as e:
@@ -2817,6 +3019,11 @@ def test_api_connection():
         oauth_username = data.get("oauth_username", "").strip()
         oauth_password = data.get("oauth_password", "").strip()
         
+        # Zoho OAuth parameters
+        zoho_refresh_token = data.get("zoho_refresh_token", "").strip()
+        zoho_client_id = data.get("zoho_client_id", "").strip()
+        zoho_client_secret = data.get("zoho_client_secret", "").strip()
+        
         # Parse custom headers
         headers = {}
         if custom_headers_str:
@@ -2826,7 +3033,48 @@ def test_api_connection():
                 pass
         
         # Add authentication
-        if auth_type == "bearer" and auth_token:
+        if auth_type == "zoho_oauth" and zoho_refresh_token and zoho_client_id and zoho_client_secret:
+            # Handle Zoho OAuth - get token using refresh token
+            try:
+                app.logger.info(f"Testing Zoho OAuth: Requesting token...")
+                from zoho_oauth_manager import ZohoOAuthManager
+                token_result = ZohoOAuthManager.refresh_token(
+                    refresh_token=zoho_refresh_token,
+                    client_id=zoho_client_id,
+                    client_secret=zoho_client_secret
+                )
+                
+                if not token_result:
+                    return jsonify({
+                        "success": False,
+                        "error": "Failed to obtain Zoho access token. Please verify your refresh_token, client_id, and client_secret are correct.",
+                        "details": "Token refresh returned no result"
+                    })
+                
+                access_token = token_result['access_token']
+                api_domain = token_result.get('api_domain', 'https://www.zohoapis.in')
+                token_type = token_result.get('token_type', 'Bearer')
+                
+                # Use correct API domain in URL if needed
+                if api_domain and not api_url.startswith(api_domain):
+                    # Replace domain if URL uses wrong domain
+                    for domain in ['https://www.zohoapis.com', 'https://www.zohoapis.eu', 'https://www.zohoapis.in']:
+                        if api_url.startswith(domain):
+                            api_url = api_url.replace(domain, api_domain)
+                            app.logger.info(f"Updated API URL to use domain: {api_domain}")
+                            break
+                
+                headers["Authorization"] = f"{token_type} {access_token}"
+                app.logger.info(f"Zoho OAuth token obtained successfully (expires in {token_result.get('expires_in', 3600)}s)")
+                
+            except Exception as e:
+                app.logger.exception(f"Error obtaining Zoho OAuth token: {e}")
+                return jsonify({
+                    "success": False,
+                    "error": f"Zoho OAuth token request failed: {str(e)}",
+                    "details": "Please check your Zoho credentials (refresh_token, client_id, client_secret)"
+                })
+        elif auth_type == "bearer" and auth_token:
             headers["Authorization"] = f"Bearer {auth_token}"
         elif auth_type == "apikey" and auth_token and apikey_header:
             headers[apikey_header] = auth_token
@@ -2935,83 +3183,250 @@ def test_api_connection():
             
             response_time = round(time.time() - start_time, 2)
             
-            # Check if successful
-            if response.status_code != 200:
-                return jsonify({
-                    "success": False,
-                    "error": f"HTTP {response.status_code}: {response.reason}"
-                })
+            # Log request details for debugging
+            app.logger.info(f"[TEST_CONNECTION] API Request: {request_method} {api_url}")
+            app.logger.info(f"[TEST_CONNECTION] Status Code: {response.status_code}")
+            app.logger.info(f"[TEST_CONNECTION] Response Headers: {dict(response.headers)}")
             
-            # Parse JSON response
-            try:
-                json_data = response.json()
-            except:
-                return jsonify({
-                    "success": False,
-                    "error": "Response is not valid JSON"
-                })
+            # Handle different HTTP status codes
+            status_code = response.status_code
             
-            # Navigate to data path if specified
-            records = json_data
-            if data_path:
-                for key in data_path.split('.'):
-                    if isinstance(records, dict) and key in records:
-                        records = records[key]
-                    else:
+            # Check for successful 2xx status codes
+            if 200 <= status_code < 300:
+                # HTTP 204 (No Content) - successful but no response body
+                if status_code == 204:
+                    app.logger.warning(f"[TEST_CONNECTION] HTTP 204 received - No content in response")
+                    return jsonify({
+                        "success": False,
+                        "error": "HTTP 204: No Content\n\nThe API request was successful, but the server returned no data. This typically means:\n\n" +
+                                "• The specified record IDs do not exist in Zoho CRM\n" +
+                                "• The endpoint successfully processed the request but has no data to return\n" +
+                                "• For Zoho CRM: Verify that the record IDs in your URL are correct and exist in your CRM\n\n" +
+                                f"📋 Request Details:\n" +
+                                f"   URL: {api_url}\n" +
+                                f"   Method: {request_method}\n" +
+                                f"   Status: 204 No Content\n\n" +
+                                "💡 Troubleshooting:\n" +
+                                "   1. Check if the record IDs exist: Try accessing records individually\n" +
+                                "   2. Verify API endpoint: Ensure you're using the correct Zoho CRM API endpoint\n" +
+                                "   3. Check permissions: Your token might not have access to these specific records\n" +
+                                "   4. Try without IDs: Use the base endpoint to see if it returns any data"
+                    })
+                
+                # Other successful 2xx status codes - try to parse response
+                # Parse JSON response
+                try:
+                    json_data = response.json()
+                    app.logger.info(f"[TEST_CONNECTION] Successfully parsed JSON response")
+                except ValueError as e:
+                    # No JSON content or empty response
+                    if status_code == 204 or (not response.text or len(response.text.strip()) == 0):
                         return jsonify({
                             "success": False,
-                            "error": f"Data path '{data_path}' not found in response"
+                            "error": f"HTTP {status_code}: Success but No Content\n\nThe API returned a successful status code ({status_code}) but the response body is empty.\n\n" +
+                                    f"📋 Request Details:\n" +
+                                    f"   URL: {api_url}\n" +
+                                    f"   Method: {request_method}\n" +
+                                    f"   Status: {status_code} {response.reason}\n\n" +
+                                    "💡 Possible reasons:\n" +
+                                    "   • The API endpoint processed your request but has no data to return\n" +
+                                    "   • The specified parameters (like record IDs) don't match any records\n" +
+                                    "   • The endpoint expects different parameters or format"
                         })
-            
-            # Determine record count
-            record_count = 0
-            sample_data = None
-            if isinstance(records, list):
-                record_count = len(records)
-                sample_data = records[0] if records else None
-            elif isinstance(records, dict):
-                record_count = 1
-                sample_data = records
-        
-        # Test target database connection
-        target_db_status = "Not tested"
-        try:
-            if target_type.lower() == "postgresql":
-                from db_utils import load_pg_config
-                pg_conf = load_pg_config()
-                test_conn = psycopg2.connect(
-                    dbname=target_database,
-                    user=pg_conf.get("username"),
-                    password=pg_conf.get("password"),
-                    host=pg_conf.get("host"),
-                    port=int(pg_conf.get("port", 5432))
-                )
-                test_conn.close()
-                target_db_status = "Connected ✓"
-            elif target_type.lower() == "clickhouse":
-                from clickhouse_driver import Client
-                from db_utils import load_clickhouse_config
-                ch_conf = load_clickhouse_config()
-                client = Client(
-                    host=ch_conf.get('host', 'localhost'),
-                    port=int(ch_conf.get('port', 9000)),
-                    user=ch_conf.get('user', 'default'),
-                    password=ch_conf.get('password', ''),
-                    database=target_database
-                )
-                client.execute('SELECT 1')
-                target_db_status = "Connected ✓"
-        except Exception as e:
-            target_db_status = f"Failed: {str(e)}"
-        
-        return jsonify({
-            "success": True,
-            "status_code": response.status_code,
-            "response_time": response_time,
-            "record_count": record_count,
-            "sample_data": sample_data,
-            "target_db_status": target_db_status
-        })
+                    else:
+                        app.logger.error(f"[TEST_CONNECTION] JSON parse error: {e}, Response text: {response.text[:200]}")
+                        return jsonify({
+                            "success": False,
+                            "error": f"Response is not valid JSON\n\nThe API returned status {status_code}, but the response body is not valid JSON.\n\n" +
+                                    f"Response preview (first 200 chars): {response.text[:200]}\n\n" +
+                                    "💡 This might indicate:\n" +
+                                    "   • The API returned HTML instead of JSON (check URL)\n" +
+                                    "   • The API returned an error message in plain text\n" +
+                                    "   • The response format is different than expected"
+                        })
+                
+                # For successful 2xx responses (except 204), continue with JSON processing
+                # Navigate to data path if specified
+                records = json_data
+                if data_path:
+                    for key in data_path.split('.'):
+                        if isinstance(records, dict) and key in records:
+                            records = records[key]
+                        else:
+                            return jsonify({
+                                "success": False,
+                                "error": f"Data path '{data_path}' not found in response"
+                            })
+                
+                # Determine record count
+                record_count = 0
+                sample_data = None
+                if isinstance(records, list):
+                    record_count = len(records)
+                    sample_data = records[0] if records else None
+                elif isinstance(records, dict):
+                    record_count = 1
+                    sample_data = records
+                else:
+                    # Auto-detect data array if no explicit path
+                    app.logger.info(f"[TEST_CONNECTION] Auto-detecting data array in response...")
+                    records = json_data
+                    if isinstance(json_data, dict):
+                        # Look for common array keys
+                        for key in ['data', 'results', 'items', 'records', 'values']:
+                            if key in json_data and isinstance(json_data[key], list):
+                                records = json_data[key]
+                                record_count = len(records)
+                                sample_data = records[0] if records else None
+                                app.logger.info(f"[TEST_CONNECTION] Found data array in key: {key}")
+                                break
+                        else:
+                            # No array found in dict, treat whole dict as single record
+                            record_count = 1
+                            sample_data = json_data
+                    elif isinstance(json_data, list):
+                        records = json_data
+                        record_count = len(records)
+                        sample_data = records[0] if records else None
+                    else:
+                        record_count = 1
+                        sample_data = json_data
+                
+                # Test target database connection
+                target_db_status = "Not tested"
+                try:
+                    if target_type.lower() == "postgresql":
+                        from db_utils import load_pg_config
+                        pg_conf = load_pg_config()
+                        test_conn = psycopg2.connect(
+                            dbname=target_database,
+                            user=pg_conf.get("username"),
+                            password=pg_conf.get("password"),
+                            host=pg_conf.get("host"),
+                            port=int(pg_conf.get("port", 5432))
+                        )
+                        test_conn.close()
+                        target_db_status = "Connected ✓"
+                    elif target_type.lower() == "clickhouse":
+                        from clickhouse_driver import Client
+                        from db_utils import load_clickhouse_config
+                        ch_conf = load_clickhouse_config()
+                        client = Client(
+                            host=ch_conf.get('host', 'localhost'),
+                            port=int(ch_conf.get('port', 9000)),
+                            user=ch_conf.get('user', 'default'),
+                            password=ch_conf.get('password', ''),
+                            database=target_database
+                        )
+                        client.execute('SELECT 1')
+                        target_db_status = "Connected ✓"
+                except Exception as db_error:
+                    app.logger.warning(f"[TEST_CONNECTION] Target DB test failed: {db_error}")
+                    target_db_status = f"Connection failed: {str(db_error)}"
+                
+                app.logger.info(f"[TEST_CONNECTION] Test completed successfully: {record_count} records found")
+                
+                return jsonify({
+                    "success": True,
+                    "status_code": status_code,
+                    "response_time": response_time,
+                    "record_count": record_count,
+                    "target_db_status": target_db_status,
+                    "sample_data": sample_data
+                })
+                
+            else:
+                # Error status codes (4xx, 5xx)
+                error_details = ""
+                try:
+                    if response.text:
+                        error_response = response.json()
+                        if isinstance(error_response, dict):
+                            error_details = error_response.get('message') or error_response.get('error') or error_response.get('details') or str(error_response)
+                        else:
+                            error_details = str(error_response)
+                except:
+                    error_details = response.text[:500] if response.text else response.reason
+                
+                # Build detailed error message based on status code
+                error_msg = f"HTTP {status_code}: {response.reason}\n\n"
+                
+                # Detailed explanations for common status codes
+                if status_code == 400:
+                    error_msg += "❌ Bad Request: The request was invalid or malformed.\n\n"
+                    error_msg += "💡 Common causes:\n"
+                    error_msg += "   • Invalid URL parameters or query strings\n"
+                    error_msg += "   • Missing required parameters\n"
+                    error_msg += "   • Malformed request body or headers\n"
+                    error_msg += "   • For Zoho: Invalid record IDs format or IDs don't exist\n\n"
+                elif status_code == 401:
+                    error_msg += "❌ Unauthorized: Authentication failed or access token is invalid.\n\n"
+                    error_msg += "💡 Common causes:\n"
+                    error_msg += "   • Access token expired or invalid\n"
+                    error_msg += "   • Wrong API domain (e.g., using .com instead of .in)\n"
+                    error_msg += "   • Missing or incorrect Authorization header\n"
+                    error_msg += "   • Token not properly formatted (should be 'Bearer <token>' or 'Zoho-oauthtoken <token>')\n"
+                    if auth_type == "zoho_oauth":
+                        error_msg += "\n🔧 For Zoho OAuth:\n"
+                        error_msg += "   • Verify your refresh_token, client_id, and client_secret are correct\n"
+                        error_msg += "   • Check that the token was successfully obtained (see server logs)\n"
+                        error_msg += "   • Ensure API URL uses the correct domain from token response\n"
+                        error_msg += "   • Try refreshing your Zoho OAuth token manually\n\n"
+                elif status_code == 403:
+                    error_msg += "❌ Forbidden: You don't have permission to access this resource.\n\n"
+                    error_msg += "💡 Common causes:\n"
+                    error_msg += "   • Your API token doesn't have the required permissions/scopes\n"
+                    error_msg += "   • The account doesn't have access to this module or data\n"
+                    error_msg += "   • Rate limiting or access restrictions\n\n"
+                elif status_code == 404:
+                    error_msg += "❌ Not Found: The requested resource or endpoint doesn't exist.\n\n"
+                    error_msg += "💡 Common causes:\n"
+                    error_msg += "   • Incorrect API endpoint URL\n"
+                    error_msg += "   • Record IDs in URL don't exist in the system\n"
+                    error_msg += "   • API endpoint path is misspelled or incorrect\n"
+                    error_msg += "   • For Zoho: Module name might be wrong (e.g., 'Leads' vs 'Lead')\n\n"
+                elif status_code == 429:
+                    error_msg += "❌ Too Many Requests: Rate limit exceeded.\n\n"
+                    error_msg += "💡 Common causes:\n"
+                    error_msg += "   • Too many API requests in a short time period\n"
+                    error_msg += "   • Zoho API rate limits have been reached\n\n"
+                    error_msg += "🔧 Solution:\n"
+                    error_msg += "   • Wait 5-10 minutes before retrying\n"
+                    error_msg += "   • Reduce the frequency of API calls\n\n"
+                elif status_code >= 500:
+                    error_msg += f"❌ Server Error ({status_code}): The API server encountered an error.\n\n"
+                    error_msg += "💡 Common causes:\n"
+                    error_msg += "   • API server is temporarily unavailable\n"
+                    error_msg += "   • Internal server error on the API provider's side\n"
+                    error_msg += "   • Service maintenance or downtime\n\n"
+                    error_msg += "🔧 Solution:\n"
+                    error_msg += "   • Wait a few minutes and try again\n"
+                    error_msg += "   • Check API provider's status page\n"
+                    error_msg += "   • Verify the API endpoint is correct\n\n"
+                else:
+                    error_msg += f"❌ Error: The API returned an unexpected status code.\n\n"
+                
+                if error_details:
+                    error_msg += f"📋 Error Details:\n{error_details}\n\n"
+                
+                error_msg += f"📋 Request Details:\n"
+                error_msg += f"   URL: {api_url}\n"
+                error_msg += f"   Method: {request_method}\n"
+                error_msg += f"   Status: {status_code} {response.reason}\n"
+                if headers.get('Authorization'):
+                    auth_header = headers['Authorization']
+                    if len(auth_header) > 50:
+                        auth_preview = auth_header[:30] + "..." + auth_header[-10:]
+                        error_msg += f"   Authorization: {auth_preview} (token present)\n"
+                    else:
+                        error_msg += f"   Authorization: {auth_header}\n"
+                
+                app.logger.error(f"[TEST_CONNECTION] API Error: {error_msg}")
+                
+                return jsonify({
+                    "success": False,
+                    "error": error_msg
+                })
         
     except requests.exceptions.Timeout:
         return jsonify({

@@ -19123,3 +19123,37 @@ NameError: name 'load_pg_config' is not defined. Did you mean: 'load_config'?
 2025-11-03 11:34:46,316 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
 2025-11-03 11:34:52,716 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
 2025-11-03 11:34:52,716 - WARNING - [AUTH] Session contents: {}
+2025-11-03 12:02:08,499 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 12:02:14,009 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 12:02:14,010 - WARNING - [AUTH] Session contents: {}
+2025-11-03 12:09:10,344 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 12:09:18,518 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 12:09:18,519 - WARNING - [AUTH] Session contents: {}
+2025-11-03 12:10:32,030 - ERROR - Background sync error: cannot access local variable 'datetime' where it is not associated with a value
+2025-11-03 12:10:57,725 - ERROR - Error syncing API source 'crm': cannot access local variable 'datetime' where it is not associated with a value
+2025-11-03 12:22:15,229 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 12:22:18,244 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 12:22:18,246 - WARNING - [AUTH] Session contents: {}
+2025-11-03 12:23:57,206 - ERROR - Token refresh failed with status 400: {"error_description":"You have made too many requests continuously. Please try again after some time.","error":"Access Denied","status":"failure"}
+2025-11-03 12:24:01,933 - ERROR - Token refresh failed with status 400: {"error_description":"You have made too many requests continuously. Please try again after some time.","error":"Access Denied","status":"failure"}
+2025-11-03 12:24:14,839 - ERROR - Token refresh failed with status 400: {"error_description":"You have made too many requests continuously. Please try again after some time.","error":"Access Denied","status":"failure"}
+2025-11-03 12:28:17,659 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 12:28:21,633 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/api from 127.0.0.1
+2025-11-03 12:28:21,634 - WARNING - [AUTH] Session contents: {}
+2025-11-03 12:29:21,071 - ERROR - Token refresh failed with status 400: {"error_description":"You have made too many requests continuously. Please try again after some time.","error":"Access Denied","status":"failure"}
+2025-11-03 12:29:21,073 - WARNING - Rate limited by Zoho. Please wait before retrying.
+2025-11-03 12:30:13,286 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-34092d2df54sm10001899a91.13 - gsmtp')
+2025-11-03 12:31:59,679 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-7ab5541488esm1909213b3a.57 - gsmtp')
+2025-11-03 12:34:02,692 - ERROR - Token refresh error: invalid_code
+2025-11-03 12:34:41,619 - ERROR - Token refresh error: invalid_code
+2025-11-03 12:38:12,847 - ERROR - Token refresh error: invalid_code
+2025-11-03 12:38:44,023 - ERROR - Token refresh error: invalid_code
+2025-11-03 12:39:04,914 - ERROR - Token refresh error: invalid_code
+2025-11-03 12:39:32,051 - ERROR - Token refresh error: invalid_code
+2025-11-03 12:40:29,006 - ERROR - Token refresh error: invalid_code
+2025-11-03 12:41:50,610 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-295743772e9sm56786285ad.66 - gsmtp')
+2025-11-03 12:59:38,095 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 12:59:41,973 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/api from 127.0.0.1
+2025-11-03 12:59:41,975 - WARNING - [AUTH] Session contents: {}
+2025-11-03 13:00:53,428 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2958dd2308fsm45796085ad.30 - gsmtp')
+2025-11-03 13:02:38,156 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2952696eae8sm107654995ad.61 - gsmtp')
