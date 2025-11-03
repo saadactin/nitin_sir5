@@ -18993,3 +18993,19 @@ Traceback (most recent call last):
   File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\daily_summary_scheduler.py", line 39, in send_daily_summary
     from dashboard import get_all_sync_history
 ImportError: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
+2025-11-02 16:58:36,738 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-02 16:58:42,256 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-02 16:58:42,260 - WARNING - [AUTH] Session contents: {}
+2025-11-02 17:11:42,568 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-02 17:11:54,535 - WARNING - [AUTH] BLOCKED unauthenticated access to /logs from 127.0.0.1
+2025-11-02 17:11:54,538 - WARNING - [AUTH] Session contents: {}
+2025-11-02 17:14:16,445 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-295743772e9sm32678835ad.66 - gsmtp')
+2025-11-02 17:16:06,409 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-29531a1965esm76992915ad.6 - gsmtp')
+2025-11-03 09:32:36,717 - ERROR - Error generating daily summary: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\daily_summary_scheduler.py", line 39, in send_daily_summary
+    from dashboard import get_all_sync_history
+ImportError: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
+2025-11-03 09:39:07,087 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 09:39:11,648 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 09:39:11,649 - WARNING - [AUTH] Session contents: {}

@@ -2424,11 +2424,26 @@ def sync_hana_source(source_id):
         
         # Run sync in background thread
         def background_sync():
+            from sync_logger import SyncLogger
+            import time
+            
+            sync_start_time = time.time()
+            total_records = 0
+            failed_tables = []
+            successful_tables = []
+            
             try:
+                SyncLogger.log_sync_start('HANA', source_name, source_id=source_id, 
+                                         details={'tables_count': len(tables_to_sync)})
+                
                 sync_engine = HanaToClickHouseSync(hana_config, clickhouse_config)
                 
                 if not (sync_engine.connect_hana() and sync_engine.connect_clickhouse()):
-                    app.logger.error("Failed to connect to HANA or ClickHouse")
+                    error_msg = "Failed to connect to HANA or ClickHouse"
+                    SyncLogger.log_sync_failed('HANA', source_name, source_id=source_id, 
+                                             error_msg=error_msg, duration=time.time() - sync_start_time,
+                                             target_db=clickhouse_config.get('database'))
+                    app.logger.error(error_msg)
                     return
                 
                 try:
@@ -2440,6 +2455,7 @@ def sync_hana_source(source_id):
                         if not schema or not table:
                             continue
                         
+                        table_start = time.time()
                         app.logger.info(f"Syncing {schema}.{table} from HANA source {source_id}")
                         
                         # Get table schema and create in ClickHouse
@@ -2454,14 +2470,56 @@ def sync_hana_source(source_id):
                         result = sync_engine.migrate_table_data(schema, table)
                         results.append(result)
                         
+                        table_duration = time.time() - table_start
+                        
+                        # Log table sync result
+                        if result.get('status') == 'success':
+                            records = result.get('migrated_rows', 0)
+                            total_records += records
+                            successful_tables.append(f"{schema}.{table}")
+                            SyncLogger.log_table_sync('HANA', source_name, source_id=source_id,
+                                                     schema=schema, table=table, records=records,
+                                                     status='success', duration=table_duration)
+                        else:
+                            failed_tables.append(f"{schema}.{table}")
+                            SyncLogger.log_table_sync('HANA', source_name, source_id=source_id,
+                                                     schema=schema, table=table, records=0,
+                                                     status='failed', duration=table_duration,
+                                                     error=result.get('error'))
+                        
                         # Setup incremental sync if requested
                         if enable_incremental or table_spec.get('enable_incremental', False):
                             sync_engine.setup_incremental_sync(schema, table)
+                    
+                    sync_duration = time.time() - sync_start_time
+                    
+                    # Log overall sync result
+                    if failed_tables:
+                        SyncLogger.log_sync_partial('HANA', source_name, source_id=source_id,
+                                                   records_synced=total_records,
+                                                   records_failed=len(failed_tables),
+                                                   duration=sync_duration,
+                                                   target_db=clickhouse_config.get('database'),
+                                                   failed_tables=failed_tables,
+                                                   details={'total_tables': len(tables_to_sync),
+                                                           'successful': len(successful_tables),
+                                                           'failed': len(failed_tables)})
+                    else:
+                        SyncLogger.log_sync_complete('HANA', source_name, source_id=source_id,
+                                                    records_synced=total_records,
+                                                    duration=sync_duration,
+                                                    target_db=clickhouse_config.get('database'),
+                                                    details={'tables_synced': len(successful_tables)})
                     
                     app.logger.info(f"HANA sync completed for {len(results)} tables")
                 finally:
                     sync_engine.close_connections()
             except Exception as e:
+                sync_duration = time.time() - sync_start_time
+                SyncLogger.log_sync_failed('HANA', source_name, source_id=source_id,
+                                         error_msg=str(e), records_partial=total_records,
+                                         duration=sync_duration,
+                                         target_db=clickhouse_config.get('database'))
                 app.logger.exception(f"Error in HANA background sync: {e}")
         
         # Start background thread
@@ -3472,9 +3530,17 @@ def alerts():
 @require_role(["admin", "operator", "viewer"])
 def view_logs():
     """View and analyze log files with pagination"""
-    log_file = 'load_postgres.log'
+    # Clean up old logs (keep last 7 days)
+    from sync_logger import cleanup_old_logs
+    cleanup_old_logs(days=7)
+    
+    # Try sync_operations.log first, fallback to load_postgres.log
+    log_file = 'sync_operations.log'
     if not os.path.exists(log_file):
-        flash(f"Log file '{log_file}' not found", "danger")
+        log_file = 'load_postgres.log'
+    
+    if not os.path.exists(log_file):
+        flash(f"Log file not found. Sync operations will be logged when available.", "info")
         return render_template(
             "logs.html",
             alerts=[],
@@ -3487,14 +3553,15 @@ def view_logs():
             errors_page=1,
             warnings_page=1,
             info_page=1,
-            per_page=10
+            per_page=20,
+            log_file_name=log_file
         )
 
     analyzer = LogAnalyzer(log_file)
     analyzer.parse_logs()
 
     # Pagination settings
-    per_page = 10
+    per_page = 20
     warnings_page = int(request.args.get("warnings_page", 1))
     errors_page = int(request.args.get("errors_page", 1))
     info_page = int(request.args.get("info_page", 1))
@@ -3522,6 +3589,7 @@ def view_logs():
         infos_total=len(infos),
         per_page=per_page,
         log_exists=True,
+        log_file_name=log_file,
         role=session.get("role")
     )
 
@@ -3548,13 +3616,17 @@ def generate_log_report():
 @require_role(["admin", "operator", "viewer"])
 def download_logs():
     """Download raw log file"""
-    log_file = 'load_postgres.log'
+    # Try sync_operations.log first, fallback to load_postgres.log
+    log_file = 'sync_operations.log'
     if not os.path.exists(log_file):
-        flash(f"Log file '{log_file}' not found", "danger")
+        log_file = 'load_postgres.log'
+    
+    if not os.path.exists(log_file):
+        flash(f"Log file not found", "danger")
         return redirect(url_for("view_logs"))
     
     from flask import send_file
-    return send_file(log_file, as_attachment=True, download_name="postgres_sync_log.log")
+    return send_file(log_file, as_attachment=True, download_name="sync_operations.log")
 
 
 

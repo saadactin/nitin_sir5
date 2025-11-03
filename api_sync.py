@@ -338,8 +338,20 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
     
     # Track sync metrics
     sync_start_time = datetime.now()
+    import time
+    start_time_seconds = time.time()
     records_synced = 0
     error_msg = None
+    
+    # Import sync logger
+    try:
+        from sync_logger import SyncLogger
+        use_sync_logger = True
+        source_name = api_url  # Use API URL as source name
+        SyncLogger.log_sync_start('REST_API', source_name, 
+                                 details={'target_db': target_database, 'target_table': target_table})
+    except ImportError:
+        use_sync_logger = False
     
     logger.info(f"🔄 Starting ONE-TIME REST API sync from: {api_url}")
     logger.info(f"📊 Target: {target_database}.{target_table}")
@@ -469,9 +481,18 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
                     # Continue with other records
         
         sync_end_time = datetime.now()
-        duration = (sync_end_time - sync_start_time).total_seconds()
+        duration = time.time() - start_time_seconds
         
         logger.info(f"✅ Sync completed successfully: {records_synced} records synced in {duration:.2f}s")
+        
+        # Log to sync logger
+        if use_sync_logger:
+            SyncLogger.log_sync_complete('REST_API', source_name,
+                                       records_synced=records_synced,
+                                       duration=duration,
+                                       target_db=target_database,
+                                       target_table=target_table,
+                                       details={'api_url': api_url})
         
         # Send success email
         send_api_sync_email(api_url, target_database, target_table, records_synced, 'success', 
@@ -483,6 +504,17 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
         logger.exception(f"Error syncing API to ClickHouse: {e}")
         error_msg = str(e)
         sync_end_time = datetime.now()
+        duration = time.time() - start_time_seconds if 'start_time_seconds' in locals() else 0
+        
+        # Log to sync logger
+        if use_sync_logger:
+            SyncLogger.log_sync_failed('REST_API', source_name,
+                                     error_msg=error_msg,
+                                     records_partial=records_synced,
+                                     duration=duration,
+                                     target_db=target_database,
+                                     details={'api_url': api_url})
+        
         send_api_sync_email(api_url, target_database, target_table, records_synced, 'failed', 
                           error_msg=error_msg, sync_start_time=sync_start_time, sync_end_time=sync_end_time)
         return {"success": False, "records_synced": records_synced, "error": error_msg}

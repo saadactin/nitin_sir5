@@ -18,19 +18,29 @@ class LogAnalyzer:
 
         seven_days_ago = datetime.now() - timedelta(days=7)
 
-        with open(self.log_file_path, 'r') as file:
+        with open(self.log_file_path, 'r', encoding='utf-8') as file:
             for line in file:
                 line = line.strip()
                 if not line:
                     continue
 
-                pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) - (\w+) - (.*)'
-                match = re.match(pattern, line)
+                # Try multiple timestamp patterns
+                # Pattern 1: YYYY-MM-DD HH:MM:SS (sync_operations.log format)
+                pattern1 = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (\w+) - \[.*?\] - (.*)'
+                # Pattern 2: YYYY-MM-DD HH:MM:SS,mmm (old format)
+                pattern2 = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) - (\w+) - (.*)'
+                
+                match = re.match(pattern1, line) or re.match(pattern2, line)
 
                 if match:
                     timestamp_str, level, message = match.groups()
                     try:
-                        timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S,%f')
+                        # Try new format first (no milliseconds)
+                        try:
+                            timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+                        except ValueError:
+                            # Try old format with milliseconds
+                            timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S,%f')
                     except ValueError:
                         timestamp = datetime.now()
 
@@ -45,22 +55,31 @@ class LogAnalyzer:
                         'raw_line': line
                     }
 
-                    if level == 'ERROR' or 'error' in message.lower():
+                    # Categorize based on level and message content
+                    if level == 'ERROR' or 'error' in message.lower() or 'SYNC_FAILED' in message:
                         self.alerts.append(log_entry)
-                    elif level == 'WARNING' or 'warning' in message.lower() or 'failed' in message.lower():
+                    elif level == 'WARNING' or 'warning' in message.lower() or 'failed' in message.lower() or 'SYNC_PARTIAL' in message:
                         self.warnings.append(log_entry)
                     else:
                         self.infos.append(log_entry)
                 else:
-                    # Non-matching lines (still check date filter)
-                    if datetime.now() >= seven_days_ago:
-                        log_entry = {
-                            'timestamp': datetime.now(),
-                            'level': 'UNKNOWN',
-                            'message': line,
-                            'raw_line': line
-                        }
-                        self.infos.append(log_entry)
+                    # Non-matching lines - check if within date range
+                    # Try to extract any date pattern
+                    date_pattern = re.search(r'(\d{4}-\d{2}-\d{2})', line)
+                    if date_pattern:
+                        try:
+                            date_str = date_pattern.group(1)
+                            log_date = datetime.strptime(date_str, '%Y-%m-%d')
+                            if log_date.date() >= (datetime.now() - timedelta(days=7)).date():
+                                log_entry = {
+                                    'timestamp': datetime.now(),
+                                    'level': 'INFO',
+                                    'message': line,
+                                    'raw_line': line
+                                }
+                                self.infos.append(log_entry)
+                        except ValueError:
+                            pass
     
     def generate_html_report(self, output_file='alerts.html'):
         """Generate HTML report with categorized alerts"""

@@ -167,16 +167,19 @@
               </div>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 dark:bg-gray-800 border-t border-border-light dark:border-border-dark flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
-              {% if ds.source_type == 'sap_hana' %}
-              <a href="{{ url_for('view_hana_tables_page', source_id=ds.id) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
-                <span class="material-icons text-base sm:text-lg">table_chart</span>
-                <span>View Tables</span>
-              </a>
-              {% else %}
-              <a href="{{ url_for('view_source_databases', source_id=ds.id) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
-                <span class="material-icons text-base sm:text-lg">dataset</span>
-                <span>Databases</span>
-              </a>
+              {# Show Databases button only for SQL Server and HANA, not for REST API #}
+              {% if ds.source_type != 'rest_api' %}
+                {% if ds.source_type == 'sap_hana' %}
+                <a href="{{ url_for('view_hana_tables_page', source_id=ds.id) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
+                  <span class="material-icons text-base sm:text-lg">table_chart</span>
+                  <span>View Tables</span>
+                </a>
+                {% else %}
+                <a href="{{ url_for('view_source_databases', source_id=ds.id) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
+                  <span class="material-icons text-base sm:text-lg">dataset</span>
+                  <span>Databases</span>
+                </a>
+                {% endif %}
               {% endif %}
               <a href="{{ url_for('sync_source_background', source_id=ds.id) }}" id="sync-source-{{ ds.id }}" data-source-id="{{ ds.id }}" class="sync-button flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors">
                 <span class="material-icons text-base sm:text-lg">sync</span>
