@@ -230,9 +230,28 @@ def init_pg_schema():
             last_run TIMESTAMP,
             status TEXT,
             error TEXT,
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP DEFAULT NOW(),
+            -- Add source_id for database sources (HANA, SQL Server from DB)
+            source_id INTEGER REFERENCES data_sources(id) ON DELETE CASCADE
         );
     """)
+    
+    # Add source_id column if it doesn't exist (for existing installations)
+    try:
+        cur.execute("""
+            SELECT column_name FROM information_schema.columns 
+            WHERE table_schema = 'metrics_sync_tables' 
+            AND table_name = 'schedules' 
+            AND column_name = 'source_id'
+        """)
+        if not cur.fetchone():
+            cur.execute("""
+                ALTER TABLE metrics_sync_tables.schedules 
+                ADD COLUMN source_id INTEGER REFERENCES data_sources(id) ON DELETE CASCADE
+            """)
+            logger.info("Added source_id column to schedules table")
+    except Exception as e:
+        logger.warning(f"Could not add source_id column (may already exist or data_sources table missing): {e}")
 
     # Ensure older installations get the new columns if the table existed prior
     try:

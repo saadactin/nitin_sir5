@@ -19009,3 +19009,117 @@ ImportError: cannot import name 'get_all_sync_history' from 'dashboard' (C:\User
 2025-11-03 09:39:07,087 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
 2025-11-03 09:39:11,648 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
 2025-11-03 09:39:11,649 - WARNING - [AUTH] Session contents: {}
+2025-11-03 09:49:19,057 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 09:49:26,590 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 09:49:26,591 - WARNING - [AUTH] Session contents: {}
+2025-11-03 10:04:20,562 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:21:26,544 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:23:13,588 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:23:16,893 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 10:23:16,896 - WARNING - [AUTH] Session contents: {}
+2025-11-03 10:23:17,443 - WARNING - [AUTH] BLOCKED unauthenticated access to /favicon.ico from 127.0.0.1
+2025-11-03 10:23:17,444 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 10:23:28,767 - WARNING - [404] Page not found: /favicon.ico - 127.0.0.1
+2025-11-03 10:23:33,091 - ERROR - Could not load data_sources for scheduling: name 'load_pg_config' is not defined
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3094, in schedule_page
+    pg_conf = load_pg_config()
+              ^^^^^^^^^^^^^^
+NameError: name 'load_pg_config' is not defined. Did you mean: 'load_config'?
+2025-11-03 10:23:56,395 - ERROR - Could not load data_sources for scheduling: name 'load_pg_config' is not defined
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3094, in schedule_page
+    pg_conf = load_pg_config()
+              ^^^^^^^^^^^^^^
+NameError: name 'load_pg_config' is not defined. Did you mean: 'load_config'?
+2025-11-03 10:33:48,990 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:33:55,218 - WARNING - [AUTH] BLOCKED unauthenticated access to /schedule from 127.0.0.1
+2025-11-03 10:33:55,219 - WARNING - [AUTH] Session contents: {}
+2025-11-03 10:34:09,822 - ERROR - Could not load data_sources for scheduling: name 'load_pg_config' is not defined
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3094, in schedule_page
+    pg_conf = load_pg_config()
+              ^^^^^^^^^^^^^^
+NameError: name 'load_pg_config' is not defined. Did you mean: 'load_config'?
+2025-11-03 10:37:53,643 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:37:54,383 - ERROR - Could not load data_sources for scheduling: name 'load_pg_config' is not defined
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3096, in schedule_page
+    pg_conf = load_pg_config()
+              ^^^^^^^^^^^^^^
+NameError: name 'load_pg_config' is not defined. Did you mean: 'load_config'?
+2025-11-03 10:38:12,781 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:39:41,858 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:41:16,576 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:42:10,775 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:42:57,522 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:43:00,602 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 10:43:00,603 - WARNING - [AUTH] Session contents: {}
+2025-11-03 10:46:42,130 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.26s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 10:49:46,787 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.16s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 10:52:21,288 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:52:21,531 - ERROR - Error decrypting password: 
+2025-11-03 10:52:21,532 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:52:21,674 - ERROR - Error decrypting password: 
+2025-11-03 10:52:21,674 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:52:21,724 - ERROR - Error decrypting password: 
+2025-11-03 10:52:21,819 - ERROR - Error decrypting password: 
+2025-11-03 10:52:21,819 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:52:21,995 - ERROR - Error decrypting password: 
+2025-11-03 10:52:21,995 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:52:22,129 - ERROR - Error decrypting password: 
+2025-11-03 10:52:22,129 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:52:22,240 - ERROR - Error decrypting password: 
+2025-11-03 10:52:22,240 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:52:22,365 - ERROR - Error decrypting password: 
+2025-11-03 10:52:22,365 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:52:22,491 - ERROR - Error decrypting password: 
+2025-11-03 10:52:22,491 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:52:53,611 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.19s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 10:53:25,235 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:53:25,497 - ERROR - Error decrypting password: 
+2025-11-03 10:53:25,497 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:53:25,606 - ERROR - Error decrypting password: 
+2025-11-03 10:53:25,606 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:53:25,652 - ERROR - Error decrypting password: 
+2025-11-03 10:53:25,757 - ERROR - Error decrypting password: 
+2025-11-03 10:53:25,758 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:53:25,907 - ERROR - Error decrypting password: 
+2025-11-03 10:53:25,907 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:53:26,057 - ERROR - Error decrypting password: 
+2025-11-03 10:53:26,058 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:55:58,500 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.21s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 10:55:58,744 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.29s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 10:56:33,344 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 10:56:33,537 - ERROR - Error decrypting password: 
+2025-11-03 10:56:33,537 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:33,698 - ERROR - Error decrypting password: 
+2025-11-03 10:56:33,698 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:33,731 - ERROR - Error decrypting password: 
+2025-11-03 10:56:33,807 - ERROR - Error decrypting password: 
+2025-11-03 10:56:33,807 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:33,946 - ERROR - Error decrypting password: 
+2025-11-03 10:56:33,946 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:34,205 - ERROR - Error decrypting password: 
+2025-11-03 10:56:34,206 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:34,456 - ERROR - Error decrypting password: 
+2025-11-03 10:56:34,456 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:34,604 - ERROR - Error decrypting password: 
+2025-11-03 10:56:34,604 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:34,725 - ERROR - Error decrypting password: 
+2025-11-03 10:56:34,725 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:34,875 - ERROR - Error decrypting password: 
+2025-11-03 10:56:34,875 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:35,022 - ERROR - Error decrypting password: 
+2025-11-03 10:56:35,022 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:35,182 - ERROR - Error decrypting password: 
+2025-11-03 10:56:35,182 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:56:35,334 - ERROR - Error decrypting password: 
+2025-11-03 10:56:35,334 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 10:59:03,022 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.27s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 10:59:03,045 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.16s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 11:02:03,686 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.14s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 11:02:03,828 - ERROR - SYNC_FAILED | Source Type: sql_server | Source Name: server1 | Source ID: 6 | Duration: 0.28s | Error: SQL Server database sources scheduled sync not yet fully implemented
+2025-11-03 11:34:46,316 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 11:34:52,716 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 11:34:52,716 - WARNING - [AUTH] Session contents: {}

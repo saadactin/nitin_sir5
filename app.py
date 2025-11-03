@@ -38,6 +38,8 @@ from seeschedule import see_schedule_page , delete_schedule
 from scheduler_utils import (
     schedule_interval_sync,
     schedule_daily_sync,
+    schedule_source_interval_sync,
+    schedule_source_daily_sync,
     delete_schedule,
     update_schedule,
     get_schedules
@@ -3078,28 +3080,185 @@ def dashboard_data():
 @app.route("/schedule", methods=["GET", "POST"])
 @require_role(["admin", "operator"])
 def schedule_page():
-    """Create a new schedule"""
+    """Create a new schedule for SQL Server (YAML) or Data Sources (Database: SQL Server/HANA)"""
+    from db_utils import get_pg_connection, load_pg_config
+    import psycopg2
+    
+    # Load YAML SQL servers
     config = load_config()
-    servers = list(config.get("sqlservers", {}).keys())
+    yaml_servers = list(config.get("sqlservers", {}).keys())
+    
+    # Load data sources from database (SQL Server and HANA only)
+    data_sources = []
+    sql_server_sources = []
+    hana_sources = []
+    try:
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details 
+            FROM data_sources 
+            WHERE is_active = true AND source_type IN ('sql_server', 'sap_hana')
+            ORDER BY created_at DESC
+        """)
+        rows = cur.fetchall()
+        app.logger.info(f"[SCHEDULE] Raw query returned {len(rows)} row(s)")
+        
+        for r in rows:
+            ds = {
+                'id': r[0],
+                'source_name': r[1],
+                'source_type': r[2],
+                'server_address': r[3],
+                'username': r[4],
+                'target_type': r[5],
+                'target_database': r[6],
+                'connection_details': r[7]
+            }
+            data_sources.append(ds)
+            
+            # Filter immediately while building
+            source_type = ds.get('source_type', '').strip().lower()
+            if source_type == 'sql_server':
+                sql_server_sources.append(ds)
+            elif source_type == 'sap_hana':
+                hana_sources.append(ds)
+        
+        cur.close()
+        conn.close()
+        
+        # Debug logging
+        app.logger.info(f"[SCHEDULE] Loaded {len(data_sources)} total data sources for scheduling")
+        app.logger.info(f"[SCHEDULE] SQL Server sources: {len(sql_server_sources)}")
+        app.logger.info(f"[SCHEDULE] HANA sources: {len(hana_sources)}")
+        for ds in data_sources:
+            app.logger.info(f"[SCHEDULE] Source: {ds['source_name']} (Type: '{ds['source_type']}', ID: {ds['id']})")
+    except Exception as e:
+        app.logger.exception(f"Could not load data_sources for scheduling: {e}")
+        flash(f"Error loading data sources: {str(e)}", "warning")
 
     if request.method == "POST":
         schedule_type = request.form.get("schedule_type")
-        server_name = request.form.get("server_name")
+        server_name = request.form.get("server_name", "").strip()
+        source_id_str = request.form.get("source_id", "").strip()
+        selected_source = request.form.get("selected_source")  # 'yaml_sql' or 'db_source'
+        
+        # Debug logging
+        app.logger.info(f"[SCHEDULE POST] Received form data:")
+        app.logger.info(f"  - schedule_type: {schedule_type}")
+        app.logger.info(f"  - server_name: '{server_name}'")
+        app.logger.info(f"  - source_id: '{source_id_str}'")
+        app.logger.info(f"  - selected_source: '{selected_source}'")
+        app.logger.info(f"  - All form keys: {list(request.form.keys())}")
+        
         try:
             if schedule_type == "interval":
                 minutes = int(request.form.get("minutes"))
-                schedule_interval_sync(server_name, minutes)
+                
+                if selected_source == "yaml_sql" and server_name:
+                    # YAML SQL Server
+                    app.logger.info(f"[SCHEDULE POST] Scheduling YAML SQL Server: {server_name} (every {minutes} minutes)")
+                    schedule_interval_sync(server_name, minutes)
+                    flash(f"Schedule set for SQL Server '{server_name}' (every {minutes} minutes)", "success")
+                elif selected_source == "db_source" and source_id_str:
+                    # Database source (SQL Server or HANA)
+                    try:
+                        source_id = int(source_id_str)
+                        app.logger.info(f"[SCHEDULE POST] Scheduling database source ID: {source_id} (every {minutes} minutes)")
+                        
+                        # Get source info for logging
+                        source_info = next((ds for ds in data_sources if ds['id'] == source_id), None)
+                        if source_info:
+                            app.logger.info(f"[SCHEDULE POST] Source found: {source_info['source_name']} (Type: {source_info['source_type']})")
+                        else:
+                            app.logger.warning(f"[SCHEDULE POST] Source ID {source_id} not found in loaded data_sources")
+                        
+                        schedule_source_interval_sync(source_id, minutes)
+                        source_name = source_info['source_name'] if source_info else f"Source {source_id}"
+                        flash(f"Schedule set for '{source_name}' (every {minutes} minutes)", "success")
+                    except ValueError:
+                        app.logger.error(f"[SCHEDULE POST] Invalid source_id: '{source_id_str}'")
+                        flash(f"Invalid source ID: {source_id_str}", "danger")
+                else:
+                    app.logger.error(f"[SCHEDULE POST] Invalid source selection: selected_source={selected_source}, server_name={server_name}, source_id={source_id_str}")
+                    flash("Invalid source selection. Please ensure you selected a source type and a specific source.", "danger")
             elif schedule_type == "daily":
                 hour = int(request.form.get("hour"))
                 minute = int(request.form.get("minute"))
-                schedule_daily_sync(server_name, hour, minute)
-            flash(f"Schedule set for {server_name}", "success")
+                
+                if selected_source == "yaml_sql" and server_name:
+                    # YAML SQL Server
+                    app.logger.info(f"[SCHEDULE POST] Scheduling YAML SQL Server: {server_name} (daily at {hour:02d}:{minute:02d})")
+                    schedule_daily_sync(server_name, hour, minute)
+                    flash(f"Schedule set for SQL Server '{server_name}' (daily at {hour:02d}:{minute:02d})", "success")
+                elif selected_source == "db_source" and source_id_str:
+                    # Database source (SQL Server or HANA)
+                    try:
+                        source_id = int(source_id_str)
+                        app.logger.info(f"[SCHEDULE POST] Scheduling database source ID: {source_id} (daily at {hour:02d}:{minute:02d})")
+                        
+                        # Get source info for logging
+                        source_info = next((ds for ds in data_sources if ds['id'] == source_id), None)
+                        if source_info:
+                            app.logger.info(f"[SCHEDULE POST] Source found: {source_info['source_name']} (Type: {source_info['source_type']})")
+                        else:
+                            app.logger.warning(f"[SCHEDULE POST] Source ID {source_id} not found in loaded data_sources")
+                        
+                        schedule_source_daily_sync(source_id, hour, minute)
+                        source_name = source_info['source_name'] if source_info else f"Source {source_id}"
+                        flash(f"Schedule set for '{source_name}' (daily at {hour:02d}:{minute:02d})", "success")
+                    except ValueError:
+                        app.logger.error(f"[SCHEDULE POST] Invalid source_id: '{source_id_str}'")
+                        flash(f"Invalid source ID: {source_id_str}", "danger")
+                else:
+                    app.logger.error(f"[SCHEDULE POST] Invalid source selection: selected_source={selected_source}, server_name={server_name}, source_id={source_id_str}")
+                    flash("Invalid source selection. Please ensure you selected a source type and a specific source.", "danger")
+            else:
+                flash("Invalid schedule type", "danger")
+        except ValueError as e:
+            app.logger.exception(f"[SCHEDULE POST] ValueError setting schedule: {e}")
+            flash(f"Invalid input: {e}", "danger")
         except Exception as e:
+            app.logger.exception(f"[SCHEDULE POST] Failed to set schedule: {e}")
             flash(f"Failed to set schedule: {e}", "danger")
         return redirect(url_for("schedule_page"))
 
+    # Filter data sources by type for template (already done above, but ensure we have lists)
+    if not sql_server_sources:
+        sql_server_sources = [ds for ds in data_sources if ds.get('source_type', '').strip().lower() == 'sql_server']
+    if not hana_sources:
+        hana_sources = [ds for ds in data_sources if ds.get('source_type', '').strip().lower() == 'sap_hana']
+    
+    # Debug logging - final verification
+    app.logger.info(f"[SCHEDULE] FINAL - SQL Server sources: {len(sql_server_sources)}")
+    for ds in sql_server_sources:
+        app.logger.info(f"[SCHEDULE] FINAL - SQL Server: {ds['source_name']} (ID: {ds['id']}, Type: '{ds.get('source_type')}')")
+    app.logger.info(f"[SCHEDULE] FINAL - HANA sources: {len(hana_sources)}")
+    for ds in hana_sources:
+        app.logger.info(f"[SCHEDULE] FINAL - HANA: {ds['source_name']} (ID: {ds['id']}, Type: '{ds.get('source_type')}')")
+    
     jobs = get_schedules()
-    return render_template("schedule.html", servers=servers, jobs=jobs, role=session.get("role"))
+    
+    # Ensure we always pass lists, never None
+    template_vars = {
+        'yaml_servers': yaml_servers or [],
+        'data_sources': data_sources or [],
+        'sql_server_sources': sql_server_sources or [],
+        'hana_sources': hana_sources or [],
+        'jobs': jobs or [],
+        'role': session.get("role")
+    }
+    
+    app.logger.info(f"[SCHEDULE] Rendering template with: SQL={len(template_vars['sql_server_sources'])}, HANA={len(template_vars['hana_sources'])}")
+    
+    return render_template("schedule.html", **template_vars)
 
 # ------------------ CSV/Excel/Text Upload → Postgres ------------------
 

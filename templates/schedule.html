@@ -14,6 +14,7 @@
         extend: {
           colors: {
             primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
             "background-light": "#F8FAFC",
             "background-dark": "#0F172A",
             "surface-light": "#FFFFFF",
@@ -37,6 +38,13 @@
   </script>
   <style>
     .material-icons { font-size: 20px; vertical-align: middle; }
+    .source-option {
+      transition: all 0.2s ease;
+    }
+    .source-option:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
   </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
@@ -50,64 +58,200 @@
 
         <!-- Header -->
         <div class="flex items-center justify-between">
-          <h2 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
-            <span class="material-icons text-2xl sm:text-3xl">settings</span>
-            <span>Schedule Sync</span>
-          </h2>
-         
+          <div class="flex items-center gap-3">
+            <span class="material-icons text-3xl sm:text-4xl text-primary">schedule</span>
+            <h2 class="text-2xl sm:text-3xl font-bold">Schedule Sync</h2>
+          </div>
         </div>
 
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% elif category == 'danger' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
         <!-- Scheduling Form -->
-        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
-          <div class="p-3 sm:p-4 bg-primary text-white rounded-t-lg flex items-center gap-2">
-            <span class="material-icons">schedule</span>
-            <h3 class="text-base sm:text-lg font-semibold">Set New Schedule</h3>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border border-border-light dark:border-border-dark overflow-hidden">
+          <div class="p-4 sm:p-6 bg-gradient-to-r from-primary to-primary-hover text-white">
+            <div class="flex items-center gap-3">
+              <span class="material-icons text-3xl">schedule</span>
+              <h3 class="text-xl sm:text-2xl font-bold">Set New Schedule</h3>
+            </div>
           </div>
-          <div class="p-4 sm:p-6">
-            <form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="sm:col-span-2 md:col-span-1">
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark text-sm sm:text-base">Select SQL Server</label>
-                <select name="server_name" required 
-                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none text-sm sm:text-base">
-                  {% for server in servers %}
-                    <option value="{{ server }}">{{ server }}</option>
-                  {% endfor %}
-                </select>
+          <div class="p-6 sm:p-8">
+            <form method="POST" id="scheduleForm" class="space-y-6">
+              <!-- Step 1: Source Type Selection -->
+              <div>
+                <label class="block mb-3 font-semibold text-base sm:text-lg text-text-light dark:text-text-dark">
+                  <span class="material-icons align-middle mr-2">category</span>
+                  Step 1: Select Source Type
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <!-- SQL Server Type Card -->
+                  <label class="source-type-card bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-6 cursor-pointer transition-all hover:shadow-lg" data-source-type="sql_server">
+                    <input type="radio" name="selected_source_type" value="sql_server" class="hidden source-type-radio" required>
+                    <div class="flex flex-col items-center text-center space-y-3">
+                      <span class="material-icons text-blue-600 dark:text-blue-400 text-5xl">storage</span>
+                      <div class="font-bold text-xl text-blue-900 dark:text-blue-200">SQL Server</div>
+                      <p class="text-sm text-blue-700 dark:text-blue-300">Schedule sync for SQL Server sources</p>
+                    </div>
+                  </label>
+
+                  <!-- HANA Type Card -->
+                  <label class="source-type-card bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-6 cursor-pointer transition-all hover:shadow-lg" data-source-type="sap_hana">
+                    <input type="radio" name="selected_source_type" value="sap_hana" class="hidden source-type-radio" required>
+                    <div class="flex flex-col items-center text-center space-y-3">
+                      <span class="material-icons text-green-600 dark:text-green-400 text-5xl">hub</span>
+                      <div class="font-bold text-xl text-green-900 dark:text-green-200">SAP HANA</div>
+                      <p class="text-sm text-green-700 dark:text-green-300">Schedule sync for HANA sources</p>
+                    </div>
+                  </label>
+                </div>
               </div>
 
-              <div class="sm:col-span-2 md:col-span-1">
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark text-sm sm:text-base">Schedule Type</label>
+              <!-- Step 2: Source Selection (hidden until type selected) -->
+              <div id="sourceSelectionStep" class="hidden">
+                <label class="block mb-3 font-semibold text-base sm:text-lg text-text-light dark:text-text-dark">
+                  <span class="material-icons align-middle mr-2">dns</span>
+                  Step 2: Select Source
+                </label>
+                
+                <!-- SQL Server Sources -->
+                <div id="sqlServerSources" class="hidden">
+                  <!-- YAML SQL Servers -->
+                  {% if yaml_servers and yaml_servers|length > 0 %}
+                  <div class="mb-4">
+                    <p class="text-sm text-subtext-light dark:text-subtext-dark mb-2 font-medium">SQL Servers (YAML Config):</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {% for server in yaml_servers %}
+                      <label class="source-option bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4 cursor-pointer flex items-center gap-3">
+                        <input type="radio" name="selected_source" value="yaml_sql" data-server-name="{{ server }}" class="text-blue-600 focus:ring-blue-500 source-radio" required>
+                        <span class="material-icons text-blue-600 dark:text-blue-400">storage</span>
+                        <div class="flex-1">
+                          <div class="font-semibold text-blue-900 dark:text-blue-200">{{ server }}</div>
+                          <div class="text-xs text-blue-700 dark:text-blue-300">YAML Config</div>
+                        </div>
+                      </label>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <!-- Database SQL Server Sources -->
+                  {% if sql_server_sources and sql_server_sources|length > 0 %}
+                  <div class="{% if yaml_servers and yaml_servers|length > 0 %}mt-4{% endif %}">
+                    <p class="text-sm text-subtext-light dark:text-subtext-dark mb-2 font-medium">SQL Servers (Database):</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {% for ds in sql_server_sources %}
+                      <label class="source-option bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4 cursor-pointer flex items-center gap-3">
+                        <input type="radio" name="selected_source" value="db_source" data-source-id="{{ ds.id }}" class="text-blue-600 focus:ring-blue-500 source-radio" required>
+                        <span class="material-icons text-blue-600 dark:text-blue-400">storage</span>
+                        <div class="flex-1">
+                          <div class="font-semibold text-blue-900 dark:text-blue-200">{{ ds.source_name }}</div>
+                          <div class="text-xs text-blue-700 dark:text-blue-300">Database Source</div>
+                        </div>
+                      </label>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <!-- Show "no sources" message only if BOTH YAML and Database sources are empty -->
+                  {% set has_yaml_sql = yaml_servers and yaml_servers|length > 0 %}
+                  {% set has_db_sql = sql_server_sources and sql_server_sources|length > 0 %}
+                  {% if not has_yaml_sql and not has_db_sql %}
+                  <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p class="text-yellow-800 dark:text-yellow-200">No SQL Server sources available. Please add SQL Server sources first.</p>
+                    <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-2">Debug: YAML={{ yaml_servers|length if yaml_servers else 0 }}, Database={{ sql_server_sources|length if sql_server_sources else 0 }}, Total={{ data_sources|length if data_sources else 0 }}</p>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <!-- HANA Sources -->
+                <div id="hanaSources" class="hidden">
+                  {% if hana_sources and hana_sources|length > 0 %}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {% for ds in hana_sources %}
+                    <label class="source-option bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg p-4 cursor-pointer flex items-center gap-3">
+                      <input type="radio" name="selected_source" value="db_source" data-source-id="{{ ds.id }}" class="text-green-600 focus:ring-green-500 source-radio" required>
+                      <span class="material-icons text-green-600 dark:text-green-400">hub</span>
+                      <div class="flex-1">
+                        <div class="font-semibold text-green-900 dark:text-green-200">{{ ds.source_name }}</div>
+                        <div class="text-xs text-green-700 dark:text-green-300">HANA Database</div>
+                      </div>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p class="text-yellow-800 dark:text-yellow-200">No HANA sources available. Please add HANA sources first.</p>
+                    <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-2">Debug: HANA sources={{ hana_sources|length if hana_sources else 0 }}, Total data_sources={{ data_sources|length if data_sources else 0 }}, hana_sources exists={{ 'yes' if hana_sources else 'no' }}</p>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Hidden fields for selected source (will be populated by JavaScript) -->
+              <input type="hidden" name="server_name" id="selectedServerName" value="">
+              <input type="hidden" name="source_id" id="selectedSourceId" value="">
+              <input type="hidden" name="source_type" id="selectedSourceType" value="">
+              
+              <!-- Debug info (remove in production) -->
+              <div id="formDebugInfo" class="hidden text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
+                <div>server_name: <span id="debugServerName">-</span></div>
+                <div>source_id: <span id="debugSourceId">-</span></div>
+                <div>selected_source: <span id="debugSelectedSource">-</span></div>
+              </div>
+
+              <!-- Schedule Type -->
+              <div>
+                <label class="block mb-2 font-semibold text-base sm:text-lg text-text-light dark:text-text-dark">
+                  <span class="material-icons align-middle mr-2">event</span>
+                  Schedule Type
+                </label>
                 <select name="schedule_type" id="scheduleType" required
-                        class="w-full rounded-md border border-border-light dark:border-border-dark p-2 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none text-sm sm:text-base">
+                        class="w-full rounded-lg border border-border-light dark:border-border-dark p-3 bg-white dark:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none text-base">
                   <option value="interval">Every X minutes</option>
                   <option value="daily">At specific time</option>
                 </select>
               </div>
 
               <!-- Interval Fields -->
-              <div id="intervalFields" class="sm:col-span-2 md:col-span-1">
-                <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark text-sm sm:text-base">Minutes</label>
-                <input type="number" name="minutes" min="1" placeholder="e.g. 2"
-                       class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none text-sm sm:text-base">
+              <div id="intervalFields">
+                <label class="block mb-2 font-semibold text-base sm:text-lg text-text-light dark:text-text-dark">
+                  <span class="material-icons align-middle mr-2">timer</span>
+                  Interval (Minutes)
+                </label>
+                <input type="number" name="minutes" min="1" placeholder="e.g. 2" required
+                       class="w-full rounded-lg border border-border-light dark:border-border-dark p-3 focus:ring-2 focus:ring-primary focus:outline-none text-base">
               </div>
 
               <!-- Daily Fields -->
-              <div id="dailyFields" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+              <div id="dailyFields" class="hidden">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark text-sm sm:text-base">Hour (0–23)</label>
-                  <input type="number" name="hour" min="0" max="23" placeholder="e.g. 14"
-                         class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none text-sm sm:text-base">
+                    <label class="block mb-2 font-semibold text-base sm:text-lg text-text-light dark:text-text-dark">Hour (0–23)</label>
+                    <input type="number" name="hour" min="0" max="23" placeholder="e.g. 14" required
+                           class="w-full rounded-lg border border-border-light dark:border-border-dark p-3 focus:ring-2 focus:ring-primary focus:outline-none text-base">
                 </div>
                 <div>
-                  <label class="block mb-1 font-medium text-subtext-light dark:text-subtext-dark">Minute (0–59)</label>
-                  <input type="number" name="minute" min="0" max="59" placeholder="e.g. 30"
-                         class="w-full rounded-md border border-border-light dark:border-border-dark p-2 focus:ring-2 focus:ring-primary focus:outline-none">
+                    <label class="block mb-2 font-semibold text-base sm:text-lg text-text-light dark:text-text-dark">Minute (0–59)</label>
+                    <input type="number" name="minute" min="0" max="59" placeholder="e.g. 30" required
+                           class="w-full rounded-lg border border-border-light dark:border-border-dark p-3 focus:ring-2 focus:ring-primary focus:outline-none text-base">
+                  </div>
                 </div>
               </div>
 
-              <div class="md:col-span-2 flex justify-end mt-2">
-                <button type="submit" class="flex items-center gap-1 px-4 py-2 bg-success text-white rounded-md hover:bg-success-dark transition-colors">
-                  <span class="material-icons">check_circle</span> Set Schedule
+              <!-- Submit Button -->
+              <div class="flex justify-end pt-4">
+                <button type="submit" class="flex items-center gap-2 px-6 py-3 bg-success text-white rounded-lg hover:bg-success-dark transition-colors font-semibold shadow-lg">
+                  <span class="material-icons">check_circle</span>
+                  <span>Set Schedule</span>
                 </button>
               </div>
             </form>
@@ -115,10 +259,12 @@
         </div>
 
         <!-- Scheduled Jobs Table -->
-        <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-border-light dark:border-border-dark">
-          <div class="p-4 bg-primary text-white rounded-t-lg flex items-center gap-2">
-            <span class="material-icons">list_alt</span>
-            <h3 class="text-lg font-semibold">Scheduled Jobs</h3>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border border-border-light dark:border-border-dark overflow-hidden">
+          <div class="p-4 sm:p-6 bg-gradient-to-r from-primary to-primary-hover text-white">
+            <div class="flex items-center gap-3">
+              <span class="material-icons text-3xl">list_alt</span>
+              <h3 class="text-xl sm:text-2xl font-bold">Scheduled Jobs</h3>
+            </div>
           </div>
           <div class="p-6">
             {% if jobs and jobs|length > 0 %}
@@ -126,39 +272,56 @@
                 <table class="w-full border border-border-light dark:border-border-dark rounded-lg overflow-hidden">
                   <thead class="bg-gray-100 dark:bg-gray-800">
                     <tr>
-                      <th class="px-4 py-2 text-left">Server</th>
-                      <th class="px-4 py-2 text-left">Type</th>
-                      <th class="px-4 py-2 text-left">Last Run</th>
-                      <th class="px-4 py-2 text-left">Status</th>
-                      <th class="px-4 py-2 text-left">Error</th>
+                      <th class="px-4 py-3 text-left font-semibold">Source Name</th>
+                      <th class="px-4 py-3 text-left font-semibold">Type</th>
+                      <th class="px-4 py-3 text-left font-semibold">Schedule</th>
+                      <th class="px-4 py-3 text-left font-semibold">Last Run</th>
+                      <th class="px-4 py-3 text-left font-semibold">Status</th>
+                      <th class="px-4 py-3 text-left font-semibold">Error</th>
                       {% if role in ['admin', 'operator'] %}
-                      <th class="px-4 py-2 text-left">Actions</th>
+                      <th class="px-4 py-3 text-left font-semibold">Actions</th>
                       {% endif %}
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody class="divide-y divide-border-light dark:divide-border-dark">
                     {% for job in jobs %}
-                    <tr class="border-t border-border-light dark:border-border-dark">
-                      <td class="px-4 py-2">{{ job.server }}</td>
-                      <td class="px-4 py-2">{{ job.type }}</td>
-                      <td class="px-4 py-2">{{ job.last_run or "-" }}</td>
-                      <td class="px-4 py-2">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <td class="px-4 py-3 font-medium">{{ job.server }}</td>
+                      <td class="px-4 py-3">
+                        <span class="px-2 py-1 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                          {{ job.source_type or 'SQL Server' }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3">{{ job.type }}</td>
+                      <td class="px-4 py-3 text-subtext-light dark:text-subtext-dark">{{ job.last_run or "-" }}</td>
+                      <td class="px-4 py-3">
                         {% if job.status == "success" %}
-                          <span class="px-2 py-1 text-xs rounded-md bg-success text-white">Success</span>
+                          <span class="px-3 py-1 text-xs font-semibold rounded-full bg-success text-white">Success</span>
                         {% elif job.status == "failed" %}
-                          <span class="px-2 py-1 text-xs rounded-md bg-danger text-white">Failed</span>
+                          <span class="px-3 py-1 text-xs font-semibold rounded-full bg-danger text-white">Failed</span>
+                        {% elif job.status == "pending" %}
+                          <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-500 text-white">Pending</span>
                         {% else %}
-                          <span class="px-2 py-1 text-xs rounded-md bg-gray-400 text-white">{{ job.status or "-" }}</span>
+                          <span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-400 text-white">{{ job.status or "-" }}</span>
                         {% endif %}
                       </td>
-                      <td class="px-4 py-2">{{ job.error or "-" }}</td>
+                      <td class="px-4 py-3 text-sm text-subtext-light dark:text-subtext-dark">{{ job.error or "-" }}</td>
                       {% if role in ['admin', 'operator'] %}
-                      <td class="px-4 py-2 flex gap-2">
-                        <a href="#" class="px-3 py-1 rounded-md bg-warning text-white hover:bg-yellow-600 text-sm">Edit</a>
+                      <td class="px-4 py-3">
+                        <div class="flex gap-2">
+                          <a href="{{ url_for('edit_schedule_page', server_name=job.server, job_type=job.type) }}" 
+                             class="px-3 py-1.5 rounded-md bg-warning text-white hover:bg-yellow-600 text-sm font-medium transition-colors">
+                            Edit
+                          </a>
                         <form action="{{ url_for('delete_schedule_route', server_name=job.server, job_type=job.type) }}" 
-                              method="POST" onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');">
-                          <button type="submit" class="px-3 py-1 rounded-md bg-danger text-white hover:bg-red-700 text-sm">Delete</button>
+                                method="POST" 
+                                onsubmit="return confirm('Delete schedule {{ job.type }} for {{ job.server }}?');"
+                                class="inline">
+                            <button type="submit" class="px-3 py-1.5 rounded-md bg-danger text-white hover:bg-red-700 text-sm font-medium transition-colors">
+                              Delete
+                            </button>
                         </form>
+                        </div>
                       </td>
                       {% endif %}
                     </tr>
@@ -167,8 +330,10 @@
                 </table>
               </div>
             {% else %}
-              <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-subtext-light dark:text-subtext-dark">
-                No schedules found.
+              <div class="p-8 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+                <span class="material-icons text-6xl text-gray-400 dark:text-gray-600 mb-4 block">schedule</span>
+                <p class="text-lg text-subtext-light dark:text-subtext-dark font-medium">No schedules found.</p>
+                <p class="text-sm text-subtext-light dark:text-subtext-dark mt-2">Create a new schedule using the form above.</p>
               </div>
             {% endif %}
           </div>
@@ -182,24 +347,208 @@
   const scheduleType = document.getElementById('scheduleType');
   const intervalFields = document.getElementById('intervalFields');
   const dailyFields = document.getElementById('dailyFields');
+  const scheduleForm = document.getElementById('scheduleForm');
 
+  // Handle schedule type change
   scheduleType.addEventListener('change', function() {
     if (this.value === 'interval') {
       intervalFields.classList.remove('hidden');
       dailyFields.classList.add('hidden');
+      intervalFields.querySelector('input').required = true;
+      dailyFields.querySelectorAll('input').forEach(inp => inp.required = false);
     } else {
       intervalFields.classList.add('hidden');
       dailyFields.classList.remove('hidden');
+      intervalFields.querySelector('input').required = false;
+      dailyFields.querySelectorAll('input').forEach(inp => inp.required = true);
     }
   });
 
-  // Reload page only after form submission
-  const scheduleForm = document.querySelector("form");
-  scheduleForm.addEventListener("submit", function() {
-    // Allow backend to process, then reload
-    setTimeout(() => {
-      location.reload();
-    }, 500); // small delay so server saves the schedule
+  // Step 1: Handle source type selection
+  const sourceTypeCards = document.querySelectorAll('.source-type-card');
+  const sourceTypeRadios = document.querySelectorAll('input[name="selected_source_type"]');
+  const sourceSelectionStep = document.getElementById('sourceSelectionStep');
+  const sqlServerSources = document.getElementById('sqlServerSources');
+  const hanaSources = document.getElementById('hanaSources');
+
+  sourceTypeRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      const selectedType = this.value;
+      const selectedCard = this.closest('.source-type-card');
+      
+      // Remove selection from all type cards
+      sourceTypeCards.forEach(card => {
+        card.classList.remove('ring-4', 'ring-offset-2');
+        if (selectedType === 'sql_server') {
+          card.classList.remove('ring-blue-500');
+        } else if (selectedType === 'sap_hana') {
+          card.classList.remove('ring-green-500');
+        }
+      });
+      
+      // Add selection to selected card
+      if (selectedCard) {
+        selectedCard.classList.add('ring-4', 'ring-offset-2');
+        if (selectedType === 'sql_server') {
+          selectedCard.classList.add('ring-blue-500');
+        } else if (selectedType === 'sap_hana') {
+          selectedCard.classList.add('ring-green-500');
+        }
+      }
+
+      // Show step 2 and relevant sources
+      sourceSelectionStep.classList.remove('hidden');
+      
+      if (selectedType === 'sql_server') {
+        sqlServerSources.classList.remove('hidden');
+        hanaSources.classList.add('hidden');
+        // Clear any HANA source selections
+        document.querySelectorAll('#hanaSources input[name="selected_source"]').forEach(inp => inp.checked = false);
+        // Debug logging - wait for DOM update
+        setTimeout(() => {
+          const sqlCount = document.querySelectorAll('#sqlServerSources .source-option').length;
+          const sqlYamlCount = document.querySelectorAll('#sqlServerSources input[data-server-name]').length;
+          const sqlDbCount = document.querySelectorAll('#sqlServerSources input[data-source-id]').length;
+          console.log(`[SCHEDULE] Showing SQL Server sources. Found ${sqlCount} source card(s) (${sqlYamlCount} YAML, ${sqlDbCount} Database)`);
+          
+          if (sqlCount === 0) {
+            const sqlSection = document.getElementById('sqlServerSources');
+            console.error('[SCHEDULE] ERROR: No SQL Server source cards found!');
+            if (sqlSection) {
+              console.error('[SCHEDULE] sqlServerSources HTML length:', sqlSection.innerHTML.length);
+              console.error('[SCHEDULE] sqlServerSources visible:', sqlSection.offsetParent !== null);
+              console.error('[SCHEDULE] sqlServerSources classes:', sqlSection.className);
+            }
+          }
+        }, 50);
+      } else if (selectedType === 'sap_hana') {
+        sqlServerSources.classList.add('hidden');
+        hanaSources.classList.remove('hidden');
+        // Clear any SQL Server source selections
+        document.querySelectorAll('#sqlServerSources input[name="selected_source"]').forEach(inp => inp.checked = false);
+        // Debug logging - wait for DOM update
+        setTimeout(() => {
+          const hanaCount = document.querySelectorAll('#hanaSources .source-option').length;
+          console.log(`[SCHEDULE] Showing HANA sources. Found ${hanaCount} source card(s)`);
+          
+          if (hanaCount === 0) {
+            const hanaSection = document.getElementById('hanaSources');
+            console.error('[SCHEDULE] ERROR: No HANA source cards found!');
+            if (hanaSection) {
+              console.error('[SCHEDULE] hanaSources HTML length:', hanaSection.innerHTML.length);
+              console.error('[SCHEDULE] hanaSources visible:', hanaSection.offsetParent !== null);
+              console.error('[SCHEDULE] hanaSources classes:', hanaSection.className);
+            }
+          }
+        }, 50);
+      }
+
+      document.getElementById('selectedSourceType').value = selectedType;
+    });
+  });
+
+  // Step 2: Handle source selection
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('source-radio')) {
+      const selectedLabel = e.target.closest('label');
+      const allLabels = document.querySelectorAll('.source-option');
+      allLabels.forEach(lbl => {
+        lbl.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+      });
+      if (selectedLabel) {
+        selectedLabel.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+      }
+    }
+  });
+
+  // Handle form submission
+  scheduleForm.addEventListener("submit", function(e) {
+    const selectedSourceType = document.querySelector('input[name="selected_source_type"]:checked');
+    const selectedSource = document.querySelector('input[name="selected_source"]:checked');
+    
+    console.log('[SCHEDULE FORM] Submit triggered');
+    console.log('[SCHEDULE FORM] Selected source type:', selectedSourceType ? selectedSourceType.value : 'none');
+    console.log('[SCHEDULE FORM] Selected source:', selectedSource ? selectedSource.value : 'none');
+    
+    if (!selectedSourceType) {
+      e.preventDefault();
+      alert('Please select a source type (SQL Server or HANA)');
+      return false;
+    }
+    
+    if (!selectedSource) {
+      e.preventDefault();
+      alert('Please select a specific source');
+      return false;
+    }
+
+    // Set hidden fields based on selection
+    const sourceValue = selectedSource.value;
+    const serverNameField = document.getElementById('selectedServerName');
+    const sourceIdField = document.getElementById('selectedSourceId');
+    
+    if (sourceValue === 'yaml_sql') {
+      // Get server name from data attribute
+      const serverName = selectedSource.getAttribute('data-server-name');
+      console.log('[SCHEDULE FORM] Setting YAML SQL server:', serverName);
+      if (serverName) {
+        serverNameField.value = serverName;
+        sourceIdField.value = '';
+      } else {
+        console.error('[SCHEDULE FORM] ERROR: No data-server-name attribute found!');
+      }
+    } else if (sourceValue === 'db_source') {
+      // Get source ID from data attribute
+      const sourceId = selectedSource.getAttribute('data-source-id');
+      console.log('[SCHEDULE FORM] Setting database source ID:', sourceId);
+      if (sourceId) {
+        sourceIdField.value = sourceId;
+        serverNameField.value = '';
+        console.log('[SCHEDULE FORM] Set source_id to:', sourceIdField.value);
+      } else {
+        console.error('[SCHEDULE FORM] ERROR: No data-source-id attribute found!');
+        e.preventDefault();
+        alert('Error: Source ID not found. Please select a source again.');
+        return false;
+      }
+    } else {
+      console.error('[SCHEDULE FORM] ERROR: Unknown source value:', sourceValue);
+      e.preventDefault();
+      alert('Error: Invalid source selection');
+      return false;
+    }
+
+    // Log final values before submit
+    console.log('[SCHEDULE FORM] Final values:');
+    console.log('  - server_name:', serverNameField.value);
+    console.log('  - source_id:', sourceIdField.value);
+    console.log('  - selected_source:', sourceValue);
+    console.log('  - schedule_type:', document.querySelector('select[name="schedule_type"]').value);
+    
+    // Update debug display
+    document.getElementById('debugServerName').textContent = serverNameField.value || '(empty)';
+    document.getElementById('debugSourceId').textContent = sourceIdField.value || '(empty)';
+    document.getElementById('debugSelectedSource').textContent = sourceValue || '(empty)';
+    document.getElementById('formDebugInfo').classList.remove('hidden');
+    
+    // Validate that we have the required fields
+    if (sourceValue === 'db_source' && !sourceIdField.value) {
+      console.error('[SCHEDULE FORM] ERROR: db_source selected but source_id is empty!');
+      e.preventDefault();
+      alert('Error: Source ID is missing. Please select the source again.');
+      return false;
+    }
+    
+    if (sourceValue === 'yaml_sql' && !serverNameField.value) {
+      console.error('[SCHEDULE FORM] ERROR: yaml_sql selected but server_name is empty!');
+      e.preventDefault();
+      alert('Error: Server name is missing. Please select the source again.');
+      return false;
+    }
+    
+    // Form will submit normally, page will reload after backend processes
+    console.log('[SCHEDULE FORM] Form submission proceeding...');
+    return true;
   });
 </script>
 
