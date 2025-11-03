@@ -423,39 +423,76 @@ def get_all_connections(connection_type=None):
 
 
 def load_clickhouse_config():
-    """Load ClickHouse config from environment variables or YAML"""
+    """
+    Load ClickHouse config from environment variables ONLY.
+    
+    Required environment variables:
+    - CLICKHOUSE_HOST
+    - CLICKHOUSE_PORT
+    - CLICKHOUSE_USER
+    - CLICKHOUSE_PASSWORD
+    
+    Returns:
+        dict with 'host', 'port', 'user', 'password'
+    
+    Raises:
+        ValueError if required variables are missing
+    """
+    # Load .env file if dotenv is available
     try:
-        # First try environment variables
-        host = os.environ.get('CLICKHOUSE_HOST')
-        port = os.environ.get('CLICKHOUSE_PORT')
-        user = os.environ.get('CLICKHOUSE_USER')
-        password = os.environ.get('CLICKHOUSE_PASSWORD')
-        
-        if host:
-            return {
-                'host': host,
-                'port': int(port) if port else 9000,
-                'user': user or 'default',
-                'password': password or ''
-            }
-        
-        # Fallback to YAML
-        with open(CONFIG_PATH, "r") as f:
-            config = yaml.safe_load(f) or {}
-        ch_config = config.get("clickhouse", {})
-        
-        return {
-            'host': ch_config.get('host', 'localhost'),
-            'port': int(ch_config.get('port', 9000)),
-            'user': ch_config.get('user', 'default'),
-            'password': ch_config.get('password', '')
-        }
-    except Exception as e:
-        logger.error(f"Error loading ClickHouse config: {e}")
-        return {
-            'host': 'localhost',
-            'port': 9000,
-            'user': 'default',
-            'password': ''
-        }
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
+    
+    # Get required environment variables
+    host = os.environ.get('CLICKHOUSE_HOST')
+    port = os.environ.get('CLICKHOUSE_PORT')
+    user = os.environ.get('CLICKHOUSE_USER')
+    password = os.environ.get('CLICKHOUSE_PASSWORD')
+    
+    # Validate required variables
+    if not host:
+        error_msg = (
+            "CLICKHOUSE_HOST environment variable is required. "
+            "Please set it in your .env file: CLICKHOUSE_HOST=your_host"
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    if not port:
+        error_msg = (
+            "CLICKHOUSE_PORT environment variable is required. "
+            "Please set it in your .env file: CLICKHOUSE_PORT=9000"
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    if not user:
+        error_msg = (
+            "CLICKHOUSE_USER environment variable is required. "
+            "Please set it in your .env file: CLICKHOUSE_USER=default"
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    # Password can be empty string, so we allow None and convert to empty string
+    password = password if password is not None else ''
+    
+    try:
+        port_int = int(port)
+    except ValueError:
+        error_msg = f"CLICKHOUSE_PORT must be a number, got: {port}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    config = {
+        'host': host,
+        'port': port_int,
+        'user': user,
+        'password': password
+    }
+    
+    logger.debug(f"Loaded ClickHouse config: host={host}, port={port_int}, user={user}, password={'***' if password else '(empty)'}")
+    return config
 

@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Tuple
 import time
 from datetime import datetime, time as time_type
 import re
+from db_utils import load_clickhouse_config
 
 logger = logging.getLogger(__name__)
 
@@ -40,16 +41,27 @@ class HanaToClickHouseSync:
             return False
     
     def connect_clickhouse(self) -> bool:
-        """Establish connection to ClickHouse"""
+        """
+        Establish connection to ClickHouse using environment variables.
+        
+        Uses load_clickhouse_config() to get connection settings from .env file.
+        The 'database' field from clickhouse_config is used for the database name.
+        """
         try:
+            # Load ClickHouse config from .env (no hardcoded values)
+            ch_config = load_clickhouse_config()
+            
+            # Get database name from clickhouse_config dict (passed by caller)
+            database = self.clickhouse_config.get('database', 'default')
+            
             self.ch_client = Client(
-                host=self.clickhouse_config.get('host', 'localhost'),
-                port=int(self.clickhouse_config.get('port', 9000)),
-                user=self.clickhouse_config.get('user', 'default'),
-                password=self.clickhouse_config.get('password', ''),
-                database=self.clickhouse_config.get('database', 'default')
+                host=ch_config['host'],
+                port=ch_config['port'],
+                user=ch_config['user'],
+                password=ch_config['password'],
+                database=database
             )
-            logger.info(f"Connected to ClickHouse: {self.clickhouse_config.get('database')}")
+            logger.info(f"Connected to ClickHouse: {ch_config['host']}:{ch_config['port']} (database: {database})")
             return True
         except Exception as e:
             logger.error(f"ClickHouse connection failed: {e}")

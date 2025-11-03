@@ -1318,11 +1318,14 @@ def sync_source_background(source_id):
                 'password': source['password']
             }
             
+            # Load ClickHouse config from .env (no hardcoded values)
+            from db_utils import load_clickhouse_config
+            ch_base_config = load_clickhouse_config()
             clickhouse_config = {
-                'host': os.getenv('CLICKHOUSE_HOST', 'localhost'),
-                'port': int(os.getenv('CLICKHOUSE_PORT', '9000')),
-                'user': os.getenv('CLICKHOUSE_USER', 'default'),
-                'password': os.getenv('CLICKHOUSE_PASSWORD', ''),
+                'host': ch_base_config['host'],
+                'port': ch_base_config['port'],
+                'user': ch_base_config['user'],
+                'password': ch_base_config['password'],
                 'database': source['target_database'] if source['target_database'] else 'hana_migrated'
             }
             
@@ -1776,74 +1779,127 @@ def load_ch_databases():
     def _http_show_databases(host, port, user, password):
         """Use ClickHouse HTTP interface to fetch databases as JSONCompact."""
         try:
-            import urllib.request
-            import urllib.parse
-            import json
-
-            http_port = int(os.environ.get('CLICKHOUSE_HTTP_PORT', 8123)) if not port else (int(port) if str(port).isdigit() else 8123)
-            url_host = host
-            query = "SHOW DATABASES"
-            params = {
-                'query': query,
-                'format': 'JSONCompact'
-            }
-            full_url = f"http://{url_host}:{http_port}/?{urllib.parse.urlencode(params)}"
-
-            # Build opener with optional basic auth
-            if user:
-                password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-                password_mgr.add_password(None, full_url, user, password or '')
-                handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
-                opener = urllib.request.build_opener(handler)
-            else:
-                opener = urllib.request.build_opener()
-
-            with opener.open(full_url, timeout=5) as resp:
-                body = resp.read()
-                try:
-                    parsed = json.loads(body.decode('utf-8'))
-                except Exception:
+            # Try using requests library first (more reliable)
+            try:
+                import requests
+                # HTTP interface always uses port 8123, regardless of native port
+                http_port = 8123
+                url = f"http://{host}:{http_port}/"
+                params = {
+                    'query': 'SHOW DATABASES FORMAT JSONCompact'
+                }
+                
+                auth = None
+                if user and password:
+                    auth = (user, password)
+                elif user:
+                    auth = (user, '')
+                
+                response = requests.get(url, params=params, auth=auth, timeout=10)
+                if response.status_code == 200:
+                    parsed = response.json()
+                    data = parsed.get('data') or []
+                    dbs = [row[0] for row in data if isinstance(row, (list, tuple)) and len(row) > 0]
+                    # Filter out system databases
+                    filtered_dbs = [db for db in dbs if db not in ['system', 'information_schema', 'INFORMATION_SCHEMA']]
+                    app.logger.info(f"Found ClickHouse databases via HTTP: {filtered_dbs}")
+                    return filtered_dbs
+                else:
+                    app.logger.debug(f"HTTP error {response.status_code}: {response.text[:200]}")
                     return []
+            except ImportError:
+                # Fallback to urllib if requests not available
+                import urllib.request
+                import urllib.parse
+                import json
+                import base64
 
-                # JSONCompact.data is list of lists
-                data = parsed.get('data') or []
-                dbs = [row[0] for row in data if isinstance(row, (list, tuple)) and len(row) > 0]
-                return dbs
+                http_port = 8123
+                url_host = host
+                query = "SHOW DATABASES FORMAT JSONCompact"
+                full_url = f"http://{url_host}:{http_port}/?{urllib.parse.quote(query)}"
+
+                req = urllib.request.Request(full_url)
+                
+                if user and password:
+                    credentials = f"{user}:{password}"
+                    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+                    req.add_header('Authorization', f'Basic {encoded_credentials}')
+                elif user:
+                    credentials = f"{user}:"
+                    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+                    req.add_header('Authorization', f'Basic {encoded_credentials}')
+
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    body = resp.read()
+                    parsed = json.loads(body.decode('utf-8'))
+                    data = parsed.get('data') or []
+                    dbs = [row[0] for row in data if isinstance(row, (list, tuple)) and len(row) > 0]
+                    filtered_dbs = [db for db in dbs if db not in ['system', 'information_schema', 'INFORMATION_SCHEMA']]
+                    return filtered_dbs
         except Exception as e:
             app.logger.debug(f"HTTP ClickHouse discovery failed: {e}")
+            import traceback
+            app.logger.debug(traceback.format_exc())
             return []
 
     try:
+        # Load ClickHouse config using db_utils (handles .env loading)
+        from db_utils import load_clickhouse_config
+        ch_config = load_clickhouse_config()
+        
+        ch_host = ch_config.get('host')
+        ch_port = ch_config.get('port')
+        ch_user = ch_config.get('user')
+        ch_password = ch_config.get('password', '')
+
+        if not ch_host:
+            app.logger.warning('CLICKHOUSE_HOST not configured')
+            return []
+
         # If driver is missing, try HTTP only
         if CHClient is None:
             app.logger.warning("clickhouse-driver is not installed; trying HTTP discovery for ClickHouse")
-            return _http_show_databases(os.environ.get('CLICKHOUSE_HOST'), os.environ.get('CLICKHOUSE_PORT'), os.environ.get('CLICKHOUSE_USER'), os.environ.get('CLICKHOUSE_PASSWORD', ''))
+            return _http_show_databases(ch_host, ch_port, ch_user, ch_password)
 
-        # Read env vars; password defaults to empty string (not None)
-        ch_host = os.environ.get('CLICKHOUSE_HOST')
-        ch_port = os.environ.get('CLICKHOUSE_PORT')
-        ch_user = os.environ.get('CLICKHOUSE_USER')
-        ch_password = os.environ.get('CLICKHOUSE_PASSWORD', '')
-
-        if not ch_host or not ch_port or not ch_user:
-            app.logger.warning('CLICKHOUSE_HOST, CLICKHOUSE_PORT and CLICKHOUSE_USER must be set in environment to discover ClickHouse databases')
-            # Try HTTP without full env set — try defaults
-            return _http_show_databases(os.environ.get('CLICKHOUSE_HOST', 'localhost'), os.environ.get('CLICKHOUSE_PORT', '8123'), os.environ.get('CLICKHOUSE_USER', ''), os.environ.get('CLICKHOUSE_PASSWORD', ''))
-
-        client = CHClient(host=ch_host, port=int(ch_port), user=ch_user, password=ch_password)
-        rows = client.execute('SHOW DATABASES')
-        dbs = []
-        for r in rows:
-            if isinstance(r, (list, tuple)):
-                dbs.append(r[0])
-            else:
-                dbs.append(r)
-        return dbs
+        # Try native protocol first (uses port from config, typically 9000)
+        try:
+            # All values come from load_clickhouse_config() - no hardcoded defaults
+            client = CHClient(
+                host=ch_host,
+                port=ch_port,
+                user=ch_user,
+                password=ch_password,
+                connect_timeout=10
+            )
+            rows = client.execute('SHOW DATABASES')
+            dbs = []
+            for r in rows:
+                if isinstance(r, (list, tuple)):
+                    db_name = r[0]
+                else:
+                    db_name = r
+                # Filter out system databases
+                if db_name not in ['system', 'information_schema', 'INFORMATION_SCHEMA']:
+                    dbs.append(db_name)
+            return dbs
+        except Exception as native_error:
+            app.logger.warning(f"Native protocol failed, trying HTTP: {native_error}")
+            # Fallback to HTTP interface
+            return _http_show_databases(ch_host, ch_port, ch_user, ch_password)
+            
     except Exception as e:
         app.logger.error(f"WARNING: Could not load ClickHouse DBs: {e}")
-        # Try HTTP fallback if TCP failed
+        # Try HTTP fallback as last resort
         try:
-            return _http_show_databases(os.environ.get('CLICKHOUSE_HOST'), os.environ.get('CLICKHOUSE_PORT'), os.environ.get('CLICKHOUSE_USER'), os.environ.get('CLICKHOUSE_PASSWORD', ''))
+            from db_utils import load_clickhouse_config
+            ch_config = load_clickhouse_config()
+            return _http_show_databases(
+                ch_config.get('host', 'localhost'),
+                ch_config.get('port', 9000),
+                ch_config.get('user', 'default'),
+                ch_config.get('password', '')
+            )
         except Exception:
             return []
 

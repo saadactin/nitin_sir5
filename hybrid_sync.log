@@ -19157,3 +19157,189 @@ NameError: name 'load_pg_config' is not defined. Did you mean: 'load_config'?
 2025-11-03 12:59:41,975 - WARNING - [AUTH] Session contents: {}
 2025-11-03 13:00:53,428 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2958dd2308fsm45796085ad.30 - gsmtp')
 2025-11-03 13:02:38,156 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2952696eae8sm107654995ad.61 - gsmtp')
+2025-11-03 14:09:07,719 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:09:11,283 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 14:09:11,283 - WARNING - [AUTH] Session contents: {}
+2025-11-03 14:09:40,989 - WARNING - Failed to connect to http://74.225.251.123:8123:9000
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\clickhouse_driver\connection.py", line 399, in connect
+    return self._init_connection(host, port)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\clickhouse_driver\connection.py", line 329, in _init_connection
+    self.socket = self._create_socket(host, port)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\clickhouse_driver\connection.py", line 280, in _create_socket
+    for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 963, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+2025-11-03 14:09:41,050 - ERROR - WARNING: Could not load ClickHouse DBs: Code: 210. getaddrinfo failed (http://74.225.251.123:8123:9000)
+2025-11-03 14:10:12,589 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:10:16,378 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/api from 127.0.0.1
+2025-11-03 14:10:16,379 - WARNING - [AUTH] Session contents: {}
+2025-11-03 14:10:38,317 - WARNING - Failed to connect to http://74.225.251.123:8123
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\clickhouse_driver\connection.py", line 399, in connect
+    return self._init_connection(host, port)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\clickhouse_driver\connection.py", line 329, in _init_connection
+    self.socket = self._create_socket(host, port)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\clickhouse_driver\connection.py", line 280, in _create_socket
+    for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 963, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+2025-11-03 14:10:38,323 - ERROR - WARNING: Could not load ClickHouse DBs: Code: 210. getaddrinfo failed (http://74.225.251.123:8123)
+2025-11-03 14:15:50,602 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:15:55,552 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 14:15:55,553 - WARNING - [AUTH] Session contents: {}
+2025-11-03 14:24:08,499 - ERROR - WARNING: Could not load ClickHouse DBs: Code: 102. Unexpected packet from server 74.225.251.123:8123 (expected Hello or Exception, got Unknown packet)
+2025-11-03 14:26:00,337 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:26:07,823 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/api from 127.0.0.1
+2025-11-03 14:26:07,824 - WARNING - [AUTH] Session contents: {}
+2025-11-03 14:26:46,645 - ERROR - WARNING: Could not load ClickHouse DBs: Code: 102. Unexpected packet from server 74.225.251.123:8123 (expected Hello or Exception, got Unknown packet)
+2025-11-03 14:35:15,234 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:35:17,182 - WARNING - Native protocol failed, trying HTTP: Code: 102. Unexpected packet from server 74.225.251.123:8123 (expected Hello or Exception, got Unknown packet)
+2025-11-03 14:35:53,214 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:35:53,618 - ERROR - Error decrypting password: 
+2025-11-03 14:35:53,618 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:35:53,874 - ERROR - Error decrypting password: 
+2025-11-03 14:35:53,874 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:35:54,621 - ERROR - Error decrypting password: 
+2025-11-03 14:35:54,621 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:35:55,425 - ERROR - Error decrypting password: 
+2025-11-03 14:35:55,426 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:35:55,650 - WARNING - Native protocol failed, trying HTTP: Code: 102. Unexpected packet from server 74.225.251.123:8123 (expected Hello or Exception, got Unknown packet)
+2025-11-03 14:36:31,695 - ERROR - Error decrypting password: 
+2025-11-03 14:36:31,716 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:36:31,991 - ERROR - Error decrypting password: 
+2025-11-03 14:36:31,991 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:36:32,056 - ERROR - Error decrypting password: 
+2025-11-03 14:37:22,919 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:44:31,966 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:44:32,232 - ERROR - Error decrypting password: 
+2025-11-03 14:44:32,232 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:44:32,397 - ERROR - Error decrypting password: 
+2025-11-03 14:44:32,397 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:44:32,726 - ERROR - Error decrypting password: 
+2025-11-03 14:44:32,726 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:44:33,053 - ERROR - Error decrypting password: 
+2025-11-03 14:44:33,054 - WARNING - PostgreSQL config loaded from DB is incomplete (likely password decryption failed); falling back to YAML
+2025-11-03 14:44:43,445 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/api from 127.0.0.1
+2025-11-03 14:44:43,446 - WARNING - [AUTH] Session contents: {}
+2025-11-03 14:45:20,721 - ERROR - Token refresh failed with status 400: {"error_description":"You have made too many requests continuously. Please try again after some time.","error":"Access Denied","status":"failure"}
+2025-11-03 14:45:20,723 - WARNING - Rate limited by Zoho. Please wait before retrying.
+2025-11-03 14:45:20,727 - ERROR - Failed to refresh token for source 66
+2025-11-03 14:45:34,339 - WARNING - Native protocol failed, trying HTTP: Code: 102. Unexpected packet from server 74.225.251.123:8123 (expected Hello or Exception, got Unknown packet)
+2025-11-03 14:46:45,577 - ERROR - Token refresh failed with status 400: {"error_description":"You have made too many requests continuously. Please try again after some time.","error":"Access Denied","status":"failure"}
+2025-11-03 14:46:45,577 - WARNING - Rate limited by Zoho. Please wait before retrying.
+2025-11-03 14:47:20,191 - ERROR - Token refresh failed with status 400: {"error_description":"You have made too many requests continuously. Please try again after some time.","error":"Access Denied","status":"failure"}
+2025-11-03 14:47:20,194 - WARNING - Rate limited by Zoho. Please wait before retrying.
+2025-11-03 14:48:44,034 - WARNING - [TEST_CONNECTION] Target DB test failed: Code: 102. Unexpected packet from server 74.225.251.123:8123 (expected Hello or Exception, got Unknown packet)
+2025-11-03 14:48:47,948 - ERROR - Error creating table: Code: 102. Unexpected packet from server 74.225.251.123:8123 (expected Hello or Exception, got Unknown packet)
+2025-11-03 14:48:47,951 - ERROR - Failed to create table
+2025-11-03 14:49:24,885 - ERROR - Error creating table: Code: 102. Unexpected packet from server 74.225.251.123:8123 (expected Hello or Exception, got Unknown packet)
+2025-11-03 14:49:24,887 - ERROR - Failed to create table
+2025-11-03 14:57:50,292 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-03 14:58:06,869 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_source_background/69 from 127.0.0.1
+2025-11-03 14:58:06,870 - WARNING - [AUTH] Session contents: {}
+2025-11-03 14:58:06,911 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:06,915 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:08,955 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:08,956 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:10,991 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:10,993 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:13,037 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:13,038 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:15,738 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:15,738 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:18,727 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:18,728 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:21,733 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:21,734 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:24,736 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:24,737 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:27,721 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:27,722 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:30,735 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:30,737 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:33,735 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:33,737 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:36,723 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:36,724 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:39,731 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:39,732 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:42,741 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:42,743 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:45,728 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:45,730 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:48,728 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:48,729 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:51,735 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:51,737 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:54,723 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:54,724 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:58:57,726 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:58:57,726 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:00,731 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:00,732 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:03,725 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:03,726 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:06,723 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:06,724 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:09,731 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:09,733 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:12,729 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:12,730 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:15,735 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:15,736 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:18,731 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:18,732 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:21,733 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:21,733 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:24,735 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:24,736 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:27,734 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:27,735 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:30,722 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:30,722 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:33,730 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:33,731 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:36,739 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:36,740 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:39,726 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:39,727 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:42,731 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:42,732 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:45,730 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:45,731 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:48,729 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:48,730 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:51,728 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:51,728 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:54,732 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:54,734 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:56,755 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:56,755 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 14:59:58,784 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 14:59:58,785 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 15:00:00,815 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 15:00:00,819 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 15:00:03,764 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 15:00:03,772 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 15:00:06,738 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 15:00:06,740 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 15:00:09,731 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 15:00:09,733 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 15:00:12,728 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 15:00:12,729 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 15:00:15,405 - WARNING - [AUTH] BLOCKED unauthenticated access to /sync_status/source/69 from 127.0.0.1
+2025-11-03 15:00:15,408 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 15:00:17,424 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-03 15:00:17,427 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-03 15:01:05,787 - ERROR - Failed to send email notification: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-7a7dbb60834sm10469217b3a.64 - gsmtp')
