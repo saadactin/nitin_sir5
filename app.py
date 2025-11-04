@@ -111,19 +111,19 @@ To restart:
 2. Run: .\\myenv1\\Scripts\\python.exe app.py
 """
         
-        print(f"\n[SHUTDOWN EMAIL] Sending shutdown notification...")
+        app.logger.info("[SHUTDOWN EMAIL] Sending shutdown notification...")
         result = email_service.notify_server_down(
             server_name="Flask Application Server",
             error_message=shutdown_message
         )
         
         if result.success:
-            print(f"[SHUTDOWN EMAIL] ✓ Alert sent successfully to {len(result.recipients)} recipients")
+            app.logger.info(f"[SHUTDOWN EMAIL] ✓ Alert sent successfully to {len(result.recipients)} recipients")
         else:
-            print(f"[SHUTDOWN EMAIL] ✗ Failed to send alert: {result.error}")
+            app.logger.error(f"[SHUTDOWN EMAIL] ✗ Failed to send alert: {result.error}")
             
     except Exception as e:
-        print(f"[SHUTDOWN EMAIL] Exception: {e}")
+        app.logger.exception(f"[SHUTDOWN EMAIL] Exception: {e}")
 
 def signal_handler(sig, frame):
     """Handle Ctrl+C and other termination signals"""
@@ -135,14 +135,14 @@ def signal_handler(sig, frame):
     
     _shutdown_in_progress = True
     
-    print("\n" + "="*60)
-    print("[SHUTDOWN] Shutdown signal received (Ctrl+C)")
-    print("="*60)
+    app.logger.info("\n" + "="*60)
+    app.logger.info("[SHUTDOWN] Shutdown signal received (Ctrl+C)")
+    app.logger.info("="*60)
     
     send_shutdown_email("Manual shutdown (Ctrl+C)")
     
-    print("[SHUTDOWN] Cleanup complete. Exiting...")
-    print("="*60)
+    app.logger.info("[SHUTDOWN] Cleanup complete. Exiting...")
+    app.logger.info("="*60)
     
     sys.exit(0)
 
@@ -240,14 +240,26 @@ def server_tables(server_name):
         target_db=target_db
     )
 
-# Prefer environment-provided secret key. If missing, warn but keep compatibility.
+# Secret key validation - fail in production if not set
 env_secret = os.environ.get('SECRET_KEY') or os.environ.get('SECRET')
+is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('ENVIRONMENT') == 'production'
+
 if env_secret:
     app.secret_key = env_secret
+elif is_production:
+    # In production, SECRET_KEY is required
+    raise RuntimeError(
+        "SECRET_KEY environment variable is required in production. "
+        "Set SECRET_KEY in your .env file or environment variables."
+    )
 else:
-    # Fallback to older default to avoid breaking existing installs, but log strongly
-    app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production-2025')
-    app.logger.warning('No SECRET_KEY found in environment; using fallback secret. Set SECRET_KEY in .env for production.')
+    # Development fallback (with strong warning)
+    app.secret_key = 'your-secret-key-change-in-production-2025'
+    app.logger.warning('=' * 80)
+    app.logger.warning('SECURITY WARNING: No SECRET_KEY found in environment!')
+    app.logger.warning('Using fallback secret key. THIS IS NOT SECURE FOR PRODUCTION!')
+    app.logger.warning('Set SECRET_KEY in .env file or environment variables.')
+    app.logger.warning('=' * 80)
 
 # Session configuration for security
 app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -272,6 +284,18 @@ if os.environ.get('HYBRID_SYNC_SIMPLE_TERMINAL', '1').lower() in ('1', 'true', '
     for h in logging.getLogger().handlers:
         if isinstance(h, logging.StreamHandler):
             h.setLevel(logging.WARNING)
+
+# Import environment validator
+from env_validator import validate_environment
+
+# Validate environment variables on startup
+is_production_env = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('ENVIRONMENT') == 'production'
+env_valid, missing_env_vars = validate_environment(production_mode=is_production_env)
+
+if not env_valid and is_production_env:
+    app.logger.error("Cannot start application in production mode with missing environment variables.")
+    app.logger.error(f"Missing variables: {', '.join(missing_env_vars)}")
+    raise RuntimeError(f"Missing required environment variables: {', '.join(missing_env_vars)}")
 
 # Initialize database schema and sync YAML configuration to database
 logging.info("Initializing connection database and syncing with YAML config...")
@@ -430,11 +454,11 @@ def index():
     # Load data_sources from Postgres so Add Source entries appear on home page
     data_sources = []
     data_source_statuses = {}
-    print(f"[CONSOLE DEBUG] Starting to load data_sources...")
+    app.logger.debug("Starting to load data_sources...")
     try:
         from db_utils import load_pg_config
         pg_conf = load_pg_config()
-        print(f"[CONSOLE DEBUG] Pg config: db={pg_conf.get('database')}, host={pg_conf.get('host')}")
+        app.logger.debug(f"Pg config: db={pg_conf.get('database')}, host={pg_conf.get('host')}")
         conn = psycopg2.connect(
             dbname=pg_conf.get('database', 'metrics_sync_tables'),
             user=pg_conf.get('username'),
@@ -442,7 +466,7 @@ def index():
             host=pg_conf.get('host'),
             port=int(pg_conf.get('port', 5432))
         )
-        print(f"[CONSOLE DEBUG] Connected to PostgreSQL")
+        app.logger.debug("Connected to PostgreSQL")
         cur = conn.cursor()
         cur.execute("""
             SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details,
@@ -452,7 +476,7 @@ def index():
         """)
         rows = cur.fetchall()
         app.logger.info(f"[DEBUG] Query returned {len(rows)} data_source rows")
-        print(f"[CONSOLE DEBUG] Query returned {len(rows)} rows")
+        app.logger.debug(f"Query returned {len(rows)} rows")
         for r in rows:
             ds = {
                 'id': r[0],
@@ -472,12 +496,12 @@ def index():
             }
             data_sources.append(ds)
             app.logger.info(f"[DEBUG] Loaded data_source: {ds['source_name']} (ID: {ds['id']})")
-            print(f"[CONSOLE DEBUG] Loaded source: {ds['source_name']}")
+            app.logger.debug(f"Loaded source: {ds['source_name']}")
         cur.close()
         conn.close()
     except Exception as e:
         app.logger.exception(f"Could not load data_sources: {e}")
-        print(f"[CONSOLE DEBUG] ERROR loading data_sources: {e}")
+        app.logger.exception(f"ERROR loading data_sources: {e}")
         import traceback
         traceback.print_exc()
 
@@ -495,7 +519,16 @@ def index():
                         host, port = ds['server_address'].split(':', 1)
                     else:
                         host = ds['server_address']
-                        port = connection_details.get('port', '30015')
+                        port = connection_details.get('port')
+                    
+                    if not port:
+                        # Try to load from .env
+                        try:
+                            from db_utils import load_hana_config
+                            hana_base = load_hana_config()
+                            port = str(hana_base['port'])
+                        except ValueError:
+                            port = None
                     
                     # Try to connect
                     conn = hana_dbapi.connect(
@@ -672,8 +705,8 @@ def index():
 
     role = session.get("role")
     app.logger.info(f"[INFO] Loaded {len(sqlservers)} SQL servers and {len(data_sources)} data sources for display")
-    print(f"[CONSOLE DEBUG] About to render: sqlservers={len(sqlservers)}, data_sources={len(data_sources)}")
-    print(f"[CONSOLE DEBUG] data_sources content: {[ds.get('source_name') for ds in data_sources]}")
+    app.logger.debug(f"About to render: sqlservers={len(sqlservers)}, data_sources={len(data_sources)}")
+    app.logger.debug(f"data_sources content: {[ds.get('source_name') for ds in data_sources]}")
     return render_template("sync_servers.html", sqlservers=sqlservers, server_statuses=server_statuses, data_sources=data_sources, data_source_statuses=data_source_statuses, role=role)
 
 
@@ -1084,7 +1117,16 @@ def view_source_databases(source_id):
                 from hdbcli import dbapi as hana_dbapi
                 host_port = source['server_address']
                 h, p = (host_port.split(':') + [None])[:2]
-                port = int(p) if p else 30015
+                # Try to get port from .env if not in server_address
+                if p:
+                    port = int(p)
+                else:
+                    try:
+                        from db_utils import load_hana_config
+                        hana_base = load_hana_config()
+                        port = hana_base['port']
+                    except ValueError:
+                        raise ValueError("HANA_PORT is required. Set HANA_PORT in .env or include port in server_address (host:port)")
                 conn_h = hana_dbapi.connect(address=h, port=port, user=source['username'], password=source['password'])
                 # Simple query to get schemas/databases
                 cur_h = conn_h.cursor()
@@ -1308,18 +1350,42 @@ def sync_source_background(source_id):
                 host, port = source['server_address'].split(':', 1)
             else:
                 host = source['server_address']
-                port = connection_details.get('port', '30015')
+                port = connection_details.get('port')
+                if not port:
+                    # Try to load from .env
+                    try:
+                        from db_utils import load_hana_config
+                        hana_base = load_hana_config()
+                        port = str(hana_base['port'])
+                    except ValueError:
+                        port = None
             
-            # Prepare configs
-            hana_config = {
-                'host': host,
-                'port': int(port),
-                'username': source['username'],
-                'password': source['password']
-            }
+            # Load HANA config from .env (no hardcoded values)
+            # Source-specific credentials can override .env values if provided
+            from db_utils import load_hana_config, load_clickhouse_config
+            try:
+                # Start with .env config as base
+                hana_base_config = load_hana_config()
+                # Allow source to override if it has stored credentials
+                hana_config = {
+                    'host': host if host else hana_base_config['host'],
+                    'port': int(port) if port else hana_base_config['port'],
+                    'username': source['username'] if source.get('username') else hana_base_config['username'],
+                    'password': source['password'] if source.get('password') else hana_base_config['password']
+                }
+            except ValueError:
+                # If .env not set, use source credentials (for backward compatibility)
+                app.logger.warning("HANA env vars not set, using source credentials from database")
+                hana_config = {
+                    'host': host,
+                    'port': int(port) if port else None,
+                    'username': source['username'],
+                    'password': source['password']
+                }
+                if not hana_config.get('port'):
+                    raise ValueError("HANA_PORT is required. Set it in .env or in source configuration.")
             
             # Load ClickHouse config from .env (no hardcoded values)
-            from db_utils import load_clickhouse_config
             ch_base_config = load_clickhouse_config()
             clickhouse_config = {
                 'host': ch_base_config['host'],
@@ -1470,7 +1536,19 @@ def edit_source(source_id):
         if ds['source_type'] == 'sql_server':
             return render_template('add_sql_source.html', source_name=ds['source_name'], server=ds['server_address'], username=ds['username'], target_type=ds['target_type'], target_database=ds['target_database'])
         else:
-            return render_template('add_hana_source.html', source_name=ds['source_name'], host=ds['server_address'].split(':')[0], port=ds['server_address'].split(':')[1] if ':' in ds['server_address'] else '30015', username=ds['username'], target_type=ds['target_type'], target_database=ds['target_database'])
+            # Get port from server_address or .env
+            server_parts = ds['server_address'].split(':')
+            host = server_parts[0]
+            port = server_parts[1] if len(server_parts) > 1 else None
+            if not port:
+                try:
+                    from db_utils import load_hana_config
+                    hana_base = load_hana_config()
+                    port = str(hana_base['port'])
+                except ValueError:
+                    port = ''  # Will require user to enter port
+            
+            return render_template('add_hana_source.html', source_name=ds['source_name'], host=host, port=port, username=ds['username'], target_type=ds['target_type'], target_database=ds['target_database'])
 
     except Exception as e:
         app.logger.exception(f"Error editing source: {e}")
@@ -1702,7 +1780,17 @@ def debug_insert_sample_source():
         )
         cur = conn.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS data_sources (id SERIAL PRIMARY KEY, source_name VARCHAR(255) UNIQUE NOT NULL, source_type VARCHAR(50) NOT NULL, server_address TEXT NOT NULL, username TEXT NOT NULL, password TEXT NOT NULL, target_type VARCHAR(50) NOT NULL, target_database VARCHAR(255) NOT NULL, is_active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-        cur.execute("INSERT INTO data_sources (source_name, source_type, server_address, username, password, target_type, target_database) VALUES (%s,%s,%s,%s,%s,%s,%s)", (name, 'sql_server', '127.0.0.1', 'sa', 'Password123!', 'postgresql', 'postgres'))
+        # Debug endpoint - use environment variables instead of hardcoded values
+        debug_server = os.environ.get('DEBUG_SERVER', '127.0.0.1')
+        debug_username = os.environ.get('DEBUG_USERNAME', 'sa')
+        debug_password = os.environ.get('DEBUG_PASSWORD', '')
+        debug_target_db = os.environ.get('DEBUG_TARGET_DB', 'postgres')
+        
+        if not debug_password:
+            flash("DEBUG_PASSWORD environment variable not set. Cannot create debug source.", "warning")
+            return redirect(url_for('index'))
+        
+        cur.execute("INSERT INTO data_sources (source_name, source_type, server_address, username, password, target_type, target_database) VALUES (%s,%s,%s,%s,%s,%s,%s)", (name, 'sql_server', debug_server, debug_username, debug_password, 'postgresql', debug_target_db))
         conn.commit()
         cur.close(); conn.close()
         flash(f"Inserted debug source '{name}'", 'success')
@@ -2041,7 +2129,15 @@ def test_hana_connection():
     try:
         data = request.get_json()
         host = (data.get("host") or "").strip()
-        port = (data.get("port") or "").strip() or "30015"
+        port = (data.get("port") or "").strip()
+        if not port:
+            # Try to load from .env
+            try:
+                from db_utils import load_hana_config
+                hana_base = load_hana_config()
+                port = str(hana_base['port'])
+            except ValueError:
+                port = None
         username = (data.get("username") or "").strip()
         password = (data.get("password") or "").strip()
 
@@ -2060,7 +2156,17 @@ def test_hana_connection():
 
         # Attempt to connect and fetch database list
         try:
-            conn = hana_dbapi.connect(address=host, port=int(port), user=username, password=password)
+            conn = hana_dbapi.connect(
+                address=host,
+                port=int(port),
+                user=username,
+                password=password,
+                encrypt=True,
+                sslValidateCertificate=False,
+                timeout=10,
+                communicationTimeout=30000,
+                reconnect=True
+            )
             cursor = conn.cursor()
             
             # Query to get all schemas/databases
@@ -2300,7 +2406,15 @@ def add_hana_source():
         try:
             source_name = request.form.get("source_name", "").strip()
             host = request.form.get("host", "").strip()
-            port = request.form.get("port", "30015").strip()
+            port = request.form.get("port", "").strip()
+            if not port:
+                # Try to load from .env
+                try:
+                    from db_utils import load_hana_config
+                    hana_base = load_hana_config()
+                    port = str(hana_base['port'])
+                except ValueError:
+                    port = None
             instance = request.form.get("instance", "").strip()
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "").strip()
@@ -2470,22 +2584,45 @@ def view_hana_tables(source_id):
             host, port = server_address.split(':', 1)
         else:
             host = server_address
-            port = connection_details.get('port', '30015')
+            port = connection_details.get('port')
+            if not port:
+                # Try to load from .env
+                try:
+                    from db_utils import load_hana_config
+                    hana_base = load_hana_config()
+                    port = str(hana_base['port'])
+                except ValueError:
+                    port = None
         
-        # Prepare HANA config
-        hana_config = {
-            'host': host,
-            'port': int(port),
-            'username': username,
-            'password': password
-        }
+        # Load HANA config from .env (no hardcoded values)
+        from db_utils import load_hana_config, load_clickhouse_config
+        try:
+            # Use .env config as base, allow form values to override
+            hana_base_config = load_hana_config()
+            hana_config = {
+                'host': host if host else hana_base_config['host'],
+                'port': int(port) if port else hana_base_config['port'],
+                'username': username if username else hana_base_config['username'],
+                'password': password if password else hana_base_config['password']
+            }
+        except ValueError:
+            # If .env not set, require form values
+            if not all([host, port, username, password]):
+                return jsonify({'status': 'error', 'message': 'HANA connection details required. Either set HANA_* env vars in .env or provide them in the form.'}), 400
+            hana_config = {
+                'host': host,
+                'port': int(port),
+                'username': username,
+                'password': password
+            }
         
-        # Get ClickHouse config
+        # Get ClickHouse config from .env (no hardcoded values)
+        ch_base_config = load_clickhouse_config()
         clickhouse_config = {
-            'host': os.getenv('CLICKHOUSE_HOST', 'localhost'),
-            'port': int(os.getenv('CLICKHOUSE_PORT', '9000')),
-            'user': os.getenv('CLICKHOUSE_USER', 'default'),
-            'password': os.getenv('CLICKHOUSE_PASSWORD', ''),
+            'host': ch_base_config['host'],
+            'port': ch_base_config['port'],
+            'user': ch_base_config['user'],
+            'password': ch_base_config['password'],
             'database': target_database if target_database else 'hana_migrated'
         }
         
@@ -2566,21 +2703,56 @@ def sync_hana_source(source_id):
             host, port = server_address.split(':', 1)
         else:
             host = server_address
-            port = connection_details.get('port', '30015')
+            port = connection_details.get('port')
+            if not port:
+                # Try to load from .env
+                try:
+                    from db_utils import load_hana_config
+                    hana_base = load_hana_config()
+                    port = str(hana_base['port'])
+                except ValueError:
+                    port = None
         
-        # Prepare configs
-        hana_config = {
-            'host': host,
-            'port': int(port),
-            'username': username,
-            'password': password
-        }
+        # Load HANA config from .env (no hardcoded values)
+        from db_utils import load_hana_config, load_clickhouse_config
+        try:
+            # Use .env config as base, allow form values to override
+            hana_base_config = load_hana_config()
+            hana_config = {
+                'host': host if host else hana_base_config['host'],
+                'port': int(port) if port else hana_base_config['port'],
+                'username': username if username else hana_base_config['username'],
+                'password': password if password else hana_base_config['password']
+            }
+        except ValueError:
+            # If .env not set, require form values
+            if not all([host, port, username, password]):
+                flash('HANA connection details required. Either set HANA_* env vars in .env or provide them in the form.', 'danger')
+                postgres_dbs = load_pg_databases()
+                clickhouse_dbs = load_clickhouse_databases()
+                return render_template("add_hana_source.html",
+                                      postgres_dbs=postgres_dbs,
+                                      clickhouse_dbs=clickhouse_dbs,
+                                      source_name=source_name,
+                                      host=host,
+                                      port=port,
+                                      instance=instance,
+                                      username=username,
+                                      target_type=target_type)
+            hana_config = {
+                'host': host,
+                'port': int(port),
+                'username': username,
+                'password': password
+            }
         
+        # Load ClickHouse config from .env (no hardcoded values)
+        ch_base_config = load_clickhouse_config()
         clickhouse_config = {
-            'host': os.getenv('CLICKHOUSE_HOST', 'localhost'),
-            'port': int(os.getenv('CLICKHOUSE_PORT', '9000')),
-            'user': os.getenv('CLICKHOUSE_USER', 'default'),
-            'password': os.getenv('CLICKHOUSE_PASSWORD', ''),
+            'host': ch_base_config['host'],
+            'port': ch_base_config['port'],
+            'user': ch_base_config['user'],
+            'password': ch_base_config['password'],
             'database': target_database if target_database else 'hana_migrated'
         }
         
@@ -3958,8 +4130,8 @@ def upload_csv():
                 except Exception as e:
                     import traceback
                     error_details = traceback.format_exc()
-                    print(f"[UPLOAD ERROR] File: {filename}")
-                    print(f"[UPLOAD ERROR] {error_details}")
+                    app.logger.error(f"[UPLOAD ERROR] File: {filename}")
+                    app.logger.error(f"[UPLOAD ERROR] {error_details}")
                     
                     upload_progress[session_id]['results'].append({
                         'file': filename,

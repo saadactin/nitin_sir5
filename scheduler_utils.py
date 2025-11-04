@@ -227,18 +227,42 @@ def _source_job_wrapper(source_id, job_type):
             else:
                 conn_details = connection_details or {}
             
-            hana_config = {
-                'host': conn_details.get('host') or (server_address.split(':')[0] if ':' in server_address else server_address),
-                'port': int(conn_details.get('port') or (server_address.split(':')[1] if ':' in server_address else 30015)),
-                'username': username,
-                'password': password or conn_details.get('password', '')
-            }
+            # Load HANA config from .env (no hardcoded values)
+            from db_utils import load_hana_config, load_clickhouse_config
+            try:
+                # Use .env config as base, allow source to override
+                hana_base_config = load_hana_config()
+                # Parse server_address if needed
+                source_host = conn_details.get('host') or (server_address.split(':')[0] if ':' in server_address else server_address)
+                source_port = conn_details.get('port') or (server_address.split(':')[1] if ':' in server_address else None)
+                
+                hana_config = {
+                    'host': source_host if source_host else hana_base_config['host'],
+                    'port': int(source_port) if source_port else hana_base_config['port'],
+                    'username': username if username else hana_base_config['username'],
+                    'password': password if password else (conn_details.get('password') or hana_base_config['password'])
+                }
+            except ValueError:
+                # If .env not set, use source credentials
+                source_host = conn_details.get('host') or (server_address.split(':')[0] if ':' in server_address else server_address)
+                source_port = conn_details.get('port') or (server_address.split(':')[1] if ':' in server_address else None)
+                if not source_port:
+                    raise ValueError("HANA_PORT is required. Set HANA_PORT in .env or in source configuration.")
+                
+                hana_config = {
+                    'host': source_host,
+                    'port': int(source_port),
+                    'username': username,
+                    'password': password or conn_details.get('password', '')
+                }
             
+            # Load ClickHouse config from .env (no hardcoded values)
+            ch_base_config = load_clickhouse_config()
             clickhouse_config = {
-                'host': os.environ.get('CLICKHOUSE_HOST', 'localhost'),
-                'port': int(os.environ.get('CLICKHOUSE_PORT', 9000)),
-                'user': os.environ.get('CLICKHOUSE_USER', 'default'),
-                'password': os.environ.get('CLICKHOUSE_PASSWORD', ''),
+                'host': ch_base_config['host'],
+                'port': ch_base_config['port'],
+                'user': ch_base_config['user'],
+                'password': ch_base_config['password'],
                 'database': target_database
             }
             

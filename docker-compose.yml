@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  hana:
+    # SAP HANA Express Edition - Free version for development
+    # Note: HANA Express requires manual download from SAP website
+    # Alternative: Use SAP HANA Express in Docker (requires SAP login)
+    image: saplabs/hanaexpress:latest
+    container_name: hana-express
+    hostname: hxe
+    ports:
+      - "39013:39013"  # SQL port (HANA Express uses 39013)
+      - "39017:39017"  # SQL port (alternative)
+      - "39041:39041"  # HTTP port  
+      - "8090:8090"    # XS Advanced
+    environment:
+      # Note: Docker Compose reads .env file automatically
+      # Make sure HANA_PASSWORD=YourPassword123 is in .env file
+      - HXE_ADMIN_PASSWORD=${HANA_PASSWORD:-YourPassword123}
+      - AGREE_TO_SAP_INSTALLER_TERMS_OF_USE=true
+    volumes:
+      - hana_data:/var/opt/hana
+      - ./passwords.json:/config/passwords.json
+    command: --agree-to-sap-license --passwords-url file:///config/passwords.json
+    restart: unless-stopped
+
+volumes:
+  hana_data:
+    driver: local
+

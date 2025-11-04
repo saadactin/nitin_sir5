@@ -26,7 +26,7 @@ def compare_table_rows(server_name, db_name, table_name):
     
     Returns:
         dict: Contains rows_source, rows_destination, missing_rows, extra_rows
-    """
+    """ 
     try:
         config = load_config()
         server_conf = config["sqlservers"].get(server_name)
@@ -69,7 +69,9 @@ def compare_table_rows(server_name, db_name, table_name):
             # Try to use timestamp column first
             timestamp_column = get_timestamp_column(server_name, db_name, table_name)
             if timestamp_column:
-                source_query = f"SELECT * FROM [{schema}].[{table}] WHERE [{timestamp_column}] <= '{last_sync_time}'"
+                # Use parameterized query to prevent SQL injection
+                # SQL Server uses parameterized queries with ? placeholders
+                source_query = f"SELECT * FROM [{schema}].[{table}] WHERE [{timestamp_column}] <= ?"
                 logger.info(f"Filtering source data by timestamp column: {timestamp_column} <= {last_sync_time}")
             elif last_pk_value:
                 # Use primary key if timestamp not available
@@ -192,7 +194,8 @@ def delta_tracking(server_name, db_name, table_name):
         if last_sync_time:
             timestamp_column = get_timestamp_column(server_name, db_name, table_name)
             if timestamp_column:
-                source_query = f"SELECT * FROM [{schema}].[{table}] WHERE [{timestamp_column}] <= '{last_sync_time}'"
+                # Use parameterized query to prevent SQL injection
+                source_query = f"SELECT * FROM [{schema}].[{table}] WHERE [{timestamp_column}] <= ?"
             else:
                 source_query = f"SELECT * FROM [{schema}].[{table}]"
         else:

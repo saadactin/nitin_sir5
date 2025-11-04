@@ -24,17 +24,40 @@ class HanaToClickHouseSync:
         self.ch_client = None
     
     def connect_hana(self) -> bool:
-        """Establish connection to SAP HANA"""
+        """
+        Establish connection to SAP HANA using config from .env.
+        
+        Uses load_hana_config() if hana_config is not provided, otherwise uses
+        the provided hana_config (for backward compatibility with stored sources).
+        """
         try:
+            # If hana_config doesn't have required fields, load from .env
+            if not self.hana_config.get('host') or not self.hana_config.get('username'):
+                logger.info("HANA config incomplete, loading from .env...")
+                env_config = load_hana_config()
+                # Merge with provided config (allows overriding with source-specific values)
+                self.hana_config = {**env_config, **self.hana_config}
+            
+            # Validate required fields are present
+            if not self.hana_config.get('host'):
+                raise ValueError("HANA host is required")
+            if not self.hana_config.get('username'):
+                raise ValueError("HANA username is required")
+            
+            # Get port (required, no default)
+            port = int(self.hana_config.get('port'))
+            if not port:
+                raise ValueError("HANA port is required")
+            
             self.hana_conn = hana_dbapi.connect(
                 address=self.hana_config['host'],
-                port=int(self.hana_config.get('port', 30015)),
+                port=port,
                 user=self.hana_config['username'],
-                password=self.hana_config['password'],
+                password=self.hana_config.get('password', ''),
                 encrypt=True,
                 sslValidateCertificate=False
             )
-            logger.info(f"Connected to HANA: {self.hana_config['host']}:{self.hana_config['port']}")
+            logger.info(f"Connected to HANA: {self.hana_config['host']}:{port}")
             return True
         except Exception as e:
             logger.error(f"HANA connection failed: {e}")
@@ -352,9 +375,9 @@ class HanaToClickHouseSync:
     def table_exists_in_clickhouse(self, database: str, table: str) -> bool:
         """Check if table exists in ClickHouse"""
         try:
+            # ClickHouse doesn't support %s placeholders - use string formatting with escaping
             result = self.ch_client.execute(
-                "SELECT name FROM system.tables WHERE database = %s AND name = %s",
-                [database, table]
+                f"SELECT name FROM system.tables WHERE database = '{database.replace("'", "''")}' AND name = '{table.replace("'", "''")}'"
             )
             return len(result) > 0
         except Exception:
@@ -407,56 +430,367 @@ class HanaToClickHouseSync:
             return False
     
     def perform_incremental_sync(self, schema: str, table: str) -> Dict:
-        """Perform incremental sync based on last sync timestamp"""
+        """
+        Perform incremental sync based on last sync timestamp.
+        
+        Tries multiple strategies:
+        1. Uses timestamp column if available (e.g., CREATED_AT, UPDATED_AT, TIMESTAMP)
+        2. Falls back to ID-based incremental if timestamp not available
+        3. Returns error if neither available
+        """
         try:
             ch_table_name = self.create_clickhouse_table_name(schema, table)
             database_name = self.clickhouse_config.get('database', 'hana_migrated')
             
-            # Get last sync timestamp
-            result = self.ch_client.execute(f"""
-            SELECT last_sync_timestamp FROM {database_name}.sync_metadata 
-            WHERE source_schema = %s AND source_table = %s AND sync_enabled = 1
-            """, [schema, table])
+            # Get last sync timestamp from metadata
+            try:
+                # ClickHouse doesn't support %s placeholders - use string formatting with escaping
+                result = self.ch_client.execute(f"""
+                SELECT last_sync_timestamp, last_sync_id 
+                FROM {database_name}.sync_metadata 
+                WHERE source_schema = '{schema.replace("'", "''")}' AND source_table = '{table.replace("'", "''")}' AND sync_enabled = 1
+                """)
+                
+                if not result:
+                    return {'status': 'error', 'message': 'No sync configuration found. Run initial sync first.'}
+                
+                last_sync = result[0][0] if result[0][0] else datetime(1970, 1, 1)  # Default to epoch if None
+                last_sync_id = result[0][1] if len(result[0]) > 1 and result[0][1] else None
+            except Exception as e:
+                logger.warning(f"Could not get last sync timestamp: {e}")
+                last_sync = datetime(1970, 1, 1)  # Start from beginning
+                last_sync_id = None
             
-            if not result:
-                return {'status': 'error', 'message': 'No sync configuration found'}
+            # Get table columns to find best sync column
+            columns = self.get_hana_table_schema(schema, table)
+            if not columns:
+                return {'status': 'error', 'message': 'Could not get table schema'}
             
-            last_sync = result[0][0]
+            column_names = [col['name'] for col in columns]
             
-            # Get new/changed records from HANA
-            cursor = self.hana_conn.cursor()
-            query = f"""
-            SELECT * FROM "{schema}"."{table}" 
-            WHERE _sync_timestamp > ? OR _last_modified > ?
-            ORDER BY _sync_timestamp
-            """
-            cursor.execute(query, (last_sync, last_sync))
+            # Find timestamp columns for incremental sync
+            timestamp_columns = [col['name'] for col in columns 
+                               if col['type'] in ['TIMESTAMP', 'SECONDDATE', 'DATE', 'TIME']]
             
-            new_data = cursor.fetchall()
-            column_names = [desc[0] for desc in cursor.description]
-            cursor.close()
+            # Also check for common timestamp column names
+            common_timestamp_names = ['CREATED_AT', 'UPDATED_AT', 'MODIFIED_AT', 'TIMESTAMP', 
+                                    'LAST_MODIFIED', 'CHANGE_TIME', 'UPDATE_TIME', 'CREATED_TIME']
+            for col_name in column_names:
+                if col_name.upper() in common_timestamp_names:
+                    timestamp_columns.insert(0, col_name)
+            
+            # Find ID column for fallback
+            id_columns = [col['name'] for col in columns 
+                        if col['type'] in ['BIGINT', 'INTEGER', 'INT'] and 
+                        col['name'].upper() in ['ID', 'ROWID', 'ROW_ID', 'RECORD_ID']]
+            
+            new_data = []
+            column_names_for_insert = []
+            
+            # Strategy 1: Use timestamp column if available
+            if timestamp_columns:
+                timestamp_col = timestamp_columns[0]
+                logger.info(f"Using timestamp column '{timestamp_col}' for incremental sync of {schema}.{table}")
+                
+                try:
+                    cursor = self.hana_conn.cursor()
+                    # Convert last_sync to appropriate format for HANA
+                    query = f"""
+                    SELECT * FROM "{schema}"."{table}" 
+                    WHERE "{timestamp_col}" > ?
+                    ORDER BY "{timestamp_col}" ASC
+                    """
+                    cursor.execute(query, (last_sync,))
+                    new_data = cursor.fetchall()
+                    column_names_for_insert = [desc[0] for desc in cursor.description]
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Timestamp-based sync failed: {e}, trying ID-based")
+                    new_data = []
+            
+            # Strategy 2: Use ID column if timestamp failed and ID available
+            if not new_data and id_columns and last_sync_id is not None:
+                id_col = id_columns[0]
+                logger.info(f"Using ID column '{id_col}' for incremental sync of {schema}.{table}")
+                
+                try:
+                    cursor = self.hana_conn.cursor()
+                    query = f"""
+                    SELECT * FROM "{schema}"."{table}" 
+                    WHERE "{id_col}" > ?
+                    ORDER BY "{id_col}" ASC
+                    """
+                    cursor.execute(query, (last_sync_id,))
+                    new_data = cursor.fetchall()
+                    column_names_for_insert = [desc[0] for desc in cursor.description]
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"ID-based sync failed: {e}")
+                    new_data = []
+            
+            # Strategy 3: If no suitable column, return error
+            if not new_data and not timestamp_columns and not id_columns:
+                return {
+                    'status': 'error', 
+                    'message': f'No timestamp or ID column found for incremental sync. Table needs CREATED_AT, UPDATED_AT, or ID column.',
+                    'new_records': 0
+                }
+            
+            # If no new data, still return success
+            if not new_data:
+                # Update last sync timestamp anyway (nothing changed)
+                try:
+                    # Use DELETE + INSERT for compatibility
+                    self.ch_client.execute(f"""
+                    ALTER TABLE {database_name}.sync_metadata 
+                    DELETE WHERE source_schema = '{schema.replace("'", "''")}' AND source_table = '{table.replace("'", "''")}'
+                    """)
+                    self.ch_client.execute(f"""
+                    INSERT INTO {database_name}.sync_metadata 
+                    (source_schema, source_table, target_table, last_sync_timestamp, sync_enabled)
+                    VALUES
+                    """, [[schema, table, ch_table_name, datetime.now(), 1]])
+                except:
+                    pass  # Ignore update errors if metadata doesn't support ALTER UPDATE
+                
+                return {
+                    'status': 'success',
+                    'table': f"{schema}.{table}",
+                    'target_table': f"{database_name}.{ch_table_name}",
+                    'new_records': 0,
+                    'last_sync': last_sync
+                }
+            
+            # Ensure ClickHouse table exists
+            if not self.table_exists_in_clickhouse(database_name, ch_table_name):
+                logger.info(f"Table {ch_table_name} doesn't exist, creating it...")
+                self.create_clickhouse_table(schema, table, columns)
+            
+            # Prepare data for ClickHouse with source metadata
+            rows_to_insert = []
+            for row in new_data:
+                converted_row = []
+                # Convert original data
+                for value in row:
+                    if value is None:
+                        converted_row.append(None)
+                    elif isinstance(value, (datetime, time_type)):
+                        converted_row.append(str(value))
+                    elif isinstance(value, bytes):
+                        converted_row.append(value.decode('utf-8', errors='ignore'))
+                    else:
+                        converted_row.append(value)
+                # Add source metadata
+                converted_row.append(schema)  # _source_schema
+                converted_row.append(table)   # _source_table
+                rows_to_insert.append(converted_row)
             
             # Insert into ClickHouse
-            if new_data:
-                columns_str = ', '.join([f'`{col}`' for col in column_names])
-                self.ch_client.execute(f"INSERT INTO {database_name}.{ch_table_name} ({columns_str}) VALUES", new_data)
+            if rows_to_insert:
+                all_columns = column_names_for_insert + ['_source_schema', '_source_table']
+                columns_str = ', '.join([f'`{col}`' for col in all_columns])
                 
-                # Update sync timestamp
-                self.ch_client.execute(f"""
-                ALTER TABLE {database_name}.sync_metadata 
-                UPDATE last_sync_timestamp = %s
-                WHERE source_schema = %s AND source_table = %s
-                """, [datetime.now(), schema, table])
+                insert_sql = f"INSERT INTO {database_name}.{ch_table_name} ({columns_str}) VALUES"
+                self.ch_client.execute(insert_sql, rows_to_insert)
+                
+                # Update sync timestamp in metadata
+                try:
+                    # Get latest timestamp/ID from synced data for next sync
+                    latest_timestamp = last_sync
+                    latest_id = last_sync_id
+                    
+                    if timestamp_columns:
+                        # Find the max timestamp value in the new data
+                        timestamp_idx = column_names_for_insert.index(timestamp_columns[0])
+                        latest_timestamp = max(row[timestamp_idx] for row in new_data if row[timestamp_idx] is not None)
+                    
+                    if id_columns:
+                        # Find the max ID value in the new data
+                        id_idx = column_names_for_insert.index(id_columns[0])
+                        latest_id = max(row[id_idx] for row in new_data if row[id_idx] is not None)
+                    
+                    # Update metadata (ClickHouse ALTER UPDATE syntax)
+                    # Note: ClickHouse ALTER UPDATE might not be supported in all versions
+                    # Use DELETE + INSERT instead for compatibility
+                    try:
+                        # Delete old record
+                        self.ch_client.execute(f"""
+                        ALTER TABLE {database_name}.sync_metadata 
+                        DELETE WHERE source_schema = '{schema.replace("'", "''")}' AND source_table = '{table.replace("'", "''")}'
+                        """)
+                        # Insert updated record
+                        self.ch_client.execute(f"""
+                        INSERT INTO {database_name}.sync_metadata 
+                        (source_schema, source_table, target_table, last_sync_timestamp, last_sync_id, sync_enabled)
+                        VALUES
+                        """, [[schema, table, ch_table_name, latest_timestamp, latest_id or 0, 1]])
+                    except Exception as update_error:
+                        # If DELETE not supported, try ALTER UPDATE (might not work in all ClickHouse versions)
+                        logger.warning(f"Could not update with DELETE, trying ALTER UPDATE: {update_error}")
+                        # Format timestamp as string for SQL
+                        timestamp_str = latest_timestamp.strftime("'%Y-%m-%d %H:%M:%S'") if isinstance(latest_timestamp, datetime) else f"'{latest_timestamp}'"
+                        self.ch_client.execute(f"""
+                        ALTER TABLE {database_name}.sync_metadata 
+                        UPDATE last_sync_timestamp = {timestamp_str}, last_sync_id = {latest_id or 0}
+                        WHERE source_schema = '{schema.replace("'", "''")}' AND source_table = '{table.replace("'", "''")}'
+                        """)
+                except Exception as e:
+                    logger.warning(f"Could not update sync metadata: {e}. Using current time.")
+                    # Fallback: use current time
+                    try:
+                        # Use DELETE + INSERT for compatibility
+                        self.ch_client.execute(f"""
+                        ALTER TABLE {database_name}.sync_metadata 
+                        DELETE WHERE source_schema = '{schema.replace("'", "''")}' AND source_table = '{table.replace("'", "''")}'
+                        """)
+                        self.ch_client.execute(f"""
+                        INSERT INTO {database_name}.sync_metadata 
+                        (source_schema, source_table, target_table, last_sync_timestamp, sync_enabled)
+                        VALUES
+                        """, [[schema, table, ch_table_name, datetime.now(), 1]])
+                    except:
+                        pass  # Ignore if ALTER UPDATE not supported
             
             return {
                 'status': 'success',
                 'table': f"{schema}.{table}",
                 'target_table': f"{database_name}.{ch_table_name}",
                 'new_records': len(new_data),
-                'last_sync': last_sync
+                'last_sync': last_sync,
+                'records_synced': len(new_data)
             }
             
         except Exception as e:
             logger.error(f"Incremental sync failed for {schema}.{table}: {e}")
-            return {'status': 'error', 'message': str(e)}
+            import traceback
+            logger.debug(traceback.format_exc())
+            return {'status': 'error', 'message': str(e), 'records_synced': 0}
+    
+    def sync_incremental(self, database: str = None) -> List[Dict]:
+        """
+        Perform incremental sync for all tables configured for incremental sync.
+        
+        This method is called by the scheduler to sync all tables that have
+        incremental sync enabled. It:
+        1. Gets all tables from sync_metadata table that have sync_enabled = 1
+        2. For each table, performs incremental sync
+        3. Returns results for all tables
+        
+        Args:
+            database: ClickHouse database name (optional, uses from clickhouse_config if not provided)
+            
+        Returns:
+            List of sync results for each table
+        """
+        try:
+            database_name = database or self.clickhouse_config.get('database', 'hana_migrated')
+            
+            # Ensure sync_metadata table exists
+            try:
+                self.ch_client.execute(f"""
+                CREATE TABLE IF NOT EXISTS {database_name}.sync_metadata
+                (
+                    source_schema String,
+                    source_table String,
+                    target_table String,
+                    last_sync_timestamp DateTime,
+                    last_sync_id UInt64,
+                    sync_enabled UInt8
+                )
+                ENGINE = MergeTree()
+                ORDER BY (source_schema, source_table)
+                """)
+            except Exception as e:
+                logger.warning(f"Could not create sync_metadata table: {e}")
+            
+            # Get all tables configured for incremental sync
+            try:
+                metadata_records = self.ch_client.execute(f"""
+                SELECT source_schema, source_table, target_table, last_sync_timestamp
+                FROM {database_name}.sync_metadata
+                WHERE sync_enabled = 1
+                ORDER BY source_schema, source_table
+                """)
+            except Exception as e:
+                logger.warning(f"Could not read sync_metadata table: {e}")
+                metadata_records = []
+            
+            if not metadata_records:
+                logger.info("No tables configured for incremental sync. Setting up initial sync for all tables.")
+                # If no metadata, do initial setup - get all schemas and tables
+                schemas = self.get_hana_schemas()
+                metadata_records = []
+                
+                # Limit to reasonable number of schemas for performance
+                for schema in schemas[:20]:  # First 20 schemas
+                    tables = self.get_hana_tables(schema)
+                    for table_info in tables:
+                        table_name = table_info['name']
+                        # Setup incremental sync for this table
+                        if self.setup_incremental_sync(schema, table_name):
+                            metadata_records.append((schema, table_name, None, datetime.now()))
+            
+            results = []
+            total_records_synced = 0
+            
+            for record in metadata_records:
+                schema = record[0]
+                table = record[1]
+                target_table = record[2] if len(record) > 2 else None
+                last_sync = record[3] if len(record) > 3 else None
+                
+                try:
+                    logger.info(f"Performing incremental sync for {schema}.{table}")
+                    result = self.perform_incremental_sync(schema, table)
+                    
+                    if result.get('status') == 'success':
+                        new_records = result.get('new_records', 0)
+                        total_records_synced += new_records
+                        logger.info(f"✅ Synced {new_records} new records from {schema}.{table}")
+                    elif result.get('status') == 'error':
+                        # If incremental sync fails (e.g., no timestamp column), try full sync
+                        logger.warning(f"Incremental sync failed for {schema}.{table}: {result.get('message')}")
+                        logger.info(f"Attempting full sync for {schema}.{table}...")
+                        
+                        # Get table schema and ensure table exists
+                        columns = self.get_hana_table_schema(schema, table)
+                        if columns:
+                            self.create_clickhouse_table(schema, table, columns)
+                            # Do full sync instead
+                            full_result = self.migrate_table_data(schema, table)
+                            if full_result.get('status') == 'success':
+                                total_records_synced += full_result.get('migrated_rows', 0)
+                                # Update metadata for next incremental sync
+                                self.setup_incremental_sync(schema, table)
+                                result = {
+                                    'status': 'success',
+                                    'table': f"{schema}.{table}",
+                                    'new_records': full_result.get('migrated_rows', 0),
+                                    'sync_type': 'full_fallback'
+                                }
+                            else:
+                                result['sync_type'] = 'failed'
+                        else:
+                            result['sync_type'] = 'skipped_no_schema'
+                    else:
+                        result['sync_type'] = 'unknown'
+                    
+                    results.append(result)
+                    
+                except Exception as e:
+                    logger.error(f"Error syncing {schema}.{table}: {e}")
+                    results.append({
+                        'status': 'error',
+                        'table': f"{schema}.{table}",
+                        'error': str(e),
+                        'records_synced': 0
+                    })
+            
+            logger.info(f"Incremental sync completed: {total_records_synced} total records synced across {len(results)} tables")
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Incremental sync process failed: {e}")
+            return [{'status': 'error', 'message': str(e), 'records_synced': 0}]
 

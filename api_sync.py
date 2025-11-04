@@ -33,13 +33,22 @@ def send_api_sync_email(api_url, target_database, target_table, records_synced, 
         sync_end_time: When sync ended
     """
     try:
-        # Email configuration (from environment or config)
+        # Email configuration (from environment - NO hardcoded defaults)
         import os
-        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        smtp_user = os.getenv("SMTP_USER", "saadpractice4@gmail.com")
-        smtp_password = os.getenv("SMTP_PASSWORD", "lqcd zyjx ayjh hyef")
-        admin_emails = os.getenv("ADMIN_EMAILS", "saad.sayyed@actin.co.in,saadpractice4@gmail.com").split(',')
+        smtp_server = os.getenv("SMTP_SERVER")
+        smtp_port_str = os.getenv("SMTP_PORT")
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_password = os.getenv("SMTP_PASSWORD")
+        admin_emails_str = os.getenv("ADMIN_EMAILS")
+        
+        # Validate required email configuration
+        if not all([smtp_server, smtp_port_str, smtp_user, smtp_password, admin_emails_str]):
+            logger.warning("Email configuration incomplete. Skipping email notification.")
+            logger.warning("Required env vars: SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ADMIN_EMAILS")
+            return
+        
+        smtp_port = int(smtp_port_str)
+        admin_emails = admin_emails_str.split(',')
         
         # Calculate duration
         duration_str = "N/A"

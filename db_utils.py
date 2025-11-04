@@ -17,8 +17,25 @@ CONFIG_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "config/db_connections.yaml")
 )
 
-# Secret key for encryption (prefer environment variable)
-SECRET_KEY = os.environ.get('SECRET_KEY', os.environ.get('SECRET', None) or "NITIN_SIR")
+# Secret key for encryption - MUST be set via environment variable
+# In production, this will fail if SECRET_KEY is not set
+def get_secret_key():
+    """Get secret key from environment. Raises error if not set in production."""
+    secret_key = os.environ.get('SECRET_KEY') or os.environ.get('SECRET')
+    if not secret_key:
+        # Check if we're in production mode
+        is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('ENVIRONMENT') == 'production'
+        if is_production:
+            raise RuntimeError(
+                "SECRET_KEY environment variable is required in production. "
+                "Set SECRET_KEY in your .env file or environment variables."
+            )
+        # Development fallback (with warning)
+        logger.warning("SECRET_KEY not set. Using fallback for development. Set SECRET_KEY for production!")
+        return "NITIN_SIR"  # Development fallback only
+    return secret_key
+
+SECRET_KEY = get_secret_key()
 
 def get_encryption_key():
     """Generate encryption key from secret"""
@@ -494,5 +511,80 @@ def load_clickhouse_config():
     }
     
     logger.debug(f"Loaded ClickHouse config: host={host}, port={port_int}, user={user}, password={'***' if password else '(empty)'}")
+    return config
+
+
+def load_hana_config():
+    """
+    Load HANA config from environment variables ONLY.
+    
+    Required environment variables:
+    - HANA_HOST
+    - HANA_PORT
+    - HANA_USERNAME
+    - HANA_PASSWORD
+    
+    Returns:
+        dict with 'host', 'port', 'username', 'password'
+    
+    Raises:
+        ValueError if required variables are missing
+    """
+    # Load .env file if dotenv is available
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
+    
+    # Get required environment variables
+    host = os.environ.get('HANA_HOST')
+    port = os.environ.get('HANA_PORT')
+    username = os.environ.get('HANA_USERNAME')
+    password = os.environ.get('HANA_PASSWORD')
+    
+    # Validate required variables
+    if not host:
+        error_msg = (
+            "HANA_HOST environment variable is required. "
+            "Please set it in your .env file: HANA_HOST=your_host"
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    if not port:
+        error_msg = (
+            "HANA_PORT environment variable is required. "
+            "Please set it in your .env file: HANA_PORT=30015"
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    if not username:
+        error_msg = (
+            "HANA_USERNAME environment variable is required. "
+            "Please set it in your .env file: HANA_USERNAME=your_username"
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    # Password can be empty string, so we allow None and convert to empty string
+    password = password if password is not None else ''
+    
+    try:
+        port_int = int(port)
+    except ValueError:
+        error_msg = f"HANA_PORT must be a number, got: {port}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    config = {
+        'host': host,
+        'port': port_int,
+        'username': username,
+        'password': password
+    }
+    
+    logger.debug(f"Loaded HANA config: host={host}, port={port_int}, username={username}, password={'***' if password else '(empty)'}")
     return config
 
