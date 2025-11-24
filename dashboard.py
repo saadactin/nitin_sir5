@@ -21,6 +21,7 @@ def log_sync(server_name: str, status: str, details: str = None):
 def get_last_10_syncs():
     """
     Return the last 10 sync attempts (newest first).
+    Includes all sync types: SQL Server, HANA, API (REST/SSE), etc.
     """
     conn = get_pg_connection()
     cur = conn.cursor()

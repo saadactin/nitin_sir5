@@ -1,0 +1,24 @@
+-- B1 DEPENDS: BEFORE:PT:PROCESS_START
+
+CREATE PROCEDURE MOBILE_KPI_CashOnHand
+LANGUAGE SQLSCRIPT 
+SQL SECURITY INVOKER
+AS
+BEGIN
+
+declare Cash FLOAT;
+SELECT TOP 1 IFNULL(OACT."CurrTotal",0) INTO Cash FROM OACT INNER JOIN OACP ON OACT."AcctCode"=OACP."LinkAct_3"; 
+SELECT 'Cash on Hand' AS Title, '' AS Gauge, '' AS Indicator, 'Amount' AS SubTitle1, TO_VARCHAR(TO_DECIMAL(Cash, 20, 2)) AS SubValue1,  '' AS SubTitle2, '' AS SubValue2 FROM DUMMY;
+
+END;
+
+
+
+
+
+
+
+
+
+
+

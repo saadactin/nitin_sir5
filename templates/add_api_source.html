@@ -483,10 +483,15 @@
       const dbSelect = document.getElementById('target_database');
       
       // Show loading state
-      dbSelect.innerHTML = '<option value="">Loading databases...</option>';
+      dbSelect.innerHTML = '<option value=""><div class="spinner w-4 h-4 border-blue-600 inline-block mr-2"></div>Loading databases...</option>';
       dbSelect.disabled = true;
       
       try {
+        const dbSelect = document.getElementById('target_database');
+        if (dbSelect) {
+          dbSelect.disabled = true;
+          dbSelect.innerHTML = '<option value=""><div class="spinner w-4 h-4 border-blue-600 inline-block mr-2"></div>Loading databases...</option>';
+        }
         const response = await fetch(`/api/target/databases?target_type=${targetType}`);
         const data = await response.json();
         
@@ -568,8 +573,13 @@
       const resultsContent = document.getElementById('testResultsContent');
       
       // Disable button and show loading
-      testBtn.disabled = true;
-      testBtn.innerHTML = '<span class="material-icons animate-spin">sync</span><span>Testing...</span>';
+      if (window.LoaderUtils) {
+        window.LoaderUtils.setButtonLoading(testBtn, true, 'Testing...');
+      } else {
+        testBtn.disabled = true;
+        testBtn.dataset.originalHtml = testBtn.innerHTML;
+        testBtn.innerHTML = '<span class="material-icons animate-spin">sync</span><span>Testing...</span>';
+      }
       
       // Collect form data
       const formData = new FormData(document.querySelector('form'));
@@ -665,8 +675,16 @@
         `;
       } finally {
         // Re-enable button
-        testBtn.disabled = false;
-        testBtn.innerHTML = '<span class="material-icons">sync</span><span>Test Connection</span>';
+        if (window.LoaderUtils) {
+          window.LoaderUtils.setButtonLoading(testBtn, false);
+        } else {
+          testBtn.disabled = false;
+          if (testBtn.dataset.originalHtml) {
+            testBtn.innerHTML = testBtn.dataset.originalHtml;
+          } else {
+            testBtn.innerHTML = '<span class="material-icons">sync</span><span>Test Connection</span>';
+          }
+        }
       }
     }
 

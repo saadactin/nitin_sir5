@@ -1,6 +1,0 @@
-id	name	email	department	salary
-1	John Doe	john@example.com	Engineering	75000
-2	Jane Smith	jane@example.com	Marketing	65000
-3	Bob Johnson	bob@example.com	Sales	70000
-4	Alice Williams	alice@example.com	HR	60000
-5	Charlie Brown	charlie@example.com	Engineering	80000

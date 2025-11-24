@@ -526,8 +526,27 @@ def sync_api_to_clickhouse_once(api_url, target_database, target_table,
         logger.info(f"📊 Using data path: '{detected_path}' (found {len(records)} records)")
         
         if not records:
-            logger.info("No records found in API response")
-            return {"success": True, "records_synced": 0, "error": None}
+            logger.info("No records found in API response - creating empty table structure")
+            # Create empty table with basic structure
+            try:
+                # ClickHouse driver uses execute() method
+                client.execute(f"CREATE DATABASE IF NOT EXISTS {target_database}")
+                # Create table with minimal structure for empty responses
+                client.execute(f"""
+                    CREATE TABLE IF NOT EXISTS {target_database}.{target_table} (
+                        `id` Nullable(String),
+                        `data` Nullable(String),
+                        `_sync_timestamp` DateTime DEFAULT now(),
+                        `_source_api` String DEFAULT '{api_url}',
+                        `_empty_response` UInt8 DEFAULT 1
+                    ) ENGINE = MergeTree()
+                    ORDER BY tuple()
+                """)
+                logger.info(f"✅ Created empty table structure: {target_database}.{target_table}")
+                return {"success": True, "records_synced": 0, "error": None, "empty_table_created": True}
+            except Exception as e:
+                logger.error(f"Failed to create empty table structure: {e}")
+                return {"success": False, "records_synced": 0, "error": f"Failed to create empty table: {str(e)}"}
         
         logger.info(f"Found {len(records)} records to sync")
         
@@ -675,6 +694,17 @@ def sync_api_to_clickhouse(api_url, target_database, target_table,
     sync_start_time = datetime.now()
     records_synced = 0
     error_msg = None
+    
+    # Import sync logger
+    try:
+        from sync_logger import SyncLogger
+        use_sync_logger = True
+        source_name = api_url  # Use API URL as source name
+        SyncLogger.log_sync_start('REST_API' if not is_sse else 'SSE_API', source_name, 
+                                 details={'target_db': target_database, 'target_table': target_table, 
+                                         'mode': 'continuous' if is_sse else 'polling'})
+    except ImportError:
+        use_sync_logger = False
     
     # Send "sync started" email
     send_api_sync_email(api_url, target_database, target_table, 0, 'running', sync_start_time=sync_start_time)

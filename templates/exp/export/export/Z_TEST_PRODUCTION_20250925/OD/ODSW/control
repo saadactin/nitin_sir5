@@ -1,0 +1,7 @@
+import data
+into table "Z_TEST_PRODUCTION_20250925"."ODSW"
+from 'data'
+    record delimited by '\n'
+    field delimited by ','
+    optionally enclosed by '"'
+error log 'data.err'

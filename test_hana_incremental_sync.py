@@ -1,141 +1,376 @@
 """
-Test HANA Incremental Sync Setup
-Verifies that scheduled incremental sync will work when HANA is available
+Test Script for HANA Incremental Sync
+Tests and verifies that incremental sync is working correctly for HANA sources
 """
+
 import os
-from dotenv import load_dotenv
+import sys
+from typing import Dict, List, Optional
+import logging
+from datetime import datetime, timedelta
 
-def test_hana_incremental_setup():
-    """Test that incremental sync setup is correct"""
-    print("=" * 70)
-    print("TESTING: HANA Incremental Sync Setup")
-    print("=" * 70)
-    
+# Load environment variables
+try:
+    from dotenv import load_dotenv
     load_dotenv()
-    
-    print("\n1. Checking Environment Variables:")
-    print("-" * 70)
-    
-    # Check HANA vars
-    hana_vars = {
-        'HANA_HOST': os.environ.get('HANA_HOST'),
-        'HANA_PORT': os.environ.get('HANA_PORT'),
-        'HANA_USERNAME': os.environ.get('HANA_USERNAME'),
-        'HANA_PASSWORD': os.environ.get('HANA_PASSWORD')
-    }
-    
-    hana_set = all(hana_vars.values())
-    for var, value in hana_vars.items():
-        display = value if 'PASSWORD' not in var else '***'
-        status = '[OK]' if value else '[NOT SET]'
-        print(f"   {status} {var} = {display if value else '(not set)'}")
-    
-    # Check ClickHouse vars
-    ch_vars = {
-        'CLICKHOUSE_HOST': os.environ.get('CLICKHOUSE_HOST'),
-        'CLICKHOUSE_PORT': os.environ.get('CLICKHOUSE_PORT'),
-        'CLICKHOUSE_USER': os.environ.get('CLICKHOUSE_USER'),
-        'CLICKHOUSE_PASSWORD': os.environ.get('CLICKHOUSE_PASSWORD')
-    }
-    
-    ch_set = all(ch_vars.values())
-    print()
-    for var, value in ch_vars.items():
-        display = value if 'PASSWORD' not in var else '***'
-        status = '[OK]' if value else '[NOT SET]'
-        print(f"   {status} {var} = {display if value else '(not set)'}")
-    
-    print("\n2. Verifying Code Implementation:")
-    print("-" * 70)
-    
-    # Check if sync_incremental method exists
-    try:
-        from hana_sync import HanaToClickHouseSync
-        if hasattr(HanaToClickHouseSync, 'sync_incremental'):
-            print("   [OK] sync_incremental() method exists")
-        else:
-            print("   [ERROR] sync_incremental() method missing!")
-            return False
-            
-        if hasattr(HanaToClickHouseSync, 'perform_incremental_sync'):
-            print("   [OK] perform_incremental_sync() method exists")
-        else:
-            print("   [ERROR] perform_incremental_sync() method missing!")
-            return False
-            
-        if hasattr(HanaToClickHouseSync, 'setup_incremental_sync'):
-            print("   [OK] setup_incremental_sync() method exists")
-        else:
-            print("   [ERROR] setup_incremental_sync() method missing!")
-            return False
-    except ImportError as e:
-        print(f"   [INFO] Could not import hana_sync: {e}")
-        print("   This is OK if hdbcli is not installed")
-    
-    # Check scheduler
-    try:
-        from scheduler_utils import sync_source_interval_sync, sync_source_daily_sync
-        print("   [OK] schedule_source_interval_sync() function exists")
-        print("   [OK] schedule_source_daily_sync() function exists")
-    except ImportError as e:
-        print(f"   [ERROR] Could not import scheduler functions: {e}")
-        return False
-    
-    print("\n3. How Incremental Sync Works:")
-    print("-" * 70)
-    print("   [INFO] Scheduled Incremental Sync Process:")
-    print("   1. Scheduler calls sync_source_interval_sync(source_id, minutes)")
-    print("   2. Function loads HANA config from .env variables")
-    print("   3. Function loads ClickHouse config from .env variables")
-    print("   4. Creates HanaToClickHouseSync engine")
-    print("   5. Connects to HANA and ClickHouse")
-    print("   6. Calls sync_engine.sync_incremental(database)")
-    print("   7. sync_incremental() gets all tables from sync_metadata")
-    print("   8. For each table, calls perform_incremental_sync(schema, table)")
-    print("   9. perform_incremental_sync() finds timestamp/ID column")
-    print("   10. Queries HANA for new records since last_sync_timestamp")
-    print("   11. Inserts new records into ClickHouse")
-    print("   12. Updates last_sync_timestamp in sync_metadata")
-    print()
-    print("   [OK] Incremental sync will work automatically!")
-    
-    print("\n4. What Happens When HANA is Available:")
-    print("-" * 70)
-    if hana_set and ch_set:
-        print("   [OK] All environment variables are set")
-        print("   [INFO] When you:")
-        print("     1. Add HANA source in web UI")
-        print("     2. Select tables to sync")
-        print("     3. Enable incremental sync option")
-        print("     4. Create a schedule (interval or daily)")
-        print()
-        print("   The scheduler will:")
-        print("     - Run at scheduled times")
-        print("     - Connect using HANA env vars from .env")
-        print("     - Sync only NEW records since last sync")
-        print("     - Track sync progress in sync_metadata table")
-        print("     - Continue working as long as env vars are set")
-    else:
-        print("   [INFO] When you set HANA env vars:")
-        print("     - Set HANA_HOST, HANA_PORT, HANA_USERNAME, HANA_PASSWORD")
-        print("     - Set CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USER, CLICKHOUSE_PASSWORD")
-        print("     - Restart Flask app")
-        print("     - Scheduler will automatically use these values")
-        print("     - No code changes needed!")
-    
-    print("\n" + "=" * 70)
-    print("[SUCCESS] HANA Incremental Sync Setup Verified")
-    print("=" * 70)
-    print("\nKey Points:")
-    print("✅ Uses .env variables (no hardcoded values)")
-    print("✅ Tracks last sync timestamp in sync_metadata table")
-    print("✅ Automatically finds timestamp columns")
-    print("✅ Syncs only new/changed records")
-    print("✅ Works with scheduled syncs (interval/daily)")
-    print("=" * 70)
-    
-    return True
+except ImportError:
+    pass
 
-if __name__ == '__main__':
-    test_hana_incremental_setup()
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('hana_incremental_sync_test.log')
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
+def test_hana_incremental_sync(source_id: Optional[int] = None, source_name: Optional[str] = None) -> Dict:
+    """
+    Test HANA incremental sync for a specific source.
+    
+    Args:
+        source_id: Source ID from database (optional)
+        source_name: Source name (optional, used if source_id not provided)
+    
+    Returns:
+        dict with test results
+    """
+    results = {
+        'success': False,
+        'source_id': None,
+        'source_name': None,
+        'connection_test': False,
+        'incremental_sync_test': False,
+        'tables_synced': 0,
+        'records_synced': 0,
+        'errors': []
+    }
+    
+    try:
+        # Import required modules
+        from hana_sync import HanaToClickHouseSync
+        from db_utils import load_hana_config, load_clickhouse_config, load_pg_config
+        import psycopg2
+        import json
+        
+        # Get source from database
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cursor = conn.cursor()
+        
+        if source_id:
+            cursor.execute("""
+                SELECT id, source_name, server_address, username, password, 
+                       connection_details, target_database, source_type
+                FROM data_sources 
+                WHERE id = %s AND is_active = true
+            """, (source_id,))
+        elif source_name:
+            cursor.execute("""
+                SELECT id, source_name, server_address, username, password, 
+                       connection_details, target_database, source_type
+                FROM data_sources 
+                WHERE source_name = %s AND is_active = true
+            """, (source_name,))
+        else:
+            # Get first HANA source
+            cursor.execute("""
+                SELECT id, source_name, server_address, username, password, 
+                       connection_details, target_database, source_type
+                FROM data_sources 
+                WHERE source_type = 'sap_hana' AND is_active = true
+                ORDER BY id
+                LIMIT 1
+            """)
+        
+        row = cursor.fetchone()
+        if not row:
+            results['errors'].append("No HANA source found")
+            return results
+        
+        source_id, source_name, server_address, username, password, \
+        connection_details_json, target_database, source_type = row
+        
+        results['source_id'] = source_id
+        results['source_name'] = source_name
+        
+        if source_type != 'sap_hana':
+            results['errors'].append(f"Source '{source_name}' is not a HANA source (type: {source_type})")
+            return results
+        
+        logger.info(f"Testing incremental sync for HANA source: {source_name} (ID: {source_id})")
+        
+        # Parse connection details
+        connection_details = {}
+        if connection_details_json:
+            if isinstance(connection_details_json, str):
+                connection_details = json.loads(connection_details_json)
+            else:
+                connection_details = connection_details_json
+        
+        # Build HANA config
+        try:
+            hana_base_config = load_hana_config()
+            source_host = connection_details.get('host') or (server_address.split(':')[0] if ':' in server_address else server_address)
+            source_port = connection_details.get('port') or (server_address.split(':')[1] if ':' in server_address else None)
+            
+            hana_config = {
+                'host': source_host if source_host else hana_base_config['host'],
+                'port': int(source_port) if source_port else hana_base_config['port'],
+                'username': username if username else hana_base_config['username'],
+                'password': password if password else hana_base_config['password']
+            }
+        except ValueError:
+            source_host = connection_details.get('host') or (server_address.split(':')[0] if ':' in server_address else server_address)
+            source_port = connection_details.get('port') or (server_address.split(':')[1] if ':' in server_address else None)
+            if not source_port:
+                results['errors'].append("HANA_PORT is required")
+                return results
+            
+            hana_config = {
+                'host': source_host,
+                'port': int(source_port),
+                'username': username,
+                'password': password or connection_details.get('password', '')
+            }
+        
+        # Build ClickHouse config
+        ch_base_config = load_clickhouse_config()
+        clickhouse_config = {
+            'host': ch_base_config['host'],
+            'port': ch_base_config['port'],
+            'user': ch_base_config['user'],
+            'password': ch_base_config['password'],
+            'database': target_database or 'JARVIS_DB'
+        }
+        
+        cursor.close()
+        conn.close()
+        
+        # Test connections
+        logger.info("Testing HANA connection...")
+        sync_engine = HanaToClickHouseSync(hana_config, clickhouse_config)
+        
+        if not sync_engine.connect_hana():
+            results['errors'].append(f"Failed to connect to HANA: {hana_config['host']}:{hana_config['port']}")
+            return results
+        
+        results['connection_test'] = True
+        logger.info("✅ HANA connection successful")
+        
+        if not sync_engine.connect_clickhouse():
+            results['errors'].append(f"Failed to connect to ClickHouse: {clickhouse_config['host']}:{clickhouse_config['port']}")
+            sync_engine.close_connections()
+            return results
+        
+        logger.info("✅ ClickHouse connection successful")
+        
+        # Perform incremental sync
+        logger.info("Performing incremental sync...")
+        try:
+            sync_results = sync_engine.sync_incremental(clickhouse_config['database'])
+            
+            if sync_results:
+                results['incremental_sync_test'] = True
+                results['tables_synced'] = len([r for r in sync_results if r and isinstance(r, dict) and r.get('status') == 'success'])
+                results['records_synced'] = sum(r.get('records_synced', 0) for r in sync_results if r and isinstance(r, dict))
+                
+                logger.info(f"✅ Incremental sync completed: {results['tables_synced']} tables, {results['records_synced']} records")
+                
+                # Log details for each table
+                for result in sync_results:
+                    if result and isinstance(result, dict):
+                        if result.get('status') == 'success':
+                            logger.info(f"  ✅ {result.get('source_table', 'Unknown')}: {result.get('records_synced', 0)} records")
+                        else:
+                            logger.warning(f"  ⚠️ {result.get('source_table', 'Unknown')}: {result.get('message', 'Failed')}")
+                            results['errors'].append(f"{result.get('source_table', 'Unknown')}: {result.get('message', 'Failed')}")
+            else:
+                results['errors'].append("Incremental sync returned no results")
+        
+        except Exception as e:
+            logger.error(f"Incremental sync error: {e}")
+            results['errors'].append(f"Incremental sync failed: {str(e)}")
+        
+        sync_engine.close_connections()
+        results['success'] = results['connection_test'] and results['incremental_sync_test']
+        
+    except Exception as e:
+        logger.exception(f"Test error: {e}")
+        results['errors'].append(str(e))
+    
+    return results
+
+
+def test_scheduling_for_hana() -> Dict:
+    """
+    Test if HANA sources are properly scheduled.
+    
+    Returns:
+        dict with scheduling test results
+    """
+    results = {
+        'success': False,
+        'sources_found': 0,
+        'sources_scheduled': 0,
+        'schedules': [],
+        'errors': []
+    }
+    
+    try:
+        from scheduler_utils import scheduled_jobs
+        from db_utils import load_pg_config
+        import psycopg2
+        
+        # Get all HANA sources
+        pg_conf = load_pg_config()
+        conn = psycopg2.connect(
+            dbname=pg_conf.get('database', 'metrics_sync_tables'),
+            user=pg_conf.get('username'),
+            password=pg_conf.get('password'),
+            host=pg_conf.get('host'),
+            port=int(pg_conf.get('port', 5432))
+        )
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, source_name, source_type
+            FROM data_sources
+            WHERE source_type = 'sap_hana' AND is_active = true
+        """)
+        
+        hana_sources = cursor.fetchall()
+        results['sources_found'] = len(hana_sources)
+        
+        logger.info(f"Found {len(hana_sources)} HANA source(s)")
+        
+        # Check schedules in database
+        for source_id, source_name, source_type in hana_sources:
+            cursor.execute("""
+                SELECT job_type, minutes, hour, minute, last_run, status
+                FROM metrics_sync_tables.schedules
+                WHERE source_id = %s AND (status != 'deleted' OR status IS NULL)
+            """, (source_id,))
+            
+            schedules = cursor.fetchall()
+            if schedules:
+                results['sources_scheduled'] += 1
+                for job_type, minutes, hour, minute, last_run, status in schedules:
+                    schedule_info = {
+                        'source_id': source_id,
+                        'source_name': source_name,
+                        'job_type': job_type,
+                        'minutes': minutes,
+                        'hour': hour,
+                        'minute': minute,
+                        'last_run': last_run.isoformat() if last_run else None,
+                        'status': status
+                    }
+                    results['schedules'].append(schedule_info)
+                    logger.info(f"  📅 {source_name}: {job_type} (last run: {last_run or 'Never'})")
+            else:
+                logger.info(f"  ⚠️ {source_name}: No schedule found")
+        
+        # Check in-memory scheduled jobs
+        for job in scheduled_jobs:
+            if job.get('source_id'):
+                for source_id, source_name, _ in hana_sources:
+                    if job.get('source_id') == source_id:
+                        logger.info(f"  ✅ {source_name}: Scheduled in memory ({job.get('type')})")
+        
+        cursor.close()
+        conn.close()
+        
+        results['success'] = results['sources_scheduled'] > 0
+        
+    except Exception as e:
+        logger.exception(f"Scheduling test error: {e}")
+        results['errors'].append(str(e))
+    
+    return results
+
+
+def main():
+    """Main test function"""
+    print("\n" + "="*60)
+    print("HANA Incremental Sync Test")
+    print("="*60 + "\n")
+    
+    # Test 1: Check scheduling
+    print("📅 Test 1: Checking HANA Source Scheduling")
+    print("-" * 60)
+    schedule_results = test_scheduling_for_hana()
+    
+    print(f"\nSources found: {schedule_results['sources_found']}")
+    print(f"Sources scheduled: {schedule_results['sources_scheduled']}")
+    
+    if schedule_results['schedules']:
+        print("\nActive Schedules:")
+        for schedule in schedule_results['schedules']:
+            print(f"  - {schedule['source_name']}: {schedule['job_type']}")
+            if schedule['last_run']:
+                print(f"    Last run: {schedule['last_run']}")
+            print(f"    Status: {schedule['status']}")
+    else:
+        print("\n⚠️ No schedules found for HANA sources")
+        print("   Use the 'Create Schedule' page to set up scheduling")
+    
+    # Test 2: Test incremental sync
+    print("\n\n🔄 Test 2: Testing Incremental Sync")
+    print("-" * 60)
+    
+    # Ask which source to test
+    source_input = input("\nEnter source ID or name (press Enter to test first HANA source): ").strip()
+    
+    source_id = None
+    source_name = None
+    
+    if source_input:
+        try:
+            source_id = int(source_input)
+        except ValueError:
+            source_name = source_input
+    
+    sync_results = test_hana_incremental_sync(source_id=source_id, source_name=source_name)
+    
+    print(f"\n{'='*60}")
+    print("Test Results")
+    print(f"{'='*60}")
+    print(f"Source: {sync_results['source_name']} (ID: {sync_results['source_id']})")
+    print(f"Connection Test: {'✅ Passed' if sync_results['connection_test'] else '❌ Failed'}")
+    print(f"Incremental Sync Test: {'✅ Passed' if sync_results['incremental_sync_test'] else '❌ Failed'}")
+    print(f"Tables Synced: {sync_results['tables_synced']}")
+    print(f"Records Synced: {sync_results['records_synced']:,}")
+    
+    if sync_results['errors']:
+        print(f"\nErrors ({len(sync_results['errors'])}):")
+        for error in sync_results['errors']:
+            print(f"  - {error}")
+    
+    print(f"\nOverall: {'✅ SUCCESS' if sync_results['success'] else '❌ FAILED'}")
+    print("="*60 + "\n")
+    
+    # Recommendations
+    if not schedule_results['success']:
+        print("💡 Recommendation: Set up scheduling for HANA sources using the 'Create Schedule' page")
+    
+    if not sync_results['success']:
+        print("💡 Recommendation: Check HANA and ClickHouse connections and ensure tables have timestamp columns")
+
+
+if __name__ == "__main__":
+    main()
 

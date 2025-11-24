@@ -1,0 +1,1 @@
+CREATE VIEW "Z_TEST_PRODUCTION_20250925"."CESS_STATYPE" ( "Type" ) AS select distinct "Type" from osta where "Name" like 'CESS%' WITH READ ONLY

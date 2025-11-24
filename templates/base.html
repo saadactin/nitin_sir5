@@ -4,10 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}SQL Sync Enterprise{% endblock %}</title>
+  <!-- Preconnect to external domains for faster loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+  
+  <!-- Load fonts with display=swap for better performance -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  
+  <!-- Defer Tailwind CSS loading -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography" defer></script>
   <script>
     tailwind.config = {
       darkMode: "class",
@@ -74,6 +83,10 @@
       }
     };
   </script>
+  <!-- Performance CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/performance.css') }}">
+  <!-- Loader Utilities -->
+  <script src="{{ url_for('static', filename='js/loaders.js') }}" defer></script>
   <style>
     .material-icons-round { 
       font-size: 20px; 

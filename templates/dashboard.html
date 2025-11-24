@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sync Dashboard - SQL Sync</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -14,38 +14,35 @@
         extend: {
           colors: {
             primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
-            success: "#198754",
-            successDark: "#157347",
-            danger: "#DC3545",
-            warning: "#FFC107",
-            backgroundLight: "#F8FAFC",
-            backgroundDark: "#0F172A",
-            surfaceLight: "#FFFFFF",
-            surfaceDark: "#1E293B",
-            textLight: "#0F172A",
-            textDark: "#E2E8F0",
-            subtextLight: "#64748B",
-            subtextDark: "#94A3B8",
-            borderLight: "#E2E8F0",
-            borderDark: "#334155",
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
           },
-          fontFamily: { display: ["Inter", "sans-serif"] }
-        }
-      }
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
     };
   </script>
   <style>
-    .material-icons { font-size: 20px; vertical-align: middle; }
+    .material-icons { font-size: 24px; vertical-align: middle; }
   </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
 
-<div class="flex h-screen">
-  <!-- Sidebar -->
-  {% include 'sidebar.html' %}
-
-  <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 space-y-4 sm:space-y-6">
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-y-auto">
+      <div class="space-y-4 sm:space-y-6">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl sm:text-3xl font-bold flex items-center gap-2">
         <span class="material-icons text-3xl sm:text-4xl">dashboard</span> 
@@ -62,11 +59,11 @@
           <p><strong>Time:</strong> {{ last_detail.time }}</p>
           <p><strong>Status:</strong>
             {% if last_detail.status == "success" %}
-              <span class="bg-success text-white px-2 py-1 rounded">Success</span>
-            {% elif last_detail.status in ["in-progress", "started"] %}
-              <span class="bg-warning text-white px-2 py-1 rounded">Started</span>
+              <span class="bg-green-500 text-white px-2 py-1 rounded">Success</span>
+            {% elif last_detail.status in ["in-progress", "started", "partial"] %}
+              <span class="bg-yellow-500 text-white px-2 py-1 rounded">Started</span>
             {% else %}
-              <span class="bg-danger text-white px-2 py-1 rounded">Failed</span>
+              <span class="bg-red-500 text-white px-2 py-1 rounded">Failed</span>
             {% endif %}
           </p>
           <p><strong>Details:</strong> {{ last_detail.details }}</p>
@@ -97,11 +94,11 @@
                 <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark whitespace-nowrap">{{ entry.time }}</td>
                 <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark">
                   {% if entry.status == "success" %}
-                    <span class="bg-success text-white px-2 py-1 rounded text-xs sm:text-sm">Success</span>
-                  {% elif entry.status in ["in-progress", "started"] %}
-                    <span class="bg-warning text-white px-2 py-1 rounded text-xs sm:text-sm">Started</span>
+                    <span class="bg-green-500 text-white px-2 py-1 rounded text-xs sm:text-sm">Success</span>
+                  {% elif entry.status in ["in-progress", "started", "partial"] %}
+                    <span class="bg-yellow-500 text-white px-2 py-1 rounded text-xs sm:text-sm">Started</span>
                   {% else %}
-                    <span class="bg-danger text-white px-2 py-1 rounded text-xs sm:text-sm">Failed</span>
+                    <span class="bg-red-500 text-white px-2 py-1 rounded text-xs sm:text-sm">Failed</span>
                   {% endif %}
                 </td>
                 <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark hidden sm:table-cell">{{ entry.details }}</td>
@@ -114,11 +111,30 @@
         {% endif %}
       </div>
     </div>
-  </main>
-</div>
+  </div>
 
 <script>
 async function refreshDashboard() {
+    const lastSyncDiv = document.getElementById('last-sync');
+    const historyDiv = document.getElementById('sync-history');
+    
+    // Show loading indicators
+    if (lastSyncDiv && !lastSyncDiv.querySelector('.spinner')) {
+        const originalLastSync = lastSyncDiv.innerHTML;
+        lastSyncDiv.dataset.originalContent = originalLastSync;
+        lastSyncDiv.innerHTML = '<div class="flex items-center gap-2 text-gray-500"><div class="spinner w-4 h-4 border-blue-600"></div> Refreshing...</div>';
+    }
+    
+    if (historyDiv && !historyDiv.querySelector('.spinner')) {
+        const originalHistory = historyDiv.innerHTML;
+        historyDiv.dataset.originalContent = originalHistory;
+        const loadingRow = document.createElement('tr');
+        loadingRow.innerHTML = '<td colspan="4" class="text-center py-4"><div class="flex items-center justify-center gap-2 text-gray-500"><div class="spinner w-4 h-4 border-blue-600"></div> Refreshing...</div></td>';
+        if (historyDiv.querySelector('tbody')) {
+            historyDiv.querySelector('tbody').appendChild(loadingRow);
+        }
+    }
+    
     try {
         const res = await fetch("/dashboard/data");
         const data = await res.json();
@@ -131,10 +147,10 @@ async function refreshDashboard() {
                 <p><strong>Time:</strong> ${last.time}</p>
                 <p><strong>Status:</strong>
                     ${last.status === "success"
-                        ? '<span class="bg-success text-white px-2 py-1 rounded">Success</span>'
-                        : (last.status === "in-progress" || last.status === "started")
-                        ? '<span class="bg-warning text-white px-2 py-1 rounded">Started</span>'
-                        : '<span class="bg-danger text-white px-2 py-1 rounded">Failed</span>'}
+                        ? '<span class="bg-green-500 text-white px-2 py-1 rounded">Success</span>'
+                        : (last.status === "in-progress" || last.status === "started" || last.status === "partial")
+                        ? '<span class="bg-yellow-500 text-white px-2 py-1 rounded">Started</span>'
+                        : '<span class="bg-red-500 text-white px-2 py-1 rounded">Failed</span>'}
                 </p>
                 <p><strong>Details:</strong> ${last.details}</p>`;
         } else {
@@ -163,10 +179,10 @@ async function refreshDashboard() {
                         <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark whitespace-nowrap">${entry.time}</td>
                         <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark">
                             ${entry.status === "success"
-                                ? '<span class="bg-success text-white px-2 py-1 rounded text-xs sm:text-sm">Success</span>'
-                                : (entry.status === "in-progress" || entry.status === "started")
-                                ? '<span class="bg-warning text-white px-2 py-1 rounded text-xs sm:text-sm">Started</span>'
-                                : '<span class="bg-danger text-white px-2 py-1 rounded text-xs sm:text-sm">Failed</span>'}
+                                ? '<span class="bg-green-500 text-white px-2 py-1 rounded text-xs sm:text-sm">Success</span>'
+                                : (entry.status === "in-progress" || entry.status === "started" || entry.status === "partial")
+                                ? '<span class="bg-yellow-500 text-white px-2 py-1 rounded text-xs sm:text-sm">Started</span>'
+                                : '<span class="bg-red-500 text-white px-2 py-1 rounded text-xs sm:text-sm">Failed</span>'}
                         </td>
                         <td class="px-2 sm:px-4 py-2 border border-border-light dark:border-border-dark hidden sm:table-cell">${entry.details}</td>
                     </tr>`;
@@ -177,14 +193,57 @@ async function refreshDashboard() {
         } else {
             historyDiv.innerHTML = '<div class="bg-blue-100 text-blue-800 p-3 rounded">No sync history found.</div>';
         }
+        
+        // Remove loading indicators
+        if (lastSyncDiv && lastSyncDiv.dataset.originalContent) {
+            // Content already updated, no need to restore
+        }
+        if (historyDiv && historyDiv.querySelector('.spinner')) {
+            const loadingRow = historyDiv.querySelector('tr:has(.spinner)');
+            if (loadingRow) loadingRow.remove();
+        }
     } catch (err) {
         console.error("Failed to refresh dashboard:", err);
+        // Restore original content on error
+        if (lastSyncDiv && lastSyncDiv.dataset.originalContent) {
+            lastSyncDiv.innerHTML = lastSyncDiv.dataset.originalContent;
+        }
+        if (historyDiv && historyDiv.dataset.originalContent) {
+            historyDiv.innerHTML = historyDiv.dataset.originalContent;
+        }
     }
 }
 
-// Auto-refresh every 5 seconds
-setInterval(refreshDashboard, 5000);
-</script>
+// Auto-refresh every 10 seconds (reduced frequency for better performance)
+// Only refresh if page is visible
+let refreshInterval;
+function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+        if (!document.hidden) {
+            refreshDashboard();
+        }
+    }, 10000); // 10 seconds
+}
 
+// Start auto-refresh when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startAutoRefresh);
+} else {
+    startAutoRefresh();
+}
+
+// Pause refresh when tab is hidden, resume when visible
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        if (refreshInterval) clearInterval(refreshInterval);
+    } else {
+        startAutoRefresh();
+    }
+});
+</script>
+      </div>
+    </main>
+  </div>
 </body>
 </html>

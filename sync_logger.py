@@ -1,6 +1,7 @@
 """
 Unified Sync Logger - Handles logging for all sync operations
 Logs HANA, API, SQL Server syncs with proper formatting and retention
+Also writes to sync_history table for dashboard display
 """
 import logging
 import os
@@ -47,6 +48,23 @@ class SyncLogger:
     """Wrapper class for structured sync logging"""
     
     @staticmethod
+    def _write_to_sync_history(source_name, status, details):
+        """Write sync entry to sync_history table for dashboard"""
+        try:
+            from db_utils import get_pg_connection
+            conn = get_pg_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO metrics_sync_tables.sync_history (server_name, sync_time, status, details)
+                VALUES (%s, NOW(), %s, %s)
+            """, (source_name, status, details or "-"))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            sync_logger.warning(f"Failed to write to sync_history: {e}")
+    
+    @staticmethod
     def log_sync_start(source_type, source_name, source_id=None, details=None):
         """Log sync operation start"""
         details_str = f" | Details: {json.dumps(details)}" if details else ""
@@ -54,6 +72,17 @@ class SyncLogger:
         sync_logger.info(
             f"SYNC_START | Source Type: {source_type} | Source Name: {source_name}{id_str}{details_str}"
         )
+        # Write to sync_history table
+        history_details = f"{source_type} sync started"
+        if details:
+            if isinstance(details, dict):
+                if 'tables_count' in details:
+                    history_details += f" ({details['tables_count']} tables)"
+                if 'target_db' in details:
+                    history_details += f" → {details['target_db']}"
+            else:
+                history_details += f": {str(details)}"
+        SyncLogger._write_to_sync_history(source_name, "started", history_details)
     
     @staticmethod
     def log_sync_complete(source_type, source_name, source_id=None, 
@@ -69,6 +98,23 @@ class SyncLogger:
             f"SYNC_COMPLETE | Source Type: {source_type} | Source Name: {source_name}{id_str} | "
             f"Records: {records_synced} | Duration: {duration:.2f}s{target_str}{details_str}"
         )
+        # Write to sync_history table
+        history_details = f"{source_type} sync completed"
+        if records_synced > 0:
+            history_details += f": {records_synced:,} records"
+        if details:
+            if isinstance(details, dict):
+                if 'tables_synced' in details:
+                    history_details += f", {details['tables_synced']} tables"
+                if 'target_table' in details:
+                    history_details += f" → {details.get('target_db', target_db or '')}.{details['target_table']}"
+            else:
+                history_details += f" | {str(details)}"
+        if target_db:
+            history_details += f" → {target_db}"
+        if target_table:
+            history_details += f".{target_table}"
+        SyncLogger._write_to_sync_history(source_name, "success", history_details)
     
     @staticmethod
     def log_sync_failed(source_type, source_name, source_id=None, error_msg=None, 
@@ -84,6 +130,15 @@ class SyncLogger:
             f"SYNC_FAILED | Source Type: {source_type} | Source Name: {source_name}{id_str} | "
             f"Duration: {duration:.2f}s{partial_str}{target_str}{error_str}{details_str}"
         )
+        # Write to sync_history table
+        history_details = f"{source_type} sync failed"
+        if error_msg:
+            history_details += f": {error_msg[:200]}"  # Limit error message length
+        if records_partial > 0:
+            history_details += f" (partial: {records_partial} records)"
+        if target_db:
+            history_details += f" → {target_db}"
+        SyncLogger._write_to_sync_history(source_name, "failed", history_details)
     
     @staticmethod
     def log_sync_partial(source_type, source_name, source_id=None,
@@ -102,6 +157,21 @@ class SyncLogger:
             f"Synced: {records_synced} | Failed: {records_failed} | Duration: {duration:.2f}s"
             f"{target_str}{failed_tables_str}{details_str}"
         )
+        # Write to sync_history table
+        history_details = f"{source_type} sync partial: {records_synced} synced, {records_failed} failed"
+        if details:
+            if isinstance(details, dict):
+                if 'total_tables' in details:
+                    history_details += f" ({details.get('successful', 0)}/{details['total_tables']} tables)"
+                if 'failed' in details:
+                    history_details += f" | {details['failed']} failed"
+        if failed_tables:
+            history_details += f" | Failed: {', '.join(failed_tables[:3])}"  # Limit to first 3
+            if len(failed_tables) > 3:
+                history_details += f" (+{len(failed_tables) - 3} more)"
+        if target_db:
+            history_details += f" → {target_db}"
+        SyncLogger._write_to_sync_history(source_name, "partial", history_details)
     
     @staticmethod
     def log_table_sync(source_type, source_name, source_id=None, 

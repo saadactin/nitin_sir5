@@ -1,0 +1,1 @@
+CREATE VIEW "Z_TEST_PRODUCTION_20250925"."B1_OcrbIBANView" ( "AbsEntry", "CardCode", "IBAN", "ISRBillerI", "CustIdNum" ) AS SELECT T0."AbsEntry", T0."CardCode", REPLACE(T0."IBAN", ' ', '') "IBAN", T0."ISRBillerI", T0."CustIdNum" FROM "Z_TEST_PRODUCTION_20250925"."OCRB" T0

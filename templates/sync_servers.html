@@ -68,15 +68,6 @@
         <span class="material-icons text-3xl sm:text-4xl text-primary">dns</span>
         <h1 class="text-2xl sm:text-3xl font-bold">SQL Servers Dashboard</h1>
       </div>
-      
-      <!-- Only show Add Server button for admin users -->
-      {% if role == 'admin' %}
-      <a href="{{ url_for('add_server') }}"
-         class="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-accent text-white rounded-lg shadow-md hover:bg-accent-hover transition-colors text-sm sm:text-base w-full sm:w-auto justify-center">
-        <span class="material-icons text-lg sm:text-xl">add_circle</span>
-        <span>Add New Server</span>
-      </a>
-      {% endif %}
     </header>
 
     {% set any_servers = (sqlservers and sqlservers|length > 0) or (data_sources and data_sources|length > 0) %}
@@ -211,7 +202,7 @@
         <span class="material-icons text-blue-600 dark:text-blue-300">info</span>
         <span class="font-medium">No servers or sources configured yet. 
           {% if role == 'admin' %}
-          Click <strong>Add New Server</strong> or <strong>Add Source</strong> to get started.
+          Click <strong>Add Source</strong> to get started.
           {% else %}
           Contact an administrator to add servers or sources.
           {% endif %}

@@ -1,0 +1,136 @@
+/* Performance Optimizations */
+
+/* Lazy loading for images */
+img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+img[loading="lazy"].loaded {
+    opacity: 1;
+}
+
+/* Optimize rendering */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduce repaints */
+.will-change-transform {
+    will-change: transform;
+}
+
+.will-change-opacity {
+    will-change: opacity;
+}
+
+/* Loading states */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Optimize table rendering */
+table {
+    border-collapse: collapse;
+    table-layout: fixed; /* Faster rendering for large tables */
+}
+
+/* Virtual scrolling container */
+.virtual-scroll-container {
+    overflow-y: auto;
+    contain: layout style paint;
+}
+
+/* Debounced input */
+.debounced-input {
+    transition: border-color 0.2s;
+}
+
+/* Loading spinner */
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+.spinner.border-blue-600 {
+    border-color: #e5e7eb;
+    border-top-color: #2563eb;
+}
+
+.spinner.border-white {
+    border-color: rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+}
+
+.spinner.border-gray-600 {
+    border-color: #e5e7eb;
+    border-top-color: #4b5563;
+}
+
+.spinner.border-green-600 {
+    border-color: #e5e7eb;
+    border-top-color: #16a34a;
+}
+
+.spinner.border-red-600 {
+    border-color: #e5e7eb;
+    border-top-color: #dc2626;
+}
+
+.spinner.w-4 {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+.spinner.w-6 {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-width: 2px;
+}
+
+.spinner.w-8 {
+    width: 2rem;
+    height: 2rem;
+    border-width: 3px;
+}
+
+.spinner.w-12 {
+    width: 3rem;
+    height: 3rem;
+    border-width: 3px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+

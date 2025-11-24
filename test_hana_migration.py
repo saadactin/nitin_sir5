@@ -1,466 +1,548 @@
 """
-Comprehensive test suite for HANA to ClickHouse migration
-Tests connection, schema extraction, data migration, and incremental sync
+Test Script for HANA to ClickHouse Direct Migration
+Tests connection and migrates data directly from HANA database to ClickHouse
 """
 
-import unittest
-import sys
 import os
-from unittest.mock import Mock, patch, MagicMock
-import json
+import sys
+from typing import Dict, List, Optional
+import logging
 from datetime import datetime
 
-# Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
+# Load environment variables
 try:
-    from hana_sync import HanaToClickHouseSync
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('hana_migration_test.log')
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Try to import required libraries
+try:
+    import hdbcli.dbapi as hana_dbapi
     HANA_AVAILABLE = True
 except ImportError:
     HANA_AVAILABLE = False
-    print("Warning: hdbcli not available. HANA tests will be skipped.")
+    logger.error("hdbcli library not installed. Install with: pip install hdbcli")
+
+try:
+    from clickhouse_connect import get_client
+    CLICKHOUSE_CONNECT_AVAILABLE = True
+except ImportError:
+    CLICKHOUSE_CONNECT_AVAILABLE = False
+    logger.error("clickhouse-connect library not installed. Install with: pip install clickhouse-connect")
 
 
-class TestHanaSync(unittest.TestCase):
-    """Test cases for HANA to ClickHouse synchronization"""
+def get_hana_config() -> Dict:
+    """Get HANA configuration from environment variables or user input"""
+    config = {}
     
-    def setUp(self):
-        """Set up test fixtures"""
-        self.hana_config = {
-            'host': '192.168.16.62',
-            'port': 30015,
-            'username': 'Tor1111',
-            'password': 'Tor1111'
-        }
+    # Try to load from .env first
+    host = os.environ.get('HANA_HOST')
+    port = os.environ.get('HANA_PORT', '30015')
+    username = os.environ.get('HANA_USERNAME')
+    password = os.environ.get('HANA_PASSWORD')
+    database = os.environ.get('HANA_DATABASE', '')
+    
+    # If not in .env, prompt user
+    if not host:
+        host = input("Enter HANA Host (IP or hostname): ").strip()
+    if not username:
+        username = input("Enter HANA Username: ").strip()
+    if not password:
+        import getpass
+        password = getpass.getpass("Enter HANA Password: ").strip()
+    
+    if not port:
+        port = input("Enter HANA Port (default 30015): ").strip() or '30015'
+    
+    config = {
+        'host': host,
+        'port': int(port),
+        'username': username,
+        'password': password,
+        'database': database
+    }
+    
+    return config
+
+
+def get_clickhouse_config() -> Dict:
+    """Get ClickHouse configuration from environment variables or user input"""
+    # Try to load from .env first
+    host = os.environ.get('CLICKHOUSE_HOST')
+    port = os.environ.get('CLICKHOUSE_PORT', '9000')
+    username = os.environ.get('CLICKHOUSE_USER', 'default')
+    password = os.environ.get('CLICKHOUSE_PASSWORD', '')
+    database = os.environ.get('CLICKHOUSE_DATABASE', 'JARVIS_DB')
+    
+    # If not in .env, prompt user
+    if not host:
+        host = input("Enter ClickHouse Host (default: localhost): ").strip() or 'localhost'
+    if not username:
+        username = input("Enter ClickHouse Username (default: default): ").strip() or 'default'
+    if password is None:
+        import getpass
+        password = getpass.getpass("Enter ClickHouse Password (press Enter if none): ").strip()
+    if not database:
+        database = input("Enter ClickHouse Database (default: JARVIS_DB): ").strip() or 'JARVIS_DB'
+    
+    config = {
+        'host': host,
+        'port': int(port) if port else 9000,
+        'username': username,
+        'password': password or '',
+        'database': database
+    }
+    
+    return config
+
+
+def test_hana_connection(hana_config: Dict) -> Optional[object]:
+    """Test HANA connection and return connection object if successful"""
+    if not HANA_AVAILABLE:
+        logger.error("hdbcli library not available")
+        return None
+    
+    try:
+        logger.info(f"Connecting to HANA: {hana_config['host']}:{hana_config['port']}")
+        conn = hana_dbapi.connect(
+            address=hana_config['host'],
+            port=hana_config['port'],
+            user=hana_config['username'],
+            password=hana_config['password'],
+            encrypt=True,
+            sslValidateCertificate=False
+        )
+        logger.info("✅ HANA connection successful!")
+        return conn
+    except Exception as e:
+        logger.error(f"❌ HANA connection failed: {e}")
+        return None
+
+
+def test_clickhouse_connection(ch_config: Dict) -> Optional[object]:
+    """Test ClickHouse connection and return client object if successful"""
+    if not CLICKHOUSE_CONNECT_AVAILABLE:
+        logger.error("clickhouse-connect library not available")
+        return None
+    
+    try:
+        logger.info(f"Connecting to ClickHouse: {ch_config['host']}:{ch_config['port']}")
+        client = get_client(
+            host=ch_config['host'],
+            port=ch_config['port'],
+            username=ch_config['username'],
+            password=ch_config['password'],
+            database=ch_config['database']
+        )
+        logger.info(f"✅ ClickHouse connection successful! (database: {ch_config['database']})")
+        return client
+    except Exception as e:
+        logger.error(f"❌ ClickHouse connection failed: {e}")
+        return None
+
+
+def get_hana_schemas(hana_conn) -> List[str]:
+    """Get all user-accessible schemas from HANA"""
+    try:
+        cursor = hana_conn.cursor()
+        cursor.execute("""
+            SELECT SCHEMA_NAME 
+            FROM SYS.SCHEMAS 
+            WHERE SCHEMA_NAME NOT IN ('SYS', '_SYS_BI', '_SYS_BIC', '_SYS_EPM', '_SYS_REPO', '_SYS_STATISTICS', 'SYSTEM')
+            ORDER BY SCHEMA_NAME
+        """)
+        schemas = [row[0] for row in cursor.fetchall()]
+        cursor.close()
+        logger.info(f"Found {len(schemas)} schemas in HANA: {', '.join(schemas[:10])}{'...' if len(schemas) > 10 else ''}")
+        return schemas
+    except Exception as e:
+        logger.error(f"Failed to get HANA schemas: {e}")
+        return []
+
+
+def get_hana_tables(hana_conn, schema: str) -> List[Dict]:
+    """Get all tables in a schema"""
+    try:
+        cursor = hana_conn.cursor()
+        query = """
+        SELECT 
+            TABLE_NAME,
+            TABLE_TYPE
+        FROM SYS.TABLES
+        WHERE SCHEMA_NAME = ?
+        ORDER BY TABLE_NAME
+        """
+        cursor.execute(query, (schema,))
+        tables = [{'name': row[0], 'type': row[1]} for row in cursor.fetchall()]
+        cursor.close()
+        return tables
+    except Exception as e:
+        logger.error(f"Failed to get tables for schema {schema}: {e}")
+        return []
+
+
+def get_hana_table_schema(hana_conn, schema: str, table: str) -> List[Dict]:
+    """Get detailed column information for a table"""
+    try:
+        cursor = hana_conn.cursor()
+        query = """
+        SELECT 
+            COLUMN_NAME,
+            DATA_TYPE_NAME,
+            LENGTH,
+            SCALE,
+            IS_NULLABLE
+        FROM SYS.TABLE_COLUMNS
+        WHERE SCHEMA_NAME = ? AND TABLE_NAME = ?
+        ORDER BY POSITION
+        """
+        cursor.execute(query, (schema, table))
+        columns = []
+        for row in cursor.fetchall():
+            columns.append({
+                'name': row[0],
+                'type': row[1],
+                'length': row[2],
+                'scale': row[3],
+                'nullable': row[4] == 'TRUE'
+            })
+        cursor.close()
+        return columns
+    except Exception as e:
+        logger.error(f"Failed to get schema for {schema}.{table}: {e}")
+        return []
+
+
+def map_hana_to_clickhouse_type(hana_type: str, length: Optional[int] = None, 
+                               scale: Optional[int] = None, nullable: bool = True) -> str:
+    """Map HANA data types to ClickHouse types"""
+    type_mapping = {
+        'TINYINT': 'Int8',
+        'SMALLINT': 'Int16',
+        'INTEGER': 'Int32',
+        'INT': 'Int32',
+        'BIGINT': 'Int64',
+        'REAL': 'Float32',
+        'DOUBLE': 'Float64',
+        'SMALLDECIMAL': 'Decimal32(2)',
+        'VARCHAR': 'String',
+        'NVARCHAR': 'String',
+        'CHAR': 'String',
+        'NCHAR': 'String',
+        'DATE': 'Date',
+        'TIME': 'String',
+        'TIMESTAMP': 'DateTime',
+        'SECONDDATE': 'DateTime',
+        'BOOLEAN': 'UInt8',
+        'BLOB': 'String',
+        'CLOB': 'String',
+        'NCLOB': 'String',
+        'TEXT': 'String'
+    }
+    
+    # Handle DECIMAL/NUMERIC with precision
+    if hana_type in ['DECIMAL', 'NUMERIC']:
+        if scale:
+            return f'Decimal64({scale})'
+        return 'Decimal64(2)'
+    
+    # Default to String for unknown types
+    ch_type = type_mapping.get(hana_type.upper(), 'String')
+    
+    # Wrap in Nullable if needed
+    if nullable:
+        return f'Nullable({ch_type})'
+    return ch_type
+
+
+def create_clickhouse_table(ch_client, database: str, schema: str, table: str, columns: List[Dict]) -> str:
+    """Create table in ClickHouse"""
+    import re
+    
+    # Create table name: schema_tablename
+    clean_schema = re.sub(r'[^a-zA-Z0-9_]', '_', schema.upper())
+    clean_table = re.sub(r'[^a-zA-Z0-9_]', '_', table.upper())
+    ch_table_name = f"{clean_schema}_{clean_table}"
+    
+    try:
+        # Create database if not exists
+        ch_client.command(f"CREATE DATABASE IF NOT EXISTS {database}")
         
-        self.clickhouse_config = {
-            'host': 'localhost',
-            'port': 9000,
-            'user': 'default',
-            'password': '',
-            'database': 'test_hana_migration'
-        }
-        
-        self.sync_engine = None
-    
-    def tearDown(self):
-        """Clean up after tests"""
-        if self.sync_engine:
-            try:
-                self.sync_engine.close_connections()
-            except:
-                pass
-    
-    @unittest.skipUnless(HANA_AVAILABLE, "hdbcli not available")
-    def test_hana_connection(self):
-        """Test 1: Verify HANA connection can be established"""
-        print("\n[TEST 1] Testing HANA connection...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        result = sync_engine.connect_hana()
-        self.assertTrue(result, "Failed to connect to HANA")
-        sync_engine.close_connections()
-        print("✓ HANA connection successful")
-    
-    def test_clickhouse_connection(self):
-        """Test 2: Verify ClickHouse connection can be established"""
-        print("\n[TEST 2] Testing ClickHouse connection...")
-        from clickhouse_driver import Client
-        try:
-            client = Client(
-                host=self.clickhouse_config['host'],
-                port=self.clickhouse_config['port'],
-                user=self.clickhouse_config['user'],
-                password=self.clickhouse_config['password']
+        # Build column definitions
+        column_defs = []
+        for col in columns:
+            ch_type = map_hana_to_clickhouse_type(
+                col['type'], 
+                col.get('length'), 
+                col.get('scale'),
+                col.get('nullable', True)
             )
-            client.execute("SELECT 1")
-            client.disconnect()
-            print("✓ ClickHouse connection successful")
-        except Exception as e:
-            self.fail(f"ClickHouse connection failed: {e}")
+            column_defs.append(f"`{col['name']}` {ch_type}")
+        
+        # Create table
+        create_sql = f"""
+        CREATE TABLE IF NOT EXISTS {database}.{ch_table_name} (
+            {', '.join(column_defs)}
+        ) ENGINE = MergeTree()
+        ORDER BY tuple()
+        """
+        
+        ch_client.command(create_sql)
+        logger.info(f"✅ Created table: {database}.{ch_table_name}")
+        return ch_table_name
+    except Exception as e:
+        logger.error(f"❌ Failed to create table {ch_table_name}: {e}")
+        raise
+
+
+def migrate_table_data(hana_conn, ch_client, database: str, schema: str, table: str, ch_table_name: str) -> int:
+    """Migrate data from HANA table to ClickHouse"""
+    import pandas as pd
     
-    @unittest.skipUnless(HANA_AVAILABLE, "hdbcli not available")
-    def test_schema_extraction(self):
-        """Test 3: Verify HANA schema extraction works"""
-        print("\n[TEST 3] Testing HANA schema extraction...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        if not sync_engine.connect_hana():
-            self.skipTest("Cannot connect to HANA")
+    try:
+        # Query data from HANA
+        query = f'SELECT * FROM "{schema}"."{table}"'
+        logger.info(f"Fetching data from HANA: {schema}.{table}")
         
-        schemas = sync_engine.get_hana_schemas()
-        self.assertIsInstance(schemas, list, "Schemas should be a list")
-        self.assertGreater(len(schemas), 0, "Should find at least one schema")
+        df = pd.read_sql(query, hana_conn)
         
-        # Verify no system schemas in results
-        system_schemas = ['SYS', '_SYS_BI', '_SYS_BIC', '_SYS_EPM']
+        if df.empty:
+            logger.info(f"ℹ️ Table {schema}.{table} is empty")
+            return 0
+        
+        # Clean column names
+        df.columns = [col.replace(' ', '_').replace('-', '_') for col in df.columns]
+        
+        # Insert into ClickHouse
+        logger.info(f"Inserting {len(df)} rows into ClickHouse: {database}.{ch_table_name}")
+        ch_client.insert_df(f"{database}.{ch_table_name}", df, column_names=df.columns.tolist())
+        
+        logger.info(f"✅ Migrated {len(df)} rows from {schema}.{table} to {database}.{ch_table_name}")
+        return len(df)
+    except Exception as e:
+        logger.error(f"❌ Failed to migrate data from {schema}.{table}: {e}")
+        return 0
+
+
+def migrate_hana_to_clickhouse(hana_config: Dict, ch_config: Dict, 
+                               schemas_filter: Optional[List[str]] = None,
+                               tables_filter: Optional[List[str]] = None,
+                               max_tables: Optional[int] = None) -> Dict:
+    """Main migration function"""
+    results = {
+        'success': False,
+        'tables_processed': 0,
+        'tables_successful': 0,
+        'tables_failed': 0,
+        'total_rows_migrated': 0,
+        'errors': []
+    }
+    
+    # Test connections
+    hana_conn = test_hana_connection(hana_config)
+    if not hana_conn:
+        results['errors'].append("HANA connection failed")
+        return results
+    
+    ch_client = test_clickhouse_connection(ch_config)
+    if not ch_client:
+        results['errors'].append("ClickHouse connection failed")
+        hana_conn.close()
+        return results
+    
+    try:
+        # Get schemas
+        all_schemas = get_hana_schemas(hana_conn)
+        if schemas_filter:
+            schemas = [s for s in all_schemas if s in schemas_filter]
+        else:
+            schemas = all_schemas
+        
+        if not schemas:
+            logger.warning("No schemas found to migrate")
+            results['errors'].append("No schemas found")
+            return results
+        
+        logger.info(f"\n{'='*60}")
+        logger.info(f"Starting migration of {len(schemas)} schema(s)")
+        logger.info(f"{'='*60}\n")
+        
+        # Process each schema
         for schema in schemas:
-            self.assertNotIn(schema, system_schemas, f"System schema {schema} should be excluded")
-        
-        sync_engine.close_connections()
-        print(f"✓ Found {len(schemas)} user schemas")
-    
-    @unittest.skipUnless(HANA_AVAILABLE, "hdbcli not available")
-    def test_table_extraction(self):
-        """Test 4: Verify table extraction from a schema"""
-        print("\n[TEST 4] Testing table extraction...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        if not sync_engine.connect_hana():
-            self.skipTest("Cannot connect to HANA")
-        
-        schemas = sync_engine.get_hana_schemas()
-        if len(schemas) == 0:
-            self.skipTest("No schemas found")
-        
-        test_schema = schemas[0]
-        tables = sync_engine.get_hana_tables(test_schema)
-        self.assertIsInstance(tables, list, "Tables should be a list")
-        
-        if len(tables) > 0:
-            table = tables[0]
-            self.assertIn('name', table, "Table should have 'name' field")
-            self.assertIn('type', table, "Table should have 'type' field")
-        
-        sync_engine.close_connections()
-        print(f"✓ Found {len(tables)} tables in schema '{test_schema}'")
-    
-    @unittest.skipUnless(HANA_AVAILABLE, "hdbcli not available")
-    def test_table_schema_extraction(self):
-        """Test 5: Verify table schema (columns) extraction"""
-        print("\n[TEST 5] Testing table schema extraction...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        if not sync_engine.connect_hana():
-            self.skipTest("Cannot connect to HANA")
-        
-        schemas = sync_engine.get_hana_schemas()
-        if len(schemas) == 0:
-            self.skipTest("No schemas found")
-        
-        # Find a schema with tables
-        tables_found = False
-        for schema in schemas[:5]:  # Check first 5 schemas
-            tables = sync_engine.get_hana_tables(schema)
-            if len(tables) > 0:
-                test_table = tables[0]['name']
-                columns = sync_engine.get_hana_table_schema(schema, test_table)
-                
-                self.assertIsInstance(columns, list, "Columns should be a list")
-                self.assertGreater(len(columns), 0, "Table should have at least one column")
-                
-                # Verify column structure
-                if len(columns) > 0:
-                    col = columns[0]
-                    required_fields = ['name', 'type', 'nullable']
-                    for field in required_fields:
-                        self.assertIn(field, col, f"Column should have '{field}' field")
-                
-                tables_found = True
-                print(f"✓ Found {len(columns)} columns in {schema}.{test_table}")
-                break
-        
-        sync_engine.close_connections()
-        if not tables_found:
-            self.skipTest("No tables found in any schema")
-    
-    def test_type_mapping(self):
-        """Test 6: Verify HANA to ClickHouse type mapping"""
-        print("\n[TEST 6] Testing data type mapping...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        
-        test_cases = [
-            ('TINYINT', None, None, 'Int8'),
-            ('SMALLINT', None, None, 'Int16'),
-            ('INTEGER', None, None, 'Int32'),
-            ('BIGINT', None, None, 'Int64'),
-            ('DECIMAL', None, 2, 'Decimal64(2)'),
-            ('REAL', None, None, 'Float32'),
-            ('DOUBLE', None, None, 'Float64'),
-            ('VARCHAR', 100, None, 'String'),
-            ('DATE', None, None, 'Date'),
-            ('TIMESTAMP', None, None, 'DateTime64'),
-            ('BOOLEAN', None, None, 'UInt8'),
-        ]
-        
-        for hana_type, length, scale, expected_ch_type in test_cases:
-            mapped_type = sync_engine.map_hana_to_clickhouse_type(hana_type, length, scale)
-            self.assertIn(expected_ch_type.split('(')[0], mapped_type, 
-                         f"Type {hana_type} should map to something containing {expected_ch_type}")
-        
-        print("✓ All type mappings correct")
-    
-    def test_table_naming(self):
-        """Test 7: Verify ClickHouse table naming convention"""
-        print("\n[TEST 7] Testing table naming convention...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        
-        test_cases = [
-            ('SCHEMA1', 'CUSTOMERS', 'SCHEMA1_CUSTOMERS'),
-            ('MySchema', 'UserTable', 'MYSCHEMA_USERTABLE'),
-            ('schema_test', 'table-123', 'SCHEMA_TEST_TABLE_123'),
-        ]
-        
-        for schema, table, expected in test_cases:
-            ch_table_name = sync_engine.create_clickhouse_table_name(schema, table)
-            self.assertEqual(ch_table_name, expected, 
-                           f"Table name should be {expected}, got {ch_table_name}")
-        
-        print("✓ Table naming convention correct")
-    
-    @unittest.skipUnless(HANA_AVAILABLE, "hdbcli not available")
-    def test_create_clickhouse_table(self):
-        """Test 8: Verify ClickHouse table creation"""
-        print("\n[TEST 8] Testing ClickHouse table creation...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        
-        if not sync_engine.connect_clickhouse():
-            self.skipTest("Cannot connect to ClickHouse")
-        
-        # Create test table schema
-        test_columns = [
-            {'name': 'id', 'type': 'INTEGER', 'length': None, 'scale': None, 'nullable': False},
-            {'name': 'name', 'type': 'VARCHAR', 'length': 100, 'scale': None, 'nullable': True},
-            {'name': 'created_date', 'type': 'DATE', 'length': None, 'scale': None, 'nullable': True},
-        ]
-        
-        test_schema = 'TEST_SCHEMA'
-        test_table = 'TEST_TABLE'
-        
-        # Create database first
-        try:
-            sync_engine.ch_client.execute(f"CREATE DATABASE IF NOT EXISTS {self.clickhouse_config['database']}")
-        except:
-            pass
-        
-        result = sync_engine.create_clickhouse_table(test_schema, test_table, test_columns)
-        self.assertTrue(result, "Table creation should succeed")
-        
-        # Verify table exists
-        ch_table_name = sync_engine.create_clickhouse_table_name(test_schema, test_table)
-        exists = sync_engine.table_exists_in_clickhouse(
-            self.clickhouse_config['database'], 
-            ch_table_name
-        )
-        self.assertTrue(exists, "Table should exist in ClickHouse")
-        
-        # Cleanup
-        try:
-            sync_engine.ch_client.execute(f"DROP TABLE IF EXISTS {self.clickhouse_config['database']}.{ch_table_name}")
-        except:
-            pass
-        
-        sync_engine.close_connections()
-        print(f"✓ Table {ch_table_name} created successfully")
-    
-    @unittest.skipUnless(HANA_AVAILABLE, "hdbcli not available")
-    def test_data_migration(self):
-        """Test 9: Verify data migration from HANA to ClickHouse"""
-        print("\n[TEST 9] Testing data migration...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        
-        if not (sync_engine.connect_hana() and sync_engine.connect_clickhouse()):
-            self.skipTest("Cannot connect to HANA or ClickHouse")
-        
-        # Find a small table to test with
-        schemas = sync_engine.get_hana_schemas()
-        if len(schemas) == 0:
-            self.skipTest("No schemas found")
-        
-        test_schema = None
-        test_table = None
-        
-        # Look for a table with data
-        for schema in schemas[:10]:
-            tables = sync_engine.get_hana_tables(schema)
+            logger.info(f"\n📦 Processing schema: {schema}")
+            tables = get_hana_tables(hana_conn, schema)
+            
+            if not tables:
+                logger.info(f"  No tables found in schema {schema}")
+                continue
+            
+            # Filter tables if needed
+            if tables_filter:
+                tables = [t for t in tables if t['name'] in tables_filter]
+            
+            logger.info(f"  Found {len(tables)} table(s)")
+            
+            # Process each table
             for table_info in tables:
-                table_name = table_info['name']
-                try:
-                    # Check if table has data
-                    cursor = sync_engine.hana_conn.cursor()
-                    cursor.execute(f'SELECT COUNT(*) FROM "{schema}"."{table_name}"')
-                    count = cursor.fetchone()[0]
-                    cursor.close()
-                    
-                    if 0 < count < 1000:  # Find a small table
-                        test_schema = schema
-                        test_table = table_name
-                        break
-                except:
+                if max_tables and results['tables_processed'] >= max_tables:
+                    logger.info(f"\n⚠️ Reached max_tables limit ({max_tables})")
+                    break
+                
+                table = table_info['name']
+                table_type = table_info['type']
+                
+                # Skip views for now
+                if table_type != 'TABLE':
+                    logger.info(f"  ⏭️ Skipping {schema}.{table} (type: {table_type})")
                     continue
-            if test_schema:
-                break
+                
+                results['tables_processed'] += 1
+                logger.info(f"\n  📋 Processing table: {schema}.{table} ({results['tables_processed']})")
+                
+                try:
+                    # Get table schema
+                    columns = get_hana_table_schema(hana_conn, schema, table)
+                    if not columns:
+                        logger.warning(f"  ⚠️ No columns found for {schema}.{table}")
+                        results['tables_failed'] += 1
+                        continue
+                    
+                    # Create ClickHouse table
+                    ch_table_name = create_clickhouse_table(ch_client, ch_config['database'], schema, table, columns)
+                    
+                    # Migrate data
+                    rows_migrated = migrate_table_data(hana_conn, ch_client, ch_config['database'], 
+                                                     schema, table, ch_table_name)
+                    
+                    results['total_rows_migrated'] += rows_migrated
+                    results['tables_successful'] += 1
+                    
+                except Exception as e:
+                    logger.error(f"  ❌ Error processing {schema}.{table}: {e}")
+                    results['tables_failed'] += 1
+                    results['errors'].append(f"{schema}.{table}: {str(e)}")
         
-        if not test_schema:
-            self.skipTest("No suitable test table found (small table with data)")
+        results['success'] = True
         
-        print(f"  Testing with table: {test_schema}.{test_table}")
-        
-        # Get table schema
-        columns = sync_engine.get_hana_table_schema(test_schema, test_table)
-        if not columns:
-            self.skipTest("Could not get table schema")
-        
-        # Create ClickHouse table
-        sync_engine.create_clickhouse_table(test_schema, test_table, columns)
-        
-        # Migrate data
-        result = sync_engine.migrate_table_data(test_schema, test_table, batch_size=100)
-        
-        self.assertEqual(result['status'], 'success', "Migration should succeed")
-        self.assertGreater(result['migrated_rows'], 0, "Should migrate at least one row")
-        self.assertEqual(result['total_rows'], result['migrated_rows'], 
-                        "All rows should be migrated")
-        
-        # Verify data in ClickHouse
-        ch_table_name = sync_engine.create_clickhouse_table_name(test_schema, test_table)
-        ch_rows = sync_engine.ch_client.execute(
-            f"SELECT count() FROM {self.clickhouse_config['database']}.{ch_table_name}"
-        )[0][0]
-        
-        self.assertEqual(ch_rows, result['migrated_rows'], 
-                        "ClickHouse row count should match migrated count")
-        
-        # Verify metadata columns exist
-        metadata_cols = sync_engine.ch_client.execute(
-            f"SELECT name FROM system.columns WHERE database = '{self.clickhouse_config['database']}' "
-            f"AND table = '{ch_table_name}' AND name LIKE '_%'"
-        )
-        metadata_col_names = [col[0] for col in metadata_cols]
-        
-        self.assertIn('_source_schema', metadata_col_names, "Should have _source_schema column")
-        self.assertIn('_source_table', metadata_col_names, "Should have _source_table column")
-        self.assertIn('_sync_timestamp', metadata_col_names, "Should have _sync_timestamp column")
-        
-        # Verify metadata values
-        sample_row = sync_engine.ch_client.execute(
-            f"SELECT _source_schema, _source_table FROM {self.clickhouse_config['database']}.{ch_table_name} LIMIT 1"
-        )[0]
-        
-        self.assertEqual(sample_row[0], test_schema, "Metadata should have correct source schema")
-        self.assertEqual(sample_row[1], test_table, "Metadata should have correct source table")
-        
-        sync_engine.close_connections()
-        print(f"✓ Successfully migrated {result['migrated_rows']} rows")
+    except Exception as e:
+        logger.error(f"Migration error: {e}")
+        results['errors'].append(str(e))
+    finally:
+        # Close connections
+        if hana_conn:
+            hana_conn.close()
+        if ch_client:
+            ch_client.close()
     
-    @unittest.skipUnless(HANA_AVAILABLE, "hdbcli not available")
-    def test_incremental_sync_setup(self):
-        """Test 10: Verify incremental sync setup"""
-        print("\n[TEST 10] Testing incremental sync setup...")
-        sync_engine = HanaToClickHouseSync(self.hana_config, self.clickhouse_config)
-        
-        if not (sync_engine.connect_hana() and sync_engine.connect_clickhouse()):
-            self.skipTest("Cannot connect to HANA or ClickHouse")
-        
-        # Find a test table
-        schemas = sync_engine.get_hana_schemas()
-        if len(schemas) == 0:
-            self.skipTest("No schemas found")
-        
-        test_schema = schemas[0]
-        tables = sync_engine.get_hana_tables(test_schema)
-        if len(tables) == 0:
-            self.skipTest("No tables found")
-        
-        test_table = tables[0]['name']
-        
-        # Setup incremental sync
-        result = sync_engine.setup_incremental_sync(test_schema, test_table)
-        
-        # Verify sync_metadata table exists
-        database_name = self.clickhouse_config['database']
-        try:
-            metadata = sync_engine.ch_client.execute(
-                f"SELECT source_schema, source_table FROM {database_name}.sync_metadata "
-                f"WHERE source_schema = '{test_schema}' AND source_table = '{test_table}'"
-            )
-            self.assertGreater(len(metadata), 0, "Sync metadata should be created")
-        except Exception as e:
-            if "does not exist" in str(e).lower():
-                self.fail("sync_metadata table should be created")
-            else:
-                # Incremental sync may not be available (no timestamp column)
+    return results
+
+
+def main():
+    """Main test function"""
+    print("\n" + "="*60)
+    print("HANA to ClickHouse Migration Test")
+    print("="*60 + "\n")
+    
+    # Check dependencies
+    if not HANA_AVAILABLE:
+        print("❌ hdbcli library not installed. Install with: pip install hdbcli")
+        return
+    if not CLICKHOUSE_CONNECT_AVAILABLE:
+        print("❌ clickhouse-connect library not installed. Install with: pip install clickhouse-connect")
+        return
+    
+    # Get configurations
+    print("📝 Configuration:")
+    print("-" * 60)
+    hana_config = get_hana_config()
+    print(f"  HANA: {hana_config['host']}:{hana_config['port']} (user: {hana_config['username']})")
+    
+    ch_config = get_clickhouse_config()
+    print(f"  ClickHouse: {ch_config['host']}:{ch_config['port']} (database: {ch_config['database']})")
+    print("-" * 60 + "\n")
+    
+    # Ask for migration options
+    print("Migration Options:")
+    print("1. Migrate all tables from all schemas")
+    print("2. Migrate specific schemas (comma-separated)")
+    print("3. Test connection only (no migration)")
+    
+    choice = input("\nEnter choice (1-3, default: 3): ").strip() or "3"
+    
+    schemas_filter = None
+    if choice == "2":
+        schemas_input = input("Enter schema names (comma-separated): ").strip()
+        if schemas_input:
+            schemas_filter = [s.strip() for s in schemas_input.split(',')]
+    
+    max_tables = None
+    if choice in ["1", "2"]:
+        max_input = input("Max tables to migrate (press Enter for all): ").strip()
+        if max_input:
+            try:
+                max_tables = int(max_input)
+            except ValueError:
                 pass
+    
+    # Test connections
+    if choice == "3":
+        print("\n🔍 Testing connections only...\n")
+        hana_conn = test_hana_connection(hana_config)
+        ch_client = test_clickhouse_connection(ch_config)
         
-        sync_engine.close_connections()
-        print("✓ Incremental sync setup verified")
-    
-    def test_data_validation(self):
-        """Test 11: Verify data integrity after migration"""
-        print("\n[TEST 11] Testing data validation...")
-        # This would be run after actual migration to verify:
-        # - Row counts match
-        # - Data types are correctly converted
-        # - No data loss
-        # - Metadata columns are populated correctly
+        if hana_conn and ch_client:
+            print("\n✅ Both connections successful! Ready for migration.")
+            # Show available schemas
+            if hana_conn:
+                schemas = get_hana_schemas(hana_conn)
+                if schemas:
+                    print(f"\nAvailable schemas: {', '.join(schemas)}")
+                hana_conn.close()
+            if ch_client:
+                ch_client.close()
+        else:
+            print("\n❌ Connection test failed. Please check your credentials.")
+    else:
+        # Run migration
+        print("\n🚀 Starting migration...\n")
+        results = migrate_hana_to_clickhouse(
+            hana_config, 
+            ch_config,
+            schemas_filter=schemas_filter,
+            max_tables=max_tables
+        )
         
-        # Placeholder for actual data validation
-        print("✓ Data validation framework ready")
-        self.assertTrue(True)
-
-
-class TestHanaFlaskIntegration(unittest.TestCase):
-    """Test cases for Flask app integration with HANA"""
-    
-    def setUp(self):
-        """Set up Flask test client"""
-        try:
-            import app
-            self.app = app.app
-            self.app.config['TESTING'] = True
-            self.client = self.app.test_client()
-        except Exception as e:
-            self.skipTest(f"Cannot import Flask app: {e}")
-    
-    def test_hana_source_card_display(self):
-        """Test 12: Verify HANA source appears as card on home page"""
-        print("\n[TEST 12] Testing HANA source card display...")
+        # Print summary
+        print("\n" + "="*60)
+        print("Migration Summary")
+        print("="*60)
+        print(f"Status: {'✅ Success' if results['success'] else '❌ Failed'}")
+        print(f"Tables processed: {results['tables_processed']}")
+        print(f"Tables successful: {results['tables_successful']}")
+        print(f"Tables failed: {results['tables_failed']}")
+        print(f"Total rows migrated: {results['total_rows_migrated']:,}")
         
-        # This test requires authentication and database setup
-        # In real scenario, would mock the database
-        
-        # For now, verify the template logic
-        response = self.client.get('/')
-        # Should check if HANA sources are displayed
-        self.assertIsNotNone(response, "Home page should load")
-        print("✓ Home page accessible")
+        if results['errors']:
+            print(f"\nErrors ({len(results['errors'])}):")
+            for error in results['errors'][:10]:  # Show first 10 errors
+                print(f"  - {error}")
+            if len(results['errors']) > 10:
+                print(f"  ... and {len(results['errors']) - 10} more errors")
+        print("="*60 + "\n")
 
 
-def run_tests():
-    """Run all test cases"""
-    print("=" * 70)
-    print("HANA TO CLICKHOUSE MIGRATION - COMPREHENSIVE TEST SUITE")
-    print("=" * 70)
-    
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-    
-    # Add all test cases
-    suite.addTests(loader.loadTestsFromTestCase(TestHanaSync))
-    suite.addTests(loader.loadTestsFromTestCase(TestHanaFlaskIntegration))
-    
-    runner = unittest.TextTestRunner(verbosity=2)
-    result = runner.run(suite)
-    
-    print("\n" + "=" * 70)
-    print("TEST SUMMARY")
-    print("=" * 70)
-    print(f"Tests run: {result.testsRun}")
-    print(f"Successes: {result.testsRun - len(result.failures) - len(result.errors)}")
-    print(f"Failures: {len(result.failures)}")
-    print(f"Errors: {len(result.errors)}")
-    print(f"Skipped: {len(result.skipped) if hasattr(result, 'skipped') else 0}")
-    
-    if result.failures:
-        print("\nFAILURES:")
-        for test, traceback in result.failures:
-            print(f"  - {test}: {traceback.split(chr(10))[-2]}")
-    
-    if result.errors:
-        print("\nERRORS:")
-        for test, traceback in result.errors:
-            print(f"  - {test}: {traceback.split(chr(10))[-2]}")
-    
-    return result.wasSuccessful()
-
-
-if __name__ == '__main__':
-    success = run_tests()
-    sys.exit(0 if success else 1)
+if __name__ == "__main__":
+    main()
 

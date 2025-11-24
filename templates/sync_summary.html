@@ -4,9 +4,14 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sync Summary - Row Count Comparison</title>
+  <!-- Preconnect for faster loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+  
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography" defer></script>
   <script>
     tailwind.config = {
       darkMode: "class",
@@ -55,10 +60,10 @@
             Sync Summary - Server Comparisons
           </h1>
           <div class="flex gap-2">
-            <button onclick="location.reload()" 
+            <button id="refresh-btn" onclick="refreshServerCards()" 
                     class="px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white transition flex items-center gap-2">
               <span class="material-icons text-sm">refresh</span>
-              Refresh
+              <span id="refresh-text">Refresh</span>
             </button>
             <a href="{{ url_for('index') }}"
                class="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
@@ -73,18 +78,28 @@
 
         <!-- Individual Server Comparison Cards (rendered by JS for fast load) -->
         <div id="server-cards" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Loading placeholder -->
-          <div id="loading-placeholder" class="col-span-1 lg:col-span-2 text-center py-12 text-subtext-light">
-            Loading server summaries...
+          <!-- Loading placeholder with spinner -->
+          <div id="loading-placeholder" class="col-span-1 lg:col-span-2 flex flex-col items-center justify-center py-12">
+            <div class="spinner w-12 h-12 border-blue-600 mb-4"></div>
+            <p class="text-subtext-light dark:text-subtext-dark font-medium">Loading server summaries...</p>
           </div>
         </div>
 
         <script>
-          async function renderServerCards(){
+          async function renderServerCards(showLoader = true){
             const container = document.getElementById('server-cards');
             const placeholder = document.getElementById('loading-placeholder');
+            
+            if (showLoader && placeholder) {
+              placeholder.innerHTML = `
+                <div class="spinner w-12 h-12 border-blue-600 mb-4"></div>
+                <p class="text-subtext-light dark:text-subtext-dark font-medium">Loading server summaries...</p>
+              `;
+            }
+            
             try{
               const resp = await fetch('/sync-summary/quick.json');
+              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
               const data = await resp.json();
               placeholder?.remove();
               if(data.error){
@@ -150,11 +165,39 @@
 
             }catch(err){
               placeholder?.remove();
-              container.innerHTML = `<div class="col-span-1 lg:col-span-2 p-6 bg-red-50 text-red-700 rounded">Fetch error: ${err}</div>`;
+              container.innerHTML = `<div class="col-span-1 lg:col-span-2 p-6 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-200 rounded">Error loading data: ${err.message || err}</div>`;
             }
           }
-            // load on DOM ready
-            document.addEventListener('DOMContentLoaded', renderServerCards);
+          
+          async function refreshServerCards() {
+            const btn = document.getElementById('refresh-btn');
+            const text = document.getElementById('refresh-text');
+            if (btn && text) {
+              btn.disabled = true;
+              btn.classList.add('opacity-75', 'cursor-not-allowed');
+              const originalText = text.textContent;
+              text.textContent = 'Refreshing...';
+              
+              const container = document.getElementById('server-cards');
+              const originalContent = container.innerHTML;
+              
+              try {
+                await renderServerCards(false);
+                text.textContent = originalText;
+              } catch (err) {
+                text.textContent = originalText;
+                container.innerHTML = originalContent;
+              } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+              }
+            } else {
+              await renderServerCards(false);
+            }
+          }
+          
+          // load on DOM ready
+          document.addEventListener('DOMContentLoaded', () => renderServerCards(true));
         </script>
 
         {% if not servers %}

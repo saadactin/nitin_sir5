@@ -19,10 +19,10 @@ def _cache_get(key):
         return None
     ts, value = entry
     if time.time() - ts > CACHE_TTL:
-        LOG.info(f"Cache expired for {key}")
+        # Cache expired - no verbose logging
         del _cache[key]
         return None
-    LOG.info(f"Cache hit for {key}")
+    # Cache hit - no verbose logging
     return value
 
 def _cache_set(key, value):
@@ -148,7 +148,7 @@ def normalize_table_name(table_key):
 
 def get_table_comparison(server_name):
     """Get table-by-table comparison for a specific server"""
-    LOG.info(f"Starting table comparison for server: {server_name}")
+    # Starting table comparison - minimal logging
     config = load_config()
     sqlservers = config.get("sqlservers", {})
 
@@ -205,12 +205,12 @@ def get_table_comparison(server_name):
                 continue
         master_cur.close()
         master_conn.close()
-        LOG.info(f"Found {len(sql_counts)} SQL Server tables with accurate row counts")
+        # SQL Server tables counted - minimal logging
 
         # Connect to PostgreSQL
         pg_conn = get_pg_connection()
         pg_cursor = pg_conn.cursor()
-        LOG.info("Starting PostgreSQL table count query")
+        # PostgreSQL query started - minimal logging
         pg_cursor.execute("""
             SELECT current_database(), schemaname, relname, n_live_tup
             FROM pg_stat_user_tables
@@ -229,13 +229,13 @@ def get_table_comparison(server_name):
         for original_key, count in sql_counts.items():
             normalized_key = normalize_table_name(original_key)
             sql_normalized[normalized_key] = count
-            LOG.debug(f"SQL: {original_key} -> {normalized_key} = {count}")
+            # SQL normalization - no debug logging
         
         # Normalize PostgreSQL table names
         for original_key, count in pg_counts.items():
             normalized_key = normalize_table_name(original_key)
             pg_normalized[normalized_key] = count
-            LOG.debug(f"PG: {original_key} -> {normalized_key} = {count}")
+            # PG normalization - no debug logging
 
         # Compare tables using normalized names
         all_tables = set(sql_normalized.keys()) | set(pg_normalized.keys())

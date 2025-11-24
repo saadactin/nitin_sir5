@@ -819,6 +819,7 @@ def load_schedules_from_db():
     """
     Load only active schedules from database (exclude deleted ones).
     This function runs automatically on server startup to restore all schedules.
+    Supports both server-based (YAML) and source-based (database) schedules.
     """
     try:
         conn = get_pg_connection()
@@ -830,12 +831,29 @@ def load_schedules_from_db():
     
     cur = conn.cursor()
     try:
-        # IMPORTANT: Exclude schedules marked as 'deleted'
+        # Check if source_id column exists
         cur.execute("""
-            SELECT server_name, job_type 
-            FROM metrics_sync_tables.schedules 
-            WHERE status != 'deleted' OR status IS NULL
+            SELECT column_name FROM information_schema.columns 
+            WHERE table_schema = 'metrics_sync_tables' 
+            AND table_name = 'schedules' 
+            AND column_name = 'source_id'
         """)
+        has_source_id = cur.fetchone() is not None
+        
+        # IMPORTANT: Exclude schedules marked as 'deleted'
+        if has_source_id:
+            cur.execute("""
+                SELECT server_name, job_type, source_id, minutes, hour, minute
+                FROM metrics_sync_tables.schedules 
+                WHERE (status != 'deleted' OR status IS NULL)
+            """)
+        else:
+            cur.execute("""
+                SELECT server_name, job_type, NULL as source_id, minutes, hour, minute
+                FROM metrics_sync_tables.schedules 
+                WHERE status != 'deleted' OR status IS NULL
+            """)
+        
         rows = cur.fetchall()
         loaded_count = 0
         failed_count = 0
@@ -851,35 +869,62 @@ def load_schedules_from_db():
         
         print(f"[SCHEDULER] Found {len(rows)} schedule(s) to restore")
         
-        for server_name, job_type in rows:
+        for row in rows:
+            server_name, job_type, source_id, minutes, hour, minute = row
             try:
                 # Ensure no duplicate schedule remains - clear any existing first
-                tag_formats = [
-                    f"{server_name}:{job_type}",
-                    f"{server_name}-{job_type}"
-                ]
+                if source_id:
+                    tag_formats = [
+                        f"source_{source_id}:{job_type}",
+                        f"source_{source_id}-{job_type}",
+                        f"source_{source_id}"
+                    ]
+                else:
+                    tag_formats = [
+                        f"{server_name}:{job_type}",
+                        f"{server_name}-{job_type}"
+                    ]
+                
                 for tag in tag_formats:
                     sched.clear(tag)
                 
-                if job_type.startswith("interval_"):
-                    minutes = int(job_type.replace("interval_", "").replace("m", ""))
-                    schedule_interval_sync(server_name, minutes)
-                    print(f"  ✓ Restored: {server_name} - Every {minutes} minutes")
-                    loaded_count += 1
-                elif job_type.startswith("daily_"):
-                    time_str = job_type.replace("daily_", "")
-                    hour, minute = map(int, time_str.split(":"))
-                    schedule_daily_sync(server_name, hour, minute)
-                    print(f"  ✓ Restored: {server_name} - Daily at {time_str}")
-                    loaded_count += 1
+                # Handle source-based schedules (HANA, SQL Server from database)
+                if source_id:
+                    if job_type.startswith("interval_"):
+                        minutes_val = int(job_type.replace("interval_", "").replace("m", ""))
+                        schedule_source_interval_sync(source_id, minutes_val)
+                        print(f"  ✓ Restored: Source {source_id} ({server_name}) - Every {minutes_val} minutes")
+                        loaded_count += 1
+                    elif job_type.startswith("daily_"):
+                        time_str = job_type.replace("daily_", "")
+                        hour_val, minute_val = map(int, time_str.split(":"))
+                        schedule_source_daily_sync(source_id, hour_val, minute_val)
+                        print(f"  ✓ Restored: Source {source_id} ({server_name}) - Daily at {time_str}")
+                        loaded_count += 1
+                    else:
+                        print(f"  ⚠ Skipped: Source {source_id} ({server_name}) - Unknown schedule type: {job_type}")
+                        failed_count += 1
+                # Handle server-based schedules (YAML config)
                 else:
-                    print(f"  ⚠ Skipped: {server_name} - Unknown schedule type: {job_type}")
-                    failed_count += 1
+                    if job_type.startswith("interval_"):
+                        minutes_val = int(job_type.replace("interval_", "").replace("m", ""))
+                        schedule_interval_sync(server_name, minutes_val)
+                        print(f"  ✓ Restored: {server_name} - Every {minutes_val} minutes")
+                        loaded_count += 1
+                    elif job_type.startswith("daily_"):
+                        time_str = job_type.replace("daily_", "")
+                        hour_val, minute_val = map(int, time_str.split(":"))
+                        schedule_daily_sync(server_name, hour_val, minute_val)
+                        print(f"  ✓ Restored: {server_name} - Daily at {time_str}")
+                        loaded_count += 1
+                    else:
+                        print(f"  ⚠ Skipped: {server_name} - Unknown schedule type: {job_type}")
+                        failed_count += 1
             except ValueError as e:
-                print(f"  ✗ Failed: {server_name} - Invalid format: {e}")
+                print(f"  ✗ Failed: {server_name} (source_id: {source_id}) - Invalid format: {e}")
                 failed_count += 1
             except Exception as e:
-                print(f"  ✗ Failed: {server_name} - Error: {e}")
+                print(f"  ✗ Failed: {server_name} (source_id: {source_id}) - Error: {e}")
                 failed_count += 1
         
         print("-"*70)

@@ -91,6 +91,17 @@ def poll_api_to_clickhouse(api_url, target_database, target_table,
     total_records_synced = 0
     poll_count = 0
     
+    # Import sync logger
+    try:
+        from sync_logger import SyncLogger
+        use_sync_logger = True
+        source_name = api_url  # Use API URL as source name
+        SyncLogger.log_sync_start('REST_API_POLLING', source_name, 
+                                 details={'target_db': target_database, 'target_table': target_table, 
+                                         'poll_interval': poll_interval, 'mode': 'polling'})
+    except ImportError:
+        use_sync_logger = False
+    
     logger.info(f"Starting continuous API polling from: {api_url}")
     logger.info(f"Target: {target_database}.{target_table}")
     logger.info(f"Polling interval: {poll_interval} seconds")

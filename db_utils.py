@@ -8,8 +8,8 @@ import base64
 import hashlib
 import logging
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set up logging - only warnings and errors
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # Path to YAML config

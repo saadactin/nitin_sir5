@@ -1,0 +1,25 @@
+-- B1 DEPENDS: AFTER:SP:ATP_A1_CREATE_DB_OBJECTS AFTER:PT:PROCESS_END
+CREATE PROCEDURE ATP_C4_TQA_EXISTS(
+	IN check_id INTEGER,
+	OUT RESULT TINYINT
+)
+LANGUAGE SQLSCRIPT 
+SQL SECURITY INVOKER
+AS
+BEGIN
+		select count(*) into RESULT
+		from (
+			select TOP 1 * from OTQA where "CheckID" = check_id
+		);
+END;
+
+
+
+
+
+
+
+
+
+
+

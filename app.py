@@ -111,14 +111,15 @@ To restart:
 2. Run: .\\myenv1\\Scripts\\python.exe app.py
 """
         
-        app.logger.info("[SHUTDOWN EMAIL] Sending shutdown notification...")
+        # Sending shutdown email - minimal logging
         result = email_service.notify_server_down(
             server_name="Flask Application Server",
             error_message=shutdown_message
         )
         
         if result.success:
-            app.logger.info(f"[SHUTDOWN EMAIL] ✓ Alert sent successfully to {len(result.recipients)} recipients")
+            # Shutdown email sent - minimal logging
+            pass
         else:
             app.logger.error(f"[SHUTDOWN EMAIL] ✗ Failed to send alert: {result.error}")
             
@@ -135,14 +136,11 @@ def signal_handler(sig, frame):
     
     _shutdown_in_progress = True
     
-    app.logger.info("\n" + "="*60)
-    app.logger.info("[SHUTDOWN] Shutdown signal received (Ctrl+C)")
-    app.logger.info("="*60)
+    # Shutdown signal received - minimal logging
     
     send_shutdown_email("Manual shutdown (Ctrl+C)")
     
-    app.logger.info("[SHUTDOWN] Cleanup complete. Exiting...")
-    app.logger.info("="*60)
+    # Shutdown complete - minimal logging
     
     sys.exit(0)
 
@@ -162,10 +160,7 @@ def test_sql_connection(server_conf):
     try:
         # Log the connection attempt details
         server = server_conf.get('server', '')
-        app.logger.info(f"Testing connection to SQL Server: {server}")
-        
-        if '\\' in server:
-            app.logger.info(f"Detected named instance format. Will use SQL Browser for port resolution.")
+        # Connection testing - minimal logging
         
         # Attempt to connect
         conn = get_sql_connection(server_conf)
@@ -174,7 +169,7 @@ def test_sql_connection(server_conf):
         cursor = conn.cursor()
         cursor.execute("SELECT @@SERVERNAME, @@VERSION")
         server_info = cursor.fetchone()
-        app.logger.info(f"Connected successfully to {server_info[0]}")
+        # Connection successful - no verbose logging
         cursor.close()
         conn.close()
         return True, None
@@ -204,13 +199,12 @@ def test_sql_connection(server_conf):
         
         return False, user_message
 
-# Configure logging for better visibility
+# Configure logging - only warnings and errors to console
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,  # Only show warnings and errors
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('app.log')
+        logging.FileHandler('app.log')  # Log everything to file, but only warnings/errors to console
     ]
 )
 
@@ -273,13 +267,13 @@ app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 SERVER_START_TIME = datetime.now().timestamp()
 
 # Enable Flask request logging
-app.logger.setLevel(logging.INFO)
-logging.getLogger('werkzeug').setLevel(logging.INFO)
+app.logger.setLevel(logging.WARNING)  # Only warnings and errors
+logging.getLogger('werkzeug').setLevel(logging.ERROR)  # Completely disable HTTP request logging
 
 # If the hybrid sync simple terminal mode is enabled, reduce console noise from Flask/werkzeug
 if os.environ.get('HYBRID_SYNC_SIMPLE_TERMINAL', '1').lower() in ('1', 'true', 'yes'):
-    # Lower werkzeug console logs to WARNING so only important messages show on the terminal
-    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+    # Completely disable Werkzeug HTTP request logging
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)  # Only show errors, not HTTP requests
     # Also set the root stream handler to WARNING so app-level INFO logs go to file only
     for h in logging.getLogger().handlers:
         if isinstance(h, logging.StreamHandler):
@@ -304,10 +298,7 @@ if sync_yaml_to_db():
 else:
     logging.warning("Failed to sync YAML configuration to database, using YAML file as fallback")
 
-# Add request logging middleware
-@app.before_request
-def log_request_info():
-    app.logger.info(f'[REQ] {request.method} {request.path} - {request.remote_addr}')
+# Request logging removed for cleaner output (only log errors)
 
 @app.before_request
 def check_authentication():
@@ -321,14 +312,14 @@ def check_authentication():
     
     # Debug logging - avoid logging flash contents (may contain Unicode/emoji)
     # Log only key session attributes to prevent UnicodeEncodeError when console encoding is limited
-    app.logger.info(f'[DEBUG] Checking auth for {request.path} - username={session.get("username")}, role={session.get("role")}, ip={session.get("session_ip")}')
+        # Debug logging removed
     
     # Check if session is valid and not from previous server instance
     session_start_time = session.get('session_start_time')
     if session_start_time and session_start_time < SERVER_START_TIME:
         # Session is from previous server instance, clear it
         session.clear()
-        app.logger.info('[AUTH] Cleared old session from previous server instance')
+        # Session cleared - no logging needed
     
     # MANDATORY authentication check - NO BYPASS ALLOWED
     if 'role' not in session or 'username' not in session:
@@ -349,11 +340,11 @@ def check_authentication():
         return redirect(url_for('login'), code=302)
     
     # Log successful authentication
-    app.logger.info(f'[AUTH] Authenticated access: {username} ({role}) to {request.path}')
+    # Authenticated access - no verbose logging
 
 @app.after_request
 def log_response_info(response):
-    app.logger.info(f'[RESP] {request.method} {request.path} - {response.status_code}')
+    # Response logging removed
     return response
 
 # Custom error handlers
@@ -368,7 +359,8 @@ try:
     if os.environ.get('CREATE_DEFAULT_ADMIN', '0') in ('1', 'true', 'True'):
         init_admin_user(create_if_missing=True, default_password=os.environ.get('DEFAULT_ADMIN_PASSWORD'))
 except Exception:
-    app.logger.info('Default admin creation skipped or failed at import-time')
+    # Admin creation - no verbose logging
+    pass
 
 
 
@@ -387,7 +379,7 @@ def login():
             session["session_ip"] = request.remote_addr
             session.permanent = True
             flash(f"Welcome, {username}!", "success")
-            app.logger.info(f"[LOGIN] Successful login: {username} ({role}) from {request.remote_addr}")
+            # Login successful - minimal logging
             return redirect(url_for("index"))
         else:
             flash("Invalid credentials", "danger")
@@ -400,13 +392,13 @@ def logout():
     username = session.get('username', 'Unknown')
     session.clear()  # Clear all session data
     flash("You have been logged out successfully.", "info")
-    app.logger.info(f"[LOGOUT] User logged out: {username}")
+    # Logout - minimal logging
     return redirect(url_for("login"))
 
 @app.route("/force-logout")
 def force_logout():
     """Force logout - clears ALL session data"""
-    app.logger.info(f"[FORCE-LOGOUT] Clearing session: {dict(session)}")
+    # Force logout - no verbose logging
     session.clear()
     session.modified = True
     flash("Session forcefully cleared. Please log in.", "warning")
@@ -438,7 +430,7 @@ def create_user_route():
 @require_role(["admin", "operator", "viewer"])
 def index():
     """Homepage → show available servers and sync option"""
-    app.logger.info(f"[HOME] Homepage accessed by user: {session.get('username', 'Unknown')}")
+    # Homepage access - no verbose logging
     config = load_config()
     sqlservers = config.get("sqlservers", {})
     
@@ -454,11 +446,11 @@ def index():
     # Load data_sources from Postgres so Add Source entries appear on home page
     data_sources = []
     data_source_statuses = {}
-    app.logger.debug("Starting to load data_sources...")
+        # Loading data sources - no debug logging
     try:
         from db_utils import load_pg_config
         pg_conf = load_pg_config()
-        app.logger.debug(f"Pg config: db={pg_conf.get('database')}, host={pg_conf.get('host')}")
+        # Config loaded - no debug logging
         conn = psycopg2.connect(
             dbname=pg_conf.get('database', 'metrics_sync_tables'),
             user=pg_conf.get('username'),
@@ -466,7 +458,7 @@ def index():
             host=pg_conf.get('host'),
             port=int(pg_conf.get('port', 5432))
         )
-        app.logger.debug("Connected to PostgreSQL")
+        # Connected - no debug logging
         cur = conn.cursor()
         cur.execute("""
             SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details,
@@ -475,8 +467,7 @@ def index():
             FROM data_sources WHERE is_active = true ORDER BY created_at DESC
         """)
         rows = cur.fetchall()
-        app.logger.info(f"[DEBUG] Query returned {len(rows)} data_source rows")
-        app.logger.debug(f"Query returned {len(rows)} rows")
+        # Query executed - no verbose logging
         for r in rows:
             ds = {
                 'id': r[0],
@@ -495,8 +486,7 @@ def index():
                 'oauth_api_domain': r[13] if len(r) > 13 else None
             }
             data_sources.append(ds)
-            app.logger.info(f"[DEBUG] Loaded data_source: {ds['source_name']} (ID: {ds['id']})")
-            app.logger.debug(f"Loaded source: {ds['source_name']}")
+            # Source loaded - no verbose logging
         cur.close()
         conn.close()
     except Exception as e:
@@ -667,7 +657,7 @@ def index():
                                         
                                         if oauth_token:
                                             headers["Authorization"] = f"Bearer {oauth_token}"
-                                            app.logger.info(f"Status check: OAuth token obtained successfully")
+                                            # OAuth token obtained - no verbose logging
                                         else:
                                             data_source_statuses[ds['id']] = {'online': False, 'error': 'No token found in OAuth response'}
                                             continue
@@ -704,9 +694,7 @@ def index():
             data_source_statuses[ds['id']] = {'online': False, 'error': str(e)}
 
     role = session.get("role")
-    app.logger.info(f"[INFO] Loaded {len(sqlservers)} SQL servers and {len(data_sources)} data sources for display")
-    app.logger.debug(f"About to render: sqlservers={len(sqlservers)}, data_sources={len(data_sources)}")
-    app.logger.debug(f"data_sources content: {[ds.get('source_name') for ds in data_sources]}")
+    # Data loaded - no verbose logging
     return render_template("sync_servers.html", sqlservers=sqlservers, server_statuses=server_statuses, data_sources=data_sources, data_source_statuses=data_source_statuses, role=role)
 
 
@@ -806,8 +794,7 @@ def sync_selected_databases(server_name):
 @require_role(["admin", "operator"])
 def sync_server(server_name):
     """Run sync for the selected server"""
-    app.logger.info(f"[SYNC START] Starting sync operation for server: {server_name}")
-    app.logger.info(f"[SYNC STARTED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
+    # Sync started - minimal logging
     
     # Log an in-progress entry so manual/stuck runs can be detected later
     try:
@@ -820,8 +807,8 @@ def sync_server(server_name):
         try:
             app.logger.info(f"[PROCESS] Processing hybrid sync for {server_name}")
             process_sql_server_hybrid(server_name, server_conf)
-            app.logger.info(f"Sync completed successfully for {server_name}")
-            app.logger.info(f"[SYNC COMPLETED] {server_name} at {datetime.now().strftime('%H:%M:%S')}")
+            # Sync completed - minimal logging
+            # Sync completed - minimal logging
             flash(f"Sync completed for {server_name}", "success")
             log_sync(server_name, "success")
             try:
@@ -850,7 +837,7 @@ def sync_background(server_name):
     This provides better isolation, progress tracking, and prevents interference
     from navigation or other operations.
     """
-    app.logger.info(f"[SYNC-ASYNC START] Request to start background sync for: {server_name}")
+    # Background sync requested - minimal logging
     
     config = load_config()
     server_conf = config.get("sqlservers", {}).get(server_name)
@@ -866,7 +853,7 @@ def sync_background(server_name):
     result = sync_manager.start_sync(server_name, server_conf, app)
     
     if result["success"]:
-        app.logger.info(f"[SYNC-ASYNC] Background sync started successfully for {server_name} (ID: {result['sync_id']})")
+        # Background sync started - minimal logging
         flash(f"Background sync started for {server_name}", "success")
         return jsonify(result), 202
     else:
@@ -1738,9 +1725,17 @@ def debug_list_data_sources():
             port=int(pg_conf.get('port', 5432))
         )
         cur = conn.cursor()
-        cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, created_at FROM data_sources ORDER BY created_at DESC")
+        # Optimized: Only select needed columns, add LIMIT for large datasets
+        cur.execute("""
+            SELECT id, source_name, source_type, server_address, username, target_type, target_database, created_at 
+            FROM data_sources 
+            WHERE is_active = true
+            ORDER BY created_at DESC
+            LIMIT 1000
+        """)
         rows = cur.fetchall()
-        cur.close(); conn.close()
+        cur.close()
+        conn.close()
 
         ds_list = []
         for r in rows:
@@ -2517,6 +2512,119 @@ def add_hana_source():
     return render_template("add_hana_source.html",
                           postgres_dbs=postgres_dbs,
                           clickhouse_dbs=clickhouse_dbs)
+
+
+@app.route("/migrate-hana-to-clickhouse", methods=["POST"])
+@require_role(["admin", "operator"])
+def migrate_hana_to_clickhouse():
+    """Migrate HANA database to ClickHouse (from exported files or direct connection)"""
+    try:
+        data = request.get_json() if request.is_json else request.form.to_dict()
+        
+        # Get HANA connection details
+        host = data.get("host", "").strip()
+        port = data.get("port", "").strip() or "30015"
+        username = data.get("username", "").strip()
+        password = data.get("password", "").strip()
+        hana_database = data.get("hana_database", "").strip()
+        target_database = data.get("target_database", "").strip()
+        source_name = data.get("source_name", "").strip()
+        base_dir = data.get("base_dir", "").strip()  # Optional: path to exported files
+        
+        # Validate required fields
+        if not all([host, port, username, password, target_database]):
+            return jsonify({
+                'success': False,
+                'message': 'Missing required fields: host, port, username, password, and target_database are required'
+            }), 400
+        
+        # Load ClickHouse config from .env
+        from db_utils import load_clickhouse_config
+        try:
+            ch_base_config = load_clickhouse_config()
+            clickhouse_config = {
+                'host': ch_base_config['host'],
+                'port': ch_base_config.get('port', 9000),
+                'username': ch_base_config['user'],
+                'password': ch_base_config['password'],
+                'database': target_database
+            }
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Failed to load ClickHouse config from .env: {str(e)}'
+            }), 500
+        
+        # If base_dir is provided, migrate from exported files
+        if base_dir and os.path.exists(base_dir):
+            # Import migration function
+            from migrate_hana_to_clickhouse import migrate_from_exported_files
+            
+            # Run migration in background thread
+            import threading
+            
+            def background_migration():
+                try:
+                    result = migrate_from_exported_files(
+                        base_dir=base_dir,
+                        clickhouse_config=clickhouse_config,
+                        target_database=target_database
+                    )
+                    app.logger.info(f"HANA migration completed: {result}")
+                except Exception as e:
+                    app.logger.exception(f"Error in HANA migration: {e}")
+            
+            thread = threading.Thread(target=background_migration, daemon=True)
+            thread.start()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Migration started from exported files directory: {base_dir}',
+                'mode': 'exported_files'
+            })
+        
+        # Otherwise, try direct HANA connection migration
+        else:
+            # Import migration function for direct HANA connection
+            from migrate_hana_to_clickhouse import migrate_from_hana_direct
+            
+            # Prepare HANA config
+            hana_config = {
+                'host': host,
+                'port': int(port),
+                'username': username,
+                'password': password
+            }
+            
+            # Run migration in background thread
+            import threading
+            
+            def background_migration():
+                try:
+                    result = migrate_from_hana_direct(
+                        hana_config=hana_config,
+                        clickhouse_config=clickhouse_config,
+                        target_database=target_database
+                    )
+                    app.logger.info(f"HANA direct migration completed: {result}")
+                except Exception as e:
+                    app.logger.exception(f"Error in HANA direct migration: {e}")
+            
+            thread = threading.Thread(target=background_migration, daemon=True)
+            thread.start()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Migration started from direct HANA connection: {host}:{port}',
+                'mode': 'direct_connection'
+            })
+    
+    except Exception as e:
+        app.logger.exception(f"Error in migrate_hana_to_clickhouse: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Migration error: {str(e)}'
+        }), 500
 
 
 @app.route("/view-hana-tables/<int:source_id>")
@@ -3698,9 +3806,16 @@ def get_target_databases():
 @app.route("/dashboard")
 @require_role(["admin", "operator", "viewer"])
 def dashboard():
+    """Dashboard route - optimized with minimal data loading"""
+    # Load essential data only - rest can be loaded via AJAX
     last_10 = get_last_10_syncs()
     last_detail = get_last_sync_details()
-    jobs = get_schedules()  # schedules for display
+    # Load schedules asynchronously to avoid blocking
+    try:
+        jobs = get_schedules()[:20]  # Limit to 20 most recent
+    except Exception as e:
+        app.logger.warning(f"Error loading schedules: {e}")
+        jobs = []
     return render_template(
         "dashboard.html",
         last_10=last_10,
@@ -3745,11 +3860,13 @@ def schedule_page():
             port=int(pg_conf.get('port', 5432))
         )
         cur = conn.cursor()
+        # Optimized query with LIMIT to prevent loading too many sources
         cur.execute("""
             SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details 
             FROM data_sources 
             WHERE is_active = true AND source_type IN ('sql_server', 'sap_hana')
             ORDER BY created_at DESC
+            LIMIT 500
         """)
         rows = cur.fetchall()
         app.logger.info(f"[SCHEDULE] Raw query returned {len(rows)} row(s)")
@@ -4489,15 +4606,15 @@ def database_metrics_json(server, db):
 @app.route("/sync-summary")
 @require_role(["admin", "operator", "viewer"])
 def sync_summary():
-    """Show sync summary page with individual server comparisons"""
+    """Show sync summary page - data loaded asynchronously for better performance"""
     try:
-        all_comparisons = get_all_server_comparisons()
+        # Render page immediately, data will be loaded via AJAX
         return render_template("sync_summary.html", 
-                             servers=all_comparisons['servers'],
-                             total_servers=all_comparisons['total_servers'],
+                             servers=[],  # Empty initially
+                             total_servers=0,
                              role=session.get("role"))
     except Exception as e:
-        flash(f"Error getting sync summary: {e}", "danger")
+        flash(f"Error loading sync summary page: {e}", "danger")
         return redirect(url_for("index"))
 
 
@@ -5031,14 +5148,12 @@ if __name__ == "__main__":
     app.logger.info(f"[LOGGING] Level: INFO")
     app.logger.info("="*60)
     
-    # Configure werkzeug to be more verbose
-    logging.getLogger('werkzeug').setLevel(logging.DEBUG)
+    # Werkzeug logging set to ERROR to completely disable HTTP request logging
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
     try:
         # Show startup status
-        app.logger.info("[INIT] Initializing Flask application...")
-        app.logger.info("[CONFIG] Loading configuration...")
-        app.logger.info("[AUTH] Authentication system ready")
+        # Application initialized - minimal logging
         # Optionally create default admin based on environment variable
         try:
             # Always ensure default admin exists on startup when running app.py
@@ -5124,6 +5239,20 @@ if __name__ == "__main__":
         # Auto-start polling for all API sources with polling_mode=True
         from flask_auto_start_polling import auto_start_polling_sources
         auto_start_polling_sources(app)
+        
+        # Completely disable Werkzeug HTTP request logging (but keep errors)
+        import logging
+        werkzeug_logger = logging.getLogger('werkzeug')
+        werkzeug_logger.setLevel(logging.ERROR)  # Only show errors, not HTTP requests
+        # Remove default handler that logs HTTP requests
+        werkzeug_logger.handlers = []
+        
+        # Print startup message
+        print("\n" + "="*60)
+        print(f" * Running on http://{app_host}:{app_port}")
+        print(f" * Environment: {'Development' if flask_debug else 'Production'}")
+        print(f" * Debug mode: {'ON' if flask_debug else 'OFF'}")
+        print("="*60 + "\n")
         
         app.run(debug=flask_debug, host=app_host, port=app_port, use_reloader=use_reloader, use_debugger=use_debugger)
     except Exception as e:
