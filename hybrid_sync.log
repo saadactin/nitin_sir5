@@ -39,3 +39,346 @@
 2025-11-24 16:59:27,970 - WARNING - [AUTH] Session contents: {}
 2025-11-24 17:12:20,369 - WARNING - Email configuration incomplete. Skipping email notification.
 2025-11-24 17:12:20,370 - WARNING - Required env vars: SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ADMIN_EMAILS
+2025-11-24 17:56:15,326 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-24 17:56:15,713 - INFO - PostgreSQL connection pool initialized (min=2, max=10)
+2025-11-24 17:56:15,927 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-24 17:56:15,928 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-24 17:57:19,207 - WARNING - [AUTH] BLOCKED unauthenticated access to /dashboard from 127.0.0.1
+2025-11-24 17:57:19,207 - WARNING - [AUTH] Session contents: {}
+2025-11-24 17:58:26,759 - WARNING - Email configuration incomplete. Skipping email notification.
+2025-11-24 17:58:26,759 - WARNING - Required env vars: SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ADMIN_EMAILS
+2025-11-24 17:58:27,960 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:58:27,962 - ERROR - Error fetching sync status for source 78: connection pool exhausted
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 1713, in sync_status_source
+    last = get_last_sync_for_server(server_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 88, in get_last_sync_for_server
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:58:27,963 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:58:28,016 - ERROR - Error fetching sync status for source 77: connection pool exhausted
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 1713, in sync_status_source
+    last = get_last_sync_for_server(server_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 88, in get_last_sync_for_server
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:58:30,719 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:58:30,720 - ERROR - Exception on /dashboard [GET]
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\auth.py", line 110, in wrapped
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3830, in dashboard
+    last_10 = get_last_10_syncs()
+              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 28, in get_last_10_syncs
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:58:33,111 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:58:33,114 - ERROR - Exception on /dashboard [GET]
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\auth.py", line 110, in wrapped
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3830, in dashboard
+    last_10 = get_last_10_syncs()
+              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 28, in get_last_10_syncs
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:58:36,736 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:58:36,738 - ERROR - Exception on /dashboard [GET]
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\auth.py", line 110, in wrapped
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3830, in dashboard
+    last_10 = get_last_10_syncs()
+              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 28, in get_last_10_syncs
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:58:38,197 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:58:38,198 - ERROR - Exception on /dashboard [GET]
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\auth.py", line 110, in wrapped
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3830, in dashboard
+    last_10 = get_last_10_syncs()
+              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 28, in get_last_10_syncs
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:58:41,805 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:58:41,805 - ERROR - Exception on /view-schedules [GET]
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\auth.py", line 110, in wrapped
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4333, in view_schedules
+    jobs = get_schedules()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\scheduler_utils.py", line 740, in get_schedules
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:59:00,983 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:59:00,984 - ERROR - Error fetching sync status for source 77: connection pool exhausted
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 1713, in sync_status_source
+    last = get_last_sync_for_server(server_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 88, in get_last_sync_for_server
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:59:20,456 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:59:20,458 - WARNING - Failed to write to sync_history: connection pool exhausted
+2025-11-24 17:59:21,602 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:59:21,603 - WARNING - Failed to write to sync_history: connection pool exhausted
+2025-11-24 17:59:21,605 - WARNING - Email configuration incomplete. Skipping email notification.
+2025-11-24 17:59:21,606 - WARNING - Required env vars: SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ADMIN_EMAILS
+2025-11-24 17:59:22,799 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:59:22,802 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:59:22,803 - ERROR - Error fetching sync status for source 79: connection pool exhausted
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 1713, in sync_status_source
+    last = get_last_sync_for_server(server_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 88, in get_last_sync_for_server
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:59:22,805 - ERROR - Error fetching sync status for source 77: connection pool exhausted
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 1713, in sync_status_source
+    last = get_last_sync_for_server(server_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 88, in get_last_sync_for_server
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 17:59:26,167 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 17:59:26,167 - ERROR - Exception on /dashboard [GET]
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\auth.py", line 110, in wrapped
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 3830, in dashboard
+    last_10 = get_last_10_syncs()
+              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 28, in get_last_10_syncs
+    conn = get_pg_connection()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\db_utils.py", line 166, in get_pg_connection
+    return ConnectionPoolManager.get_postgresql_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\connection_pool.py", line 100, in get_postgresql_connection
+    return _pg_pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 169, in getconn
+    return self._getconn(key)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Lib\site-packages\psycopg2\pool.py", line 92, in _getconn
+    raise PoolError("connection pool exhausted")
+psycopg2.pool.PoolError: connection pool exhausted
+2025-11-24 18:11:16,229 - ERROR - Failed to get connection from PostgreSQL pool: connection pool exhausted
+2025-11-24 18:11:16,231 - ERROR - Error retrieving connections: connection pool exhausted
+2025-11-24 18:11:49,251 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-24 18:11:50,161 - INFO - PostgreSQL connection pool initialized (min=5, max=20)
+2025-11-24 18:11:50,341 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-24 18:11:50,342 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-24 18:11:51,740 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/api from 127.0.0.1
+2025-11-24 18:11:51,741 - WARNING - [AUTH] Session contents: {}

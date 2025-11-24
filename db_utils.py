@@ -154,20 +154,31 @@ def get_pg_connection_without_config():
         return None
 
 def get_pg_connection():
-    """Return a live PostgreSQL connection"""
+    """
+    Return a live PostgreSQL connection from connection pool.
+    Use connection pooling for better performance.
+    Remember to return the connection using return_pg_connection() when done.
+    """
     try:
-        conf = load_pg_config()
-        # If YAML/DB didn't provide a password, try environment variables directly as a last resort
-        password = conf.get("password") or os.environ.get('PG_PASSWORD') or os.environ.get('POSTGRES_PASSWORD')
-        if not password:
-            raise RuntimeError("PostgreSQL password not supplied. Set PG_PASSWORD or POSTGRES_PASSWORD in .env, or provide in YAML.")
-        return psycopg2.connect(
-            dbname=conf["database"],
-            user=conf["username"],
-            password=password,
-            host=conf["host"],
-            port=conf["port"],
-        )
+        # Try to use connection pool first
+        try:
+            from connection_pool import ConnectionPoolManager
+            return ConnectionPoolManager.get_postgresql_connection()
+        except (ImportError, RuntimeError) as pool_error:
+            # Fallback to direct connection if pool not available
+            logger.warning(f"Connection pool not available, using direct connection: {pool_error}")
+            conf = load_pg_config()
+            # If YAML/DB didn't provide a password, try environment variables directly as a last resort
+            password = conf.get("password") or os.environ.get('PG_PASSWORD') or os.environ.get('POSTGRES_PASSWORD')
+            if not password:
+                raise RuntimeError("PostgreSQL password not supplied. Set PG_PASSWORD or POSTGRES_PASSWORD in .env, or provide in YAML.")
+            return psycopg2.connect(
+                dbname=conf["database"],
+                user=conf["username"],
+                password=password,
+                host=conf["host"],
+                port=conf["port"],
+            )
     except psycopg2.OperationalError as e:
         error_msg = str(e)
         if 'database' in error_msg and 'does not exist' in error_msg:
@@ -184,6 +195,21 @@ def get_pg_connection():
             except:
                 pass
         raise
+
+def return_pg_connection(conn):
+    """
+    Return a PostgreSQL connection to the pool.
+    Call this when done with a connection obtained from get_pg_connection().
+    """
+    try:
+        from connection_pool import ConnectionPoolManager
+        ConnectionPoolManager.return_postgresql_connection(conn)
+    except (ImportError, AttributeError):
+        # If pool not available, just close the connection
+        try:
+            conn.close()
+        except:
+            pass
 
 def get_connection_from_db(connection_type):
     """Load connection configuration from database"""

@@ -138,6 +138,13 @@ def signal_handler(sig, frame):
     
     # Shutdown signal received - minimal logging
     
+    # Close all connection pools
+    try:
+        from connection_pool import ConnectionPoolManager
+        ConnectionPoolManager.close_all_pools()
+    except Exception as e:
+        app.logger.warning(f"Error closing connection pools: {e}")
+    
     send_shutdown_email("Manual shutdown (Ctrl+C)")
     
     # Shutdown complete - minimal logging
@@ -147,6 +154,18 @@ def signal_handler(sig, frame):
 # Register signal handlers
 signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
 signal.signal(signal.SIGTERM, signal_handler)  # Termination signal
+
+# Register atexit handler for connection pool cleanup
+def cleanup_on_exit():
+    """Cleanup function called on normal exit"""
+    try:
+        from connection_pool import ConnectionPoolManager
+        ConnectionPoolManager.close_all_pools()
+    except Exception as e:
+        # Use print since logger might be closed
+        print(f"Error closing connection pools on exit: {e}")
+
+atexit.register(cleanup_on_exit)
 
 def test_sql_connection(server_conf):
     """Test if a SQL Server connection is valid
@@ -448,47 +467,40 @@ def index():
     data_source_statuses = {}
         # Loading data sources - no debug logging
     try:
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        # Config loaded - no debug logging
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        # Connected - no debug logging
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details,
-                   oauth_refresh_token, oauth_client_id, oauth_client_secret,
-                   oauth_access_token, oauth_token_expiry, oauth_api_domain
-            FROM data_sources WHERE is_active = true ORDER BY created_at DESC
-        """)
-        rows = cur.fetchall()
-        # Query executed - no verbose logging
-        for r in rows:
-            ds = {
-                'id': r[0],
-                'source_name': r[1],
-                'source_type': r[2],
-                'server_address': r[3],
-                'username': r[4],
-                'target_type': r[5],
-                'target_database': r[6],
-                'connection_details': r[7],
-                'oauth_refresh_token': r[8] if len(r) > 8 else None,
-                'oauth_client_id': r[9] if len(r) > 9 else None,
-                'oauth_client_secret': r[10] if len(r) > 10 else None,
-                'oauth_access_token': r[11] if len(r) > 11 else None,
-                'oauth_token_expiry': r[12] if len(r) > 12 else None,
-                'oauth_api_domain': r[13] if len(r) > 13 else None
-            }
-            data_sources.append(ds)
-            # Source loaded - no verbose logging
-        cur.close()
-        conn.close()
+        from db_utils import get_pg_connection, return_pg_connection
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details,
+                       oauth_refresh_token, oauth_client_id, oauth_client_secret,
+                       oauth_access_token, oauth_token_expiry, oauth_api_domain
+                FROM data_sources WHERE is_active = true ORDER BY created_at DESC
+            """)
+            rows = cur.fetchall()
+            # Query executed - no verbose logging
+            for r in rows:
+                ds = {
+                    'id': r[0],
+                    'source_name': r[1],
+                    'source_type': r[2],
+                    'server_address': r[3],
+                    'username': r[4],
+                    'target_type': r[5],
+                    'target_database': r[6],
+                    'connection_details': r[7],
+                    'oauth_refresh_token': r[8] if len(r) > 8 else None,
+                    'oauth_client_id': r[9] if len(r) > 9 else None,
+                    'oauth_client_secret': r[10] if len(r) > 10 else None,
+                    'oauth_access_token': r[11] if len(r) > 11 else None,
+                    'oauth_token_expiry': r[12] if len(r) > 12 else None,
+                    'oauth_api_domain': r[13] if len(r) > 13 else None
+                }
+                data_sources.append(ds)
+                # Source loaded - no verbose logging
+            cur.close()
+        finally:
+            return_pg_connection(conn)
     except Exception as e:
         app.logger.exception(f"Could not load data_sources: {e}")
         app.logger.exception(f"ERROR loading data_sources: {e}")
@@ -560,7 +572,7 @@ def index():
                     cur.execute("SELECT password FROM data_sources WHERE id = %s", (ds['id'],))
                     pw_row = cur.fetchone()
                     cur.close()
-                    conn.close()
+                    return_pg_connection(conn)
                     if pw_row and pw_row[0]:
                         server_conf['password'] = pw_row[0]
                 except Exception:
@@ -3839,7 +3851,7 @@ def dashboard_data():
 @require_role(["admin", "operator"])
 def schedule_page():
     """Create a new schedule for SQL Server (YAML) or Data Sources (Database: SQL Server/HANA)"""
-    from db_utils import get_pg_connection, load_pg_config
+    from db_utils import get_pg_connection, return_pg_connection, load_pg_config
     import psycopg2
     
     # Load YAML SQL servers
@@ -5222,6 +5234,21 @@ if __name__ == "__main__":
                 app.logger.error(f"Error fetching job statuses: {e}")
                 return jsonify({"error": str(e)}), 500
                 
+        # Initialize connection pools
+        try:
+            from connection_pool import ConnectionPoolManager
+            from db_utils import load_pg_config
+            
+            # Initialize PostgreSQL pool
+            pg_config = load_pg_config()
+            if pg_config:
+                ConnectionPoolManager.init_postgresql_pool(pg_config)
+                app.logger.info("[POOL] PostgreSQL connection pool initialized")
+            else:
+                app.logger.warning("[POOL] PostgreSQL config not available, pools will be created on-demand")
+        except Exception as e:
+            app.logger.warning(f"[POOL] Connection pool initialization failed (will use direct connections): {e}")
+        
         app.logger.info("[STARTUP] Application startup complete!")
         
         app.logger.info("[READY] Application ready! Access at: http://127.0.0.1:5000")

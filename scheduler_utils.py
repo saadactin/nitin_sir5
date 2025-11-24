@@ -3,7 +3,7 @@ import schedule as sched
 import threading
 import time
 import datetime
-from db_utils import get_pg_connection, init_pg_schema
+from db_utils import get_pg_connection, return_pg_connection, init_pg_schema
 from hybrid_sync import process_sql_server_hybrid
 from manage_server import load_config
 from dashboard import log_sync
@@ -32,29 +32,41 @@ def _start_scheduler_thread():
 # ---------------- DB Utilities ----------------
 def _save_schedule_to_db(server_name, job_type, last_run, status, error, source_id=None):
     conn = get_pg_connection()
-    cur = conn.cursor()
-    # First check if source_id column exists, if not, use old format
     try:
-        cur.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_schema = 'metrics_sync_tables' 
-            AND table_name = 'schedules' 
-            AND column_name = 'source_id'
-        """)
-        has_source_id = cur.fetchone() is not None
-        
-        if has_source_id:
+        cur = conn.cursor()
+        # First check if source_id column exists, if not, use old format
+        try:
             cur.execute("""
-                DELETE FROM metrics_sync_tables.schedules
-                WHERE (server_name = %s AND job_type = %s) OR (source_id = %s AND job_type = %s)
-            """, (server_name, job_type, source_id, job_type))
-            cur.execute("""
-                INSERT INTO metrics_sync_tables.schedules
-                    (server_name, job_type, last_run, status, error, source_id)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (server_name, job_type, last_run, status, error, source_id))
-        else:
-            # Old format without source_id
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_schema = 'metrics_sync_tables' 
+                AND table_name = 'schedules' 
+                AND column_name = 'source_id'
+            """)
+            has_source_id = cur.fetchone() is not None
+            
+            if has_source_id:
+                cur.execute("""
+                    DELETE FROM metrics_sync_tables.schedules
+                    WHERE (server_name = %s AND job_type = %s) OR (source_id = %s AND job_type = %s)
+                """, (server_name, job_type, source_id, job_type))
+                cur.execute("""
+                    INSERT INTO metrics_sync_tables.schedules
+                        (server_name, job_type, last_run, status, error, source_id)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (server_name, job_type, last_run, status, error, source_id))
+            else:
+                # Old format without source_id
+                cur.execute("""
+                    DELETE FROM metrics_sync_tables.schedules
+                    WHERE server_name = %s AND job_type = %s
+                """, (server_name, job_type))
+                cur.execute("""
+                    INSERT INTO metrics_sync_tables.schedules
+                        (server_name, job_type, last_run, status, error)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (server_name, job_type, last_run, status, error))
+        except Exception as e:
+            # Fallback to old format
             cur.execute("""
                 DELETE FROM metrics_sync_tables.schedules
                 WHERE server_name = %s AND job_type = %s
@@ -64,20 +76,10 @@ def _save_schedule_to_db(server_name, job_type, last_run, status, error, source_
                     (server_name, job_type, last_run, status, error)
                 VALUES (%s, %s, %s, %s, %s)
             """, (server_name, job_type, last_run, status, error))
-    except Exception as e:
-        # Fallback to old format
-        cur.execute("""
-            DELETE FROM metrics_sync_tables.schedules
-            WHERE server_name = %s AND job_type = %s
-        """, (server_name, job_type))
-        cur.execute("""
-            INSERT INTO metrics_sync_tables.schedules
-                (server_name, job_type, last_run, status, error)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (server_name, job_type, last_run, status, error))
-    conn.commit()
-    cur.close()
-    conn.close()
+        conn.commit()
+        cur.close()
+    finally:
+        return_pg_connection(conn)
 
 # ---------------- Job Wrapper ----------------
 def _job_wrapper(server_name, server_conf, job_type):
@@ -199,7 +201,7 @@ def _source_job_wrapper(source_id, job_type):
         connection_details = row[8] if row[8] else {}
         
         cur.close()
-        conn.close()
+        return_pg_connection(conn)
         
         print(f"\n{'='*60}")
         print(f"[SYNC] STARTED: {source_name} ({source_type}, {job_type})")
@@ -458,7 +460,7 @@ def health_check_all_servers():
         for s_name, s_conf in cfg.get('sqlservers', {}).items():
             try:
                 conn = get_pg_connection()  # ensure PG reachable
-                conn.close()
+                return_pg_connection(conn)
             except Exception:
                 # continue even if PG check fails; focus on SQL servers
                 pass
@@ -544,10 +546,12 @@ def schedule_source_interval_sync(source_id, minutes):
         else:
             raise ValueError(f"Source ID {source_id} not found or inactive")
         cur.close()
-        conn.close()
+        return_pg_connection(conn)
     except Exception as e:
         print(f"[SCHEDULER] WARNING: Could not verify source in database: {e}")
         print(f"[SCHEDULER] Proceeding with scheduling anyway (source_id: {source_id})")
+        if 'conn' in locals():
+            return_pg_connection(conn)
     
     job_type = f"interval_{minutes}m"
     
@@ -601,10 +605,12 @@ def schedule_source_daily_sync(source_id, hour, minute):
         else:
             raise ValueError(f"Source ID {source_id} not found or inactive")
         cur.close()
-        conn.close()
+        return_pg_connection(conn)
     except Exception as e:
         print(f"[SCHEDULER] WARNING: Could not verify source in database: {e}")
         print(f"[SCHEDULER] Proceeding with scheduling anyway (source_id: {source_id})")
+        if 'conn' in locals():
+            return_pg_connection(conn)
     
     time_str = f"{hour:02d}:{minute:02d}"
     job_type = f"daily_{time_str}"
@@ -656,7 +662,7 @@ def delete_schedule(server_name, job_type):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_pg_connection(conn)
     
     # Clear scheduled jobs from schedule library with all possible tag formats
     try:
@@ -698,7 +704,7 @@ def clean_deleted_schedules():
         return 0
     finally:
         cur.close()
-        conn.close()
+        return_pg_connection(conn)
 
 def mark_stale_in_progress(threshold_minutes=60):
     """
@@ -724,7 +730,7 @@ def mark_stale_in_progress(threshold_minutes=60):
         return 0
     finally:
         cur.close()
-        conn.close()
+        return_pg_connection(conn)
 
 def update_schedule(server_name, job_type, **kwargs):
     delete_schedule(server_name, job_type)
@@ -738,54 +744,68 @@ def update_schedule(server_name, job_type, **kwargs):
 
 def get_schedules():
     conn = get_pg_connection()
-    cur = conn.cursor()
-    # Check if source_id column exists
     try:
-        cur.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_schema = 'metrics_sync_tables' 
-            AND table_name = 'schedules' 
-            AND column_name = 'source_id'
-        """)
-        has_source_id = cur.fetchone() is not None
-        
-        if has_source_id:
+        cur = conn.cursor()
+        # Check if source_id column exists
+        try:
             cur.execute("""
-                SELECT server_name, job_type,
-                       COALESCE(last_run::text, '-') AS last_run,
-                       status,
-                       COALESCE(error, '-') AS error,
-                       source_id
-                FROM metrics_sync_tables.schedules
-                WHERE (status != 'deleted' OR status IS NULL)
-                ORDER BY created_at DESC
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_schema = 'metrics_sync_tables' 
+                AND table_name = 'schedules' 
+                AND column_name = 'source_id'
             """)
-            rows = cur.fetchall()
-            # Get source types for database sources
-            result = []
-            for r in rows:
-                source_type = None
-                if r[5]:  # source_id exists
-                    # Try to get source type from data_sources
-                    try:
-                        cur2 = conn.cursor()
-                        cur2.execute("SELECT source_type FROM data_sources WHERE id = %s", (r[5],))
-                        type_row = cur2.fetchone()
-                        if type_row:
-                            source_type = type_row[0]
-                        cur2.close()
-                    except:
-                        pass
-                result.append({
-                    "server": r[0], 
-                    "type": r[1], 
-                    "last_run": r[2], 
-                    "status": r[3], 
-                    "error": r[4],
-                    "source_type": source_type
-                })
-        else:
-            # Old format
+            has_source_id = cur.fetchone() is not None
+            
+            if has_source_id:
+                cur.execute("""
+                    SELECT server_name, job_type,
+                           COALESCE(last_run::text, '-') AS last_run,
+                           status,
+                           COALESCE(error, '-') AS error,
+                           source_id
+                    FROM metrics_sync_tables.schedules
+                    WHERE (status != 'deleted' OR status IS NULL)
+                    ORDER BY created_at DESC
+                """)
+                rows = cur.fetchall()
+                # Get source types for database sources
+                result = []
+                for r in rows:
+                    source_type = None
+                    if r[5]:  # source_id exists
+                        # Try to get source type from data_sources
+                        try:
+                            cur2 = conn.cursor()
+                            cur2.execute("SELECT source_type FROM data_sources WHERE id = %s", (r[5],))
+                            type_row = cur2.fetchone()
+                            if type_row:
+                                source_type = type_row[0]
+                            cur2.close()
+                        except:
+                            pass
+                    result.append({
+                        "server": r[0], 
+                        "type": r[1], 
+                        "last_run": r[2], 
+                        "status": r[3], 
+                        "error": r[4],
+                        "source_type": source_type
+                    })
+            else:
+                # Old format
+                cur.execute("""
+                    SELECT server_name, job_type,
+                           COALESCE(last_run::text, '-') AS last_run,
+                           status,
+                           COALESCE(error, '-') AS error
+                    FROM metrics_sync_tables.schedules
+                    WHERE status != 'deleted' OR status IS NULL
+                    ORDER BY created_at DESC
+                """)
+                rows = cur.fetchall()
+                result = [{"server": r[0], "type": r[1], "last_run": r[2], "status": r[3], "error": r[4]} for r in rows]
+        except Exception as e:
+            # Fallback to old format
             cur.execute("""
                 SELECT server_name, job_type,
                        COALESCE(last_run::text, '-') AS last_run,
@@ -797,23 +817,11 @@ def get_schedules():
             """)
             rows = cur.fetchall()
             result = [{"server": r[0], "type": r[1], "last_run": r[2], "status": r[3], "error": r[4]} for r in rows]
-    except Exception as e:
-        # Fallback to old format
-        cur.execute("""
-            SELECT server_name, job_type,
-                   COALESCE(last_run::text, '-') AS last_run,
-                   status,
-                   COALESCE(error, '-') AS error
-            FROM metrics_sync_tables.schedules
-            WHERE status != 'deleted' OR status IS NULL
-            ORDER BY created_at DESC
-        """)
-        rows = cur.fetchall()
-        result = [{"server": r[0], "type": r[1], "last_run": r[2], "status": r[3], "error": r[4]} for r in rows]
-    
-    cur.close()
-    conn.close()
-    return result
+        
+        cur.close()
+        return result
+    finally:
+        return_pg_connection(conn)
 
 def load_schedules_from_db():
     """
@@ -937,8 +945,10 @@ def load_schedules_from_db():
     except Exception as e:
         print(f"\n[SCHEDULER ERROR] Failed to load schedules from database: {e}\n")
     finally:
-        cur.close()
-        conn.close()
+        if 'cur' in locals():
+            cur.close()
+        if 'conn' in locals():
+            return_pg_connection(conn)
 
 # Auto-load schedules on module import (happens on server startup)
 print("\n[SCHEDULER] Initializing scheduler system...")
