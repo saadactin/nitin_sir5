@@ -2,7 +2,7 @@ import bcrypt
 import os
 from flask import session, redirect, url_for, flash
 import logging
-from db_utils import get_pg_connection, init_pg_schema
+from db_utils import get_pg_connection, return_pg_connection, init_pg_schema
 
 # Ensure schema is ready
 init_pg_schema()
@@ -26,7 +26,7 @@ def create_user(username, password, role, created_by="system"):
         result = cur.fetchone()
         conn.commit()
         cur.close()
-        conn.close()
+        return_pg_connection(conn)
         
         # If user was created successfully, send email notification
         if result is not None:
@@ -63,24 +63,28 @@ def init_admin_user(create_if_missing=False, default_password=None):
         return
 
     conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM metrics_sync_tables.users WHERE username = 'admin';")
-    if not cur.fetchone():
-        pw = default_password or os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123')
-        create_user("admin", pw, "admin")
-        # SECURITY: Never log the actual password
-        logging.info(f"Default admin created (username: admin) - password set from environment or default")
-    cur.close()
-    conn.close()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM metrics_sync_tables.users WHERE username = 'admin';")
+        if not cur.fetchone():
+            pw = default_password or os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123')
+            create_user("admin", pw, "admin")
+            # SECURITY: Never log the actual password
+            logging.info(f"Default admin created (username: admin) - password set from environment or default")
+        cur.close()
+    finally:
+        return_pg_connection(conn)
 
 def authenticate_user(username, password):
     """Check username + password, return role if valid"""
     conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT password, role FROM metrics_sync_tables.users WHERE username = %s", (username,))
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT password, role FROM metrics_sync_tables.users WHERE username = %s", (username,))
+        row = cur.fetchone()
+        cur.close()
+    finally:
+        return_pg_connection(conn)
 
     if row:
         stored_hash, role = row

@@ -382,3 +382,293 @@ psycopg2.pool.PoolError: connection pool exhausted
 2025-11-24 18:11:50,342 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
 2025-11-24 18:11:51,740 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/api from 127.0.0.1
 2025-11-24 18:11:51,741 - WARNING - [AUTH] Session contents: {}
+2025-11-25 16:15:24,076 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-25 16:15:24,805 - INFO - PostgreSQL connection pool initialized (min=5, max=20)
+2025-11-25 16:15:24,935 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-25 16:15:24,936 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-25 16:15:29,679 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:15:29,679 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3DFE72C90>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:15:29,681 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:15:38,786 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:15:38,787 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44E5BB0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:15:38,787 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:15:40,971 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source from 127.0.0.1
+2025-11-25 16:15:40,974 - WARNING - [AUTH] Session contents: {}
+2025-11-25 16:15:47,922 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:15:47,923 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44E7B30>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:15:47,924 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:15:57,014 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:15:57,017 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F10D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:15:57,018 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:16:06,542 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:16:06,542 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F2F60>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:16:06,543 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:16:15,657 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:16:15,658 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F1C10>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:16:15,658 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:16:24,752 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:16:24,753 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F1820>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:16:24,754 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:16:33,871 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:16:33,885 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F3500>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:16:33,894 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:16:42,999 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:16:43,000 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F2420>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:16:43,000 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:16:52,104 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:16:52,106 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F21E0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:16:52,106 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:17:01,201 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:17:01,202 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F0FB0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:17:01,204 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:17:10,294 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:17:10,294 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44E7920>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:17:10,295 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:17:19,403 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:17:19,404 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E4504C20>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:17:19,404 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:17:28,769 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:17:28,769 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44E7B90>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:17:28,770 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:17:37,854 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:17:37,856 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3DFF79FD0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:17:37,857 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:17:46,963 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:17:46,965 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F0DA0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:17:46,967 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:17:56,084 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:17:56,090 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F21E0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:17:56,091 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:18:05,160 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:18:05,161 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44CB4D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:18:05,162 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:28:11,204 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:28:11,204 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E05C1940>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:28:11,205 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:28:20,270 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:28:20,271 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F0EC0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:28:20,273 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:28:29,388 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:28:29,388 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F0C80>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:28:29,392 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:28:38,460 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:28:38,462 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F20C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:28:38,464 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:28:47,561 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:28:47,562 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E4505400>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:28:47,563 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:28:56,658 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:28:56,659 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44E7AD0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:28:56,659 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:29:05,761 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:29:05,761 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E40E6150>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:29:05,762 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:29:14,881 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:29:14,881 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F11F0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:29:14,882 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 16:29:23,972 - ERROR - ERROR: Cannot connect to API at http://localhost:5005/api/leads
+2025-11-25 16:29:23,973 - ERROR - Details: HTTPConnectionPool(host='localhost', port=5005): Max retries exceeded with url: /api/leads (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001F3E44F1D30>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-11-25 16:29:23,973 - ERROR - Possible causes: API server is down, wrong URL, or network issue.
+2025-11-25 17:39:55,938 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-25 17:39:57,495 - INFO - PostgreSQL connection pool initialized (min=5, max=20)
+2025-11-25 17:39:58,261 - INFO - Rate limiting enabled
+2025-11-25 17:39:58,269 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-25 17:39:58,269 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-25 17:43:29,983 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-25 17:43:30,735 - INFO - PostgreSQL connection pool initialized (min=5, max=20)
+2025-11-25 17:43:30,857 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-25 17:43:30,860 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-25 17:43:30,860 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-25 17:43:34,429 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-25 17:43:34,445 - WARNING - [AUTH] Session contents: {}
+2025-11-25 17:43:35,612 - WARNING - [AUTH] BLOCKED unauthenticated access to /favicon.ico from 127.0.0.1
+2025-11-25 17:43:35,619 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-11-25 17:43:44,050 - WARNING - [404] Page not found: /favicon.ico - 127.0.0.1
+2025-11-25 17:46:15,419 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:46:15,420 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:46:21,218 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:46:21,219 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:46:27,023 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:46:27,024 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:46:32,913 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:46:32,914 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:46:38,655 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:46:38,656 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:46:44,412 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:46:44,413 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:46:50,204 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:46:50,204 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:46:55,898 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:46:55,898 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:01,590 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:01,591 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:07,315 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:07,317 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:13,019 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:13,022 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:18,788 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:18,789 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:24,472 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:24,473 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:30,141 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:30,143 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:35,880 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:35,881 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:41,791 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:41,792 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:47,521 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:47,522 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:53,362 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:53,364 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:47:59,054 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:47:59,056 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:04,847 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:04,849 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:10,584 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:10,585 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:16,210 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:16,212 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:21,865 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:21,867 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:27,680 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:27,680 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:33,329 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:33,332 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:39,007 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:39,007 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:44,958 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:44,959 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:45,867 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:45,868 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:50,688 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:50,689 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:51,604 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:51,605 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:56,405 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:56,407 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:48:57,245 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:48:57,248 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:02,237 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:02,238 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:03,019 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:03,023 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:07,873 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:07,875 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:08,804 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:08,805 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:13,487 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:13,488 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:14,514 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:14,515 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:19,178 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:19,179 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:20,136 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:20,139 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:25,989 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:25,990 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:26,036 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:26,039 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:31,954 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:31,955 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:32,007 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:32,008 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:37,998 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-25 17:49:38,004 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-25 17:49:38,262 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:38,262 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:38,272 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:38,273 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:38,898 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:38,899 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:44,144 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:44,145 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:44,184 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:44,185 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:44,752 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:44,753 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:50,113 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:50,114 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:50,174 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:50,176 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:50,655 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:50,656 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:56,106 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:56,107 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:56,225 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:56,228 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:49:56,502 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:49:56,503 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:02,108 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:02,109 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:02,215 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:02,217 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:02,436 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:02,437 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:07,995 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:07,996 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:08,153 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:08,153 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:08,310 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:08,311 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:13,788 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:13,789 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:14,046 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:14,047 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:14,244 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:14,245 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:19,040 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:19,040 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:19,282 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:19,283 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-25 17:50:19,498 - ERROR - ERROR: Authentication failed (401 Unauthorized)
+2025-11-25 17:50:19,498 - ERROR - Authentication required but not configured. Please set up authentication.
+2025-11-26 11:22:32,815 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-26 11:22:33,766 - INFO - PostgreSQL connection pool initialized (min=5, max=20)
+2025-11-26 11:22:34,189 - INFO - Rate limiting enabled
+2025-11-26 11:22:34,193 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-26 11:22:34,193 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-26 11:48:29,007 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-26 11:48:29,962 - INFO - PostgreSQL connection pool initialized (min=5, max=20)
+2025-11-26 11:48:30,111 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-26 11:48:30,116 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-26 11:48:30,117 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-26 11:48:37,817 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-26 11:48:37,818 - WARNING - [AUTH] Session contents: {}
+2025-11-26 11:49:33,486 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 11:49:38,982 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 11:49:38,994 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 11:49:40,234 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 11:49:44,687 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 11:49:45,790 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 11:49:51,223 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 12:03:35,376 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 12:03:40,732 - WARNING - Connection pool exhausted after 5.1s, using direct connection
+2025-11-26 12:03:46,319 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 12:17:30,905 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 12:17:36,534 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 12:17:38,327 - ERROR - Failed to get connection from PostgreSQL pool: 'NoneType' object has no attribute 'getconn'
+2025-11-26 12:17:38,345 - ERROR - Failed to get connection from PostgreSQL pool: 'NoneType' object has no attribute 'getconn'
+2025-11-26 12:17:38,560 - WARNING - Falling back to direct PostgreSQL connection
+2025-11-26 12:17:38,603 - WARNING - Falling back to direct PostgreSQL connection
+2025-11-26 14:13:30,749 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-26 14:13:31,607 - INFO - PostgreSQL connection pool initialized (min=5, max=20)
+2025-11-26 14:13:31,934 - INFO - Rate limiting enabled
+2025-11-26 14:13:31,939 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-26 14:13:31,940 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-26 14:14:02,018 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-26 14:14:02,019 - WARNING - [AUTH] Session contents: {}
+2025-11-26 14:14:54,385 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 14:15:49,159 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-26 14:15:49,753 - INFO - PostgreSQL connection pool initialized (min=5, max=20)
+2025-11-26 14:15:49,869 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-26 14:15:49,873 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-26 14:15:49,874 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-26 14:15:55,062 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source from 127.0.0.1
+2025-11-26 14:15:55,064 - WARNING - [AUTH] Session contents: {}
+2025-11-26 14:16:34,497 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 14:17:23,887 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 14:17:29,265 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 14:17:34,709 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 14:17:40,046 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 14:17:40,186 - WARNING - Connection pool exhausted after 5.0s, using direct connection
+2025-11-26 14:17:45,399 - WARNING - Connection pool exhausted after 5.1s, using direct connection

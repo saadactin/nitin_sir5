@@ -73,6 +73,8 @@ from hybrid_sync import (
     create_table_sync_tracking,
 )
 from utils.email_service import email_service
+from url_validator import validate_api_url, sanitize_url
+from db_utils import get_pg_connection, return_pg_connection
 
 # Global flag to track if shutdown email was sent
 _shutdown_email_sent = False
@@ -228,6 +230,34 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+
+# Initialize rate limiter
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    
+    # Configure rate limiter
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri="memory://",  # Use in-memory storage (can be changed to Redis in production)
+        strategy="fixed-window",  # or "moving-window"
+        headers_enabled=True  # Include rate limit headers in response
+    )
+    app.logger.info("Rate limiting enabled")
+except ImportError:
+    limiter = None
+    app.logger.warning("Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter")
+
+# Helper function to apply rate limiting conditionally
+def apply_rate_limit(limit_str):
+    """Apply rate limiting decorator if limiter is available"""
+    def decorator(func):
+        if limiter:
+            return limiter.limit(limit_str)(func)
+        return func
+    return decorator
 
 # Register blueprints
 app.register_blueprint(sync_summary_bp, url_prefix='/sync-summary')
@@ -559,15 +589,7 @@ def index():
                 # We can't test without password; mark as unknown unless password present in DB
                 # Attempt to fetch password from DB for testing (internal only)
                 try:
-                    from db_utils import load_pg_config
-                    pg_conf = load_pg_config()
-                    conn = psycopg2.connect(
-                        dbname=pg_conf.get('database', 'metrics_sync_tables'),
-                        user=pg_conf.get('username'),
-                        password=pg_conf.get('password'),
-                        host=pg_conf.get('host'),
-                        port=int(pg_conf.get('port', 5432))
-                    )
+                    conn = get_pg_connection()
                     cur = conn.cursor()
                     cur.execute("SELECT password FROM data_sources WHERE id = %s", (ds['id'],))
                     pw_row = cur.fetchone()
@@ -882,27 +904,21 @@ def sync_api_source(source_id):
     
     try:
         # Load source details from database
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT source_name, source_type, server_address, target_type, 
-                   target_database, connection_details,
-                   oauth_refresh_token, oauth_client_id, oauth_client_secret,
-                   oauth_access_token, oauth_token_expiry, oauth_api_domain
-            FROM data_sources 
-            WHERE id = %s AND is_active = true
-        """, (source_id,))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT source_name, source_type, server_address, target_type, 
+                       target_database, connection_details,
+                       oauth_refresh_token, oauth_client_id, oauth_client_secret,
+                       oauth_access_token, oauth_token_expiry, oauth_api_domain
+                FROM data_sources 
+                WHERE id = %s AND is_active = true
+            """, (source_id,))
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            return_pg_connection(conn)
         
         if not row:
             app.logger.warning(f"[API-SYNC] API source {source_id} not found or inactive")
@@ -1081,19 +1097,14 @@ def view_source_databases(source_id):
     """Show databases for a configured source (SQL Server or HANA)"""
     try:
         # Load source from DB
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        cur = conn.cursor()
-        cur.execute("SELECT id, source_name, source_type, server_address, username, password, connection_details FROM data_sources WHERE id = %s", (source_id,))
-        row = cur.fetchone()
-        cur.close(); conn.close()
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, source_name, source_type, server_address, username, password, connection_details FROM data_sources WHERE id = %s", (source_id,))
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            return_pg_connection(conn)
 
         if not row:
             flash('Source not found', 'danger')
@@ -1152,25 +1163,20 @@ def view_source_databases(source_id):
 def sync_source_background(source_id):
     """Start background sync for a configured source (SQL Server and REST API supported)"""
     try:
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT id, source_name, source_type, server_address, username, password, 
-                   target_database, connection_details,
-                   oauth_refresh_token, oauth_client_id, oauth_client_secret,
-                   oauth_access_token, oauth_token_expiry, oauth_api_domain
-            FROM data_sources WHERE id = %s
-        """, (source_id,))
-        row = cur.fetchone()
-        cur.close(); conn.close()
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, source_name, source_type, server_address, username, password, 
+                       target_database, connection_details,
+                       oauth_refresh_token, oauth_client_id, oauth_client_secret,
+                       oauth_access_token, oauth_token_expiry, oauth_api_domain
+                FROM data_sources WHERE id = %s
+            """, (source_id,))
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            return_pg_connection(conn)
 
         if not row:
             return jsonify({"success": False, "message": "Source not found"}), 404
@@ -1498,35 +1504,30 @@ def sync_source_background(source_id):
 def edit_source(source_id):
     """Edit an existing data source (pre-fill forms)"""
     try:
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        cur = conn.cursor()
-        if request.method == 'POST':
-            # Update record
-            form = request.form
-            source_name = form.get('source_name')
-            server = form.get('server')
-            username = form.get('username')
-            password = form.get('password')
-            target_type = form.get('target_type')
-            target_database = form.get('target_database')
-            cur.execute("UPDATE data_sources SET source_name=%s, server_address=%s, username=%s, password=%s, target_type=%s, target_database=%s, updated_at = CURRENT_TIMESTAMP WHERE id=%s",
-                        (source_name, server, username, password, target_type, target_database, source_id))
-            conn.commit()
-            cur.close(); conn.close()
-            flash('Source updated', 'success')
-            return redirect(url_for('index'))
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            if request.method == 'POST':
+                # Update record
+                form = request.form
+                source_name = form.get('source_name')
+                server = form.get('server')
+                username = form.get('username')
+                password = form.get('password')
+                target_type = form.get('target_type')
+                target_database = form.get('target_database')
+                cur.execute("UPDATE data_sources SET source_name=%s, server_address=%s, username=%s, password=%s, target_type=%s, target_database=%s, updated_at = CURRENT_TIMESTAMP WHERE id=%s",
+                            (source_name, server, username, password, target_type, target_database, source_id))
+                conn.commit()
+                cur.close()
+                flash('Source updated', 'success')
+                return redirect(url_for('index'))
 
-        cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE id = %s", (source_id,))
-        row = cur.fetchone()
-        cur.close(); conn.close()
+            cur.execute("SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details FROM data_sources WHERE id = %s", (source_id,))
+            row = cur.fetchone()
+            cur.close()
+        finally:
+            return_pg_connection(conn)
         if not row:
             flash('Source not found', 'danger')
             return redirect(url_for('index'))
@@ -1559,44 +1560,39 @@ def edit_source(source_id):
 @require_role(["admin", "operator"])
 def delete_source_route(source_id):
     try:
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        cur = conn.cursor()
-        
-        # First, get the source name before deletion
-        cur.execute("SELECT source_name FROM data_sources WHERE id = %s", (source_id,))
-        result = cur.fetchone()
-        source_name = result[0] if result else None
-        
-        # Delete all related data before deleting the source
-        # 1. Delete from schedules table
-        cur.execute("DELETE FROM metrics_sync_tables.schedules WHERE server_name = %s", (source_name,))
-        app.logger.info(f"[DELETE] Deleted {cur.rowcount} schedule(s) for source {source_name}")
-        
-        # 2. Delete from sync_history table
-        cur.execute("DELETE FROM metrics_sync_tables.sync_history WHERE server_name = %s", (source_name,))
-        app.logger.info(f"[DELETE] Deleted {cur.rowcount} sync history record(s) for source {source_name}")
-        
-        # 3. Delete from sync_database_status table
-        cur.execute("DELETE FROM sync_database_status WHERE server_name = %s", (source_name,))
-        app.logger.info(f"[DELETE] Deleted {cur.rowcount} database status record(s) for source {source_name}")
-        
-        # 4. Delete from sync_table_status table
-        cur.execute("DELETE FROM sync_table_status WHERE server_name = %s", (source_name,))
-        app.logger.info(f"[DELETE] Deleted {cur.rowcount} table status record(s) for source {source_name}")
-        
-        # 5. Finally, delete the source itself
-        cur.execute("DELETE FROM data_sources WHERE id = %s", (source_id,))
-        
-        conn.commit()
-        cur.close(); conn.close()
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            
+            # First, get the source name before deletion
+            cur.execute("SELECT source_name FROM data_sources WHERE id = %s", (source_id,))
+            result = cur.fetchone()
+            source_name = result[0] if result else None
+            
+            # Delete all related data before deleting the source
+            # 1. Delete from schedules table
+            cur.execute("DELETE FROM metrics_sync_tables.schedules WHERE server_name = %s", (source_name,))
+            app.logger.info(f"[DELETE] Deleted {cur.rowcount} schedule(s) for source {source_name}")
+            
+            # 2. Delete from sync_history table
+            cur.execute("DELETE FROM metrics_sync_tables.sync_history WHERE server_name = %s", (source_name,))
+            app.logger.info(f"[DELETE] Deleted {cur.rowcount} sync history record(s) for source {source_name}")
+            
+            # 3. Delete from sync_database_status table
+            cur.execute("DELETE FROM sync_database_status WHERE server_name = %s", (source_name,))
+            app.logger.info(f"[DELETE] Deleted {cur.rowcount} database status record(s) for source {source_name}")
+            
+            # 4. Delete from sync_table_status table
+            cur.execute("DELETE FROM sync_table_status WHERE server_name = %s", (source_name,))
+            app.logger.info(f"[DELETE] Deleted {cur.rowcount} table status record(s) for source {source_name}")
+            
+            # 5. Finally, delete the source itself
+            cur.execute("DELETE FROM data_sources WHERE id = %s", (source_id,))
+            
+            conn.commit()
+            cur.close()
+        finally:
+            return_pg_connection(conn)
         flash('Source and all related data deleted successfully', 'success')
         app.logger.info(f"[DELETE] Successfully deleted source {source_name} (ID: {source_id}) and all related data")
     except Exception as e:
@@ -1727,27 +1723,21 @@ def debug_list_data_sources():
     Useful to verify the running app can read the same DB where sources are inserted.
     """
     try:
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        cur = conn.cursor()
-        # Optimized: Only select needed columns, add LIMIT for large datasets
-        cur.execute("""
-            SELECT id, source_name, source_type, server_address, username, target_type, target_database, created_at 
-            FROM data_sources 
-            WHERE is_active = true
-            ORDER BY created_at DESC
-            LIMIT 1000
-        """)
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            # Optimized: Only select needed columns, add LIMIT for large datasets
+            cur.execute("""
+                SELECT id, source_name, source_type, server_address, username, target_type, target_database, created_at 
+                FROM data_sources 
+                WHERE is_active = true
+                ORDER BY created_at DESC
+                LIMIT 1000
+            """)
+            rows = cur.fetchall()
+            cur.close()
+        finally:
+            return_pg_connection(conn)
 
         ds_list = []
         for r in rows:
@@ -1776,30 +1766,25 @@ def debug_insert_sample_source():
     """
     try:
         name = request.args.get('name') or f"debug_sample_{int(datetime.now().timestamp())}"
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        cur = conn.cursor()
-        cur.execute("CREATE TABLE IF NOT EXISTS data_sources (id SERIAL PRIMARY KEY, source_name VARCHAR(255) UNIQUE NOT NULL, source_type VARCHAR(50) NOT NULL, server_address TEXT NOT NULL, username TEXT NOT NULL, password TEXT NOT NULL, target_type VARCHAR(50) NOT NULL, target_database VARCHAR(255) NOT NULL, is_active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-        # Debug endpoint - use environment variables instead of hardcoded values
-        debug_server = os.environ.get('DEBUG_SERVER', '127.0.0.1')
-        debug_username = os.environ.get('DEBUG_USERNAME', 'sa')
-        debug_password = os.environ.get('DEBUG_PASSWORD', '')
-        debug_target_db = os.environ.get('DEBUG_TARGET_DB', 'postgres')
-        
-        if not debug_password:
-            flash("DEBUG_PASSWORD environment variable not set. Cannot create debug source.", "warning")
-            return redirect(url_for('index'))
-        
-        cur.execute("INSERT INTO data_sources (source_name, source_type, server_address, username, password, target_type, target_database) VALUES (%s,%s,%s,%s,%s,%s,%s)", (name, 'sql_server', debug_server, debug_username, debug_password, 'postgresql', debug_target_db))
-        conn.commit()
-        cur.close(); conn.close()
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS data_sources (id SERIAL PRIMARY KEY, source_name VARCHAR(255) UNIQUE NOT NULL, source_type VARCHAR(50) NOT NULL, server_address TEXT NOT NULL, username TEXT NOT NULL, password TEXT NOT NULL, target_type VARCHAR(50) NOT NULL, target_database VARCHAR(255) NOT NULL, is_active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+            # Debug endpoint - use environment variables instead of hardcoded values
+            debug_server = os.environ.get('DEBUG_SERVER', '127.0.0.1')
+            debug_username = os.environ.get('DEBUG_USERNAME', 'sa')
+            debug_password = os.environ.get('DEBUG_PASSWORD', '')
+            debug_target_db = os.environ.get('DEBUG_TARGET_DB', 'postgres')
+            
+            if not debug_password:
+                flash("DEBUG_PASSWORD environment variable not set. Cannot create debug source.", "warning")
+                return redirect(url_for('index'))
+            
+            cur.execute("INSERT INTO data_sources (source_name, source_type, server_address, username, password, target_type, target_database) VALUES (%s,%s,%s,%s,%s,%s,%s)", (name, 'sql_server', debug_server, debug_username, debug_password, 'postgresql', debug_target_db))
+            conn.commit()
+            cur.close()
+        finally:
+            return_pg_connection(conn)
         flash(f"Inserted debug source '{name}'", 'success')
         app.logger.info(f"[DEBUG] Inserted sample data_source: {name}")
         return redirect(url_for('index'))
@@ -1845,7 +1830,10 @@ def load_pg_databases():
         pg_conf = load_pg_config()
         
         # Connect to the configured Postgres database (or fallback to 'postgres')
+        # Note: get_pg_connection() uses the default database from config
+        # For listing databases, we need to connect to 'postgres' database
         connect_db = pg_conf.get('database') or 'postgres'
+        # Use direct connection for listing databases (special case)
         conn = psycopg2.connect(
             dbname=connect_db,
             user=pg_conf.get("username"),
@@ -1853,10 +1841,13 @@ def load_pg_databases():
             host=pg_conf.get("host"),
             port=int(pg_conf.get("port", 5432)),
         )
-        cur = conn.cursor()
-        cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
-        dbs = [row[0] for row in cur.fetchall()]
-        conn.close()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
+            dbs = [row[0] for row in cur.fetchall()]
+            cur.close()
+        finally:
+            conn.close()  # Direct connection, not from pool
         return dbs
     except Exception as e:
         app.logger.exception(f"WARNING: Could not load Postgres DBs: {e}")
@@ -2339,44 +2330,38 @@ def add_sql_source():
                                       target_type=target_type)
             
             # Save source configuration to database
-            from db_utils import load_pg_config
-            pg_conf = load_pg_config()
-            conn = psycopg2.connect(
-                dbname=pg_conf.get('database', 'metrics_sync_tables'),
-                user=pg_conf.get("username"),
-                password=pg_conf.get("password"),
-                host=pg_conf.get("host"),
-                port=int(pg_conf.get("port", 5432))
-            )
-            cursor = conn.cursor()
-            
-            # Create sources table if it doesn't exist
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS data_sources (
-                    id SERIAL PRIMARY KEY,
-                    source_name VARCHAR(255) UNIQUE NOT NULL,
-                    source_type VARCHAR(50) NOT NULL,
-                    server_address TEXT NOT NULL,
-                    username TEXT NOT NULL,
-                    password TEXT NOT NULL,
-                    target_type VARCHAR(50) NOT NULL,
-                    target_database VARCHAR(255) NOT NULL,
-                    is_active BOOLEAN DEFAULT TRUE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Insert the new source
-            cursor.execute("""
-                INSERT INTO data_sources 
-                (source_name, source_type, server_address, username, password, target_type, target_database)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (source_name, 'sql_server', server, username, password, target_type, target_database))
-            
-            conn.commit()
-            cursor.close()
-            conn.close()
+            conn = get_pg_connection()
+            try:
+                cursor = conn.cursor()
+                
+                # Create sources table if it doesn't exist
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS data_sources (
+                        id SERIAL PRIMARY KEY,
+                        source_name VARCHAR(255) UNIQUE NOT NULL,
+                        source_type VARCHAR(50) NOT NULL,
+                        server_address TEXT NOT NULL,
+                        username TEXT NOT NULL,
+                        password TEXT NOT NULL,
+                        target_type VARCHAR(50) NOT NULL,
+                        target_database VARCHAR(255) NOT NULL,
+                        is_active BOOLEAN DEFAULT TRUE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                
+                # Insert the new source
+                cursor.execute("""
+                    INSERT INTO data_sources 
+                    (source_name, source_type, server_address, username, password, target_type, target_database)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (source_name, 'sql_server', server, username, password, target_type, target_database))
+                
+                conn.commit()
+                cursor.close()
+            finally:
+                return_pg_connection(conn)
             
             flash(f"SQL Server source '{source_name}' added successfully!", "success")
             return redirect(url_for("add_source_page"))
@@ -2449,55 +2434,49 @@ def add_hana_source():
             app.logger.info(f"Adding SAP HANA source: {host}:{port}")
             
             # Save source configuration to database
-            from db_utils import load_pg_config
-            pg_conf = load_pg_config()
-            conn = psycopg2.connect(
-                dbname=pg_conf.get('database', 'metrics_sync_tables'),
-                user=pg_conf.get("username"),
-                password=pg_conf.get("password"),
-                host=pg_conf.get("host"),
-                port=int(pg_conf.get("port", 5432))
-            )
-            cursor = conn.cursor()
-            
-            # Create sources table if it doesn't exist (same as SQL Server route)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS data_sources (
-                    id SERIAL PRIMARY KEY,
-                    source_name VARCHAR(255) UNIQUE NOT NULL,
-                    source_type VARCHAR(50) NOT NULL,
-                    server_address TEXT NOT NULL,
-                    username TEXT NOT NULL,
-                    password TEXT NOT NULL,
-                    target_type VARCHAR(50) NOT NULL,
-                    target_database VARCHAR(255) NOT NULL,
-                    connection_details JSONB,
-                    is_active BOOLEAN DEFAULT TRUE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Store HANA-specific details in connection_details JSON
-            connection_details = {
-                "host": host,
-                "port": port,
-                "instance": instance,
-                "hana_database": hana_database
-            }
-            
-            # Insert the new source
-            cursor.execute("""
-                INSERT INTO data_sources 
-                (source_name, source_type, server_address, username, password, 
-                 target_type, target_database, connection_details)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (source_name, 'sap_hana', f"{host}:{port}", username, password, 
-                  target_type, target_database, json.dumps(connection_details)))
-            
-            conn.commit()
-            cursor.close()
-            conn.close()
+            conn = get_pg_connection()
+            try:
+                cursor = conn.cursor()
+                
+                # Create sources table if it doesn't exist (same as SQL Server route)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS data_sources (
+                        id SERIAL PRIMARY KEY,
+                        source_name VARCHAR(255) UNIQUE NOT NULL,
+                        source_type VARCHAR(50) NOT NULL,
+                        server_address TEXT NOT NULL,
+                        username TEXT NOT NULL,
+                        password TEXT NOT NULL,
+                        target_type VARCHAR(50) NOT NULL,
+                        target_database VARCHAR(255) NOT NULL,
+                        connection_details JSONB,
+                        is_active BOOLEAN DEFAULT TRUE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                
+                # Store HANA-specific details in connection_details JSON
+                connection_details = {
+                    "host": host,
+                    "port": port,
+                    "instance": instance,
+                    "hana_database": hana_database
+                }
+                
+                # Insert the new source
+                cursor.execute("""
+                    INSERT INTO data_sources 
+                    (source_name, source_type, server_address, username, password, 
+                     target_type, target_database, connection_details)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (source_name, 'sap_hana', f"{host}:{port}", username, password, 
+                      target_type, target_database, json.dumps(connection_details)))
+                
+                conn.commit()
+                cursor.close()
+            finally:
+                return_pg_connection(conn)
             
             flash(f"SAP HANA source '{source_name}' added successfully!", "success")
             return redirect(url_for("add_source_page"))
@@ -2644,20 +2623,14 @@ def migrate_hana_to_clickhouse():
 def view_hana_tables_page(source_id):
     """Render HANA tables browser page"""
     try:
-        from db_utils import load_pg_config
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get("username"),
-            password=pg_conf.get("password"),
-            host=pg_conf.get("host"),
-            port=int(pg_conf.get("port", 5432))
-        )
-        cursor = conn.cursor()
-        cursor.execute("SELECT source_name FROM data_sources WHERE id = %s", (source_id,))
-        row = cursor.fetchone()
-        cursor.close()
-        conn.close()
+        conn = get_pg_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT source_name FROM data_sources WHERE id = %s", (source_id,))
+            row = cursor.fetchone()
+            cursor.close()
+        finally:
+            return_pg_connection(conn)
         
         if not row:
             flash("Source not found", "danger")
@@ -2993,6 +2966,7 @@ def sync_hana_source(source_id):
 
 @app.route("/add-source/api", methods=["GET", "POST"])
 @require_role(["admin", "operator"])
+@apply_rate_limit("10 per minute")
 def add_api_source():
     """Add REST API as a data source"""
     if request.method == "POST":
@@ -3046,14 +3020,26 @@ def add_api_source():
                                       api_url=api_url,
                                       target_type=target_type)
             
-            # Validate URL format
-            if not api_url.startswith(('http://', 'https://')):
-                flash("API URL must start with http:// or https://", "danger")
+            # Validate URL format and security
+            is_valid, error_msg = validate_api_url(api_url)
+            if not is_valid:
+                flash(f"Invalid API URL: {error_msg}", "danger")
                 return render_template("add_api_source.html",
                                       source_name=source_name,
                                       api_url=api_url,
                                       target_type=target_type)
             
+            # Sanitize URL
+            sanitized_url = sanitize_url(api_url)
+            if not sanitized_url:
+                flash("Failed to sanitize API URL. Please check the URL format.", "danger")
+                return render_template("add_api_source.html",
+                                      source_name=source_name,
+                                      api_url=api_url,
+                                      target_type=target_type)
+            
+            # Use sanitized URL
+            api_url = sanitized_url
             app.logger.info(f"Adding REST API source: {api_url}")
             
             # Save source configuration to database
@@ -3345,12 +3331,32 @@ def add_api_source():
 
 @app.route("/test_api_connection", methods=["POST"])
 @require_role(["admin", "operator"])
+@apply_rate_limit("20 per minute")
 def test_api_connection():
     """Test API connection and fetch sample data"""
     import time
     try:
         data = request.get_json()
         api_url = data.get("api_url", "").strip()
+        
+        # Validate URL if provided
+        if api_url:
+            is_valid, error_msg = validate_api_url(api_url)
+            if not is_valid:
+                return jsonify({
+                    "success": False,
+                    "message": f"Invalid API URL: {error_msg}"
+                }), 400
+            
+            # Sanitize URL
+            sanitized_url = sanitize_url(api_url)
+            if not sanitized_url:
+                return jsonify({
+                    "success": False,
+                    "message": "Failed to sanitize API URL. Please check the URL format."
+                }), 400
+            api_url = sanitized_url
+        
         auth_type = data.get("auth_type", "none")
         auth_token = data.get("auth_token", "").strip()
         basic_username = data.get("basic_username", "").strip()
@@ -3820,8 +3826,10 @@ def get_target_databases():
 def dashboard():
     """Dashboard route - optimized with minimal data loading"""
     # Load essential data only - rest can be loaded via AJAX
+    from dashboard import get_dashboard_metrics
     last_10 = get_last_10_syncs()
     last_detail = get_last_sync_details()
+    metrics = get_dashboard_metrics()
     # Load schedules asynchronously to avoid blocking
     try:
         jobs = get_schedules()[:20]  # Limit to 20 most recent
@@ -3832,6 +3840,7 @@ def dashboard():
         "dashboard.html",
         last_10=last_10,
         last_detail=last_detail,
+        metrics=metrics,
         jobs=jobs,
         role=session.get("role")
     )
@@ -3841,10 +3850,12 @@ def dashboard():
 @require_role(["admin", "operator", "viewer"])
 def dashboard_data():
     """Return sync history as JSON for auto-refresh"""
-    return {
+    from dashboard import get_dashboard_metrics
+    return jsonify({
         "last_detail": get_last_sync_details(),
         "last_10": get_last_10_syncs(),
-    }
+        "metrics": get_dashboard_metrics()
+    })
 # ------------------ Schedule Routes ------------------
 
 @app.route("/schedule", methods=["GET", "POST"])
@@ -3863,48 +3874,43 @@ def schedule_page():
     sql_server_sources = []
     hana_sources = []
     try:
-        pg_conf = load_pg_config()
-        conn = psycopg2.connect(
-            dbname=pg_conf.get('database', 'metrics_sync_tables'),
-            user=pg_conf.get('username'),
-            password=pg_conf.get('password'),
-            host=pg_conf.get('host'),
-            port=int(pg_conf.get('port', 5432))
-        )
-        cur = conn.cursor()
-        # Optimized query with LIMIT to prevent loading too many sources
-        cur.execute("""
-            SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details 
-            FROM data_sources 
-            WHERE is_active = true AND source_type IN ('sql_server', 'sap_hana')
-            ORDER BY created_at DESC
-            LIMIT 500
-        """)
-        rows = cur.fetchall()
-        app.logger.info(f"[SCHEDULE] Raw query returned {len(rows)} row(s)")
-        
-        for r in rows:
-            ds = {
-                'id': r[0],
-                'source_name': r[1],
-                'source_type': r[2],
-                'server_address': r[3],
-                'username': r[4],
-                'target_type': r[5],
-                'target_database': r[6],
-                'connection_details': r[7]
-            }
-            data_sources.append(ds)
+        conn = get_pg_connection()
+        try:
+            cur = conn.cursor()
+            # Optimized query with LIMIT to prevent loading too many sources
+            cur.execute("""
+                SELECT id, source_name, source_type, server_address, username, target_type, target_database, connection_details 
+                FROM data_sources 
+                WHERE is_active = true AND source_type IN ('sql_server', 'sap_hana')
+                ORDER BY created_at DESC
+                LIMIT 500
+            """)
+            rows = cur.fetchall()
+            app.logger.info(f"[SCHEDULE] Raw query returned {len(rows)} row(s)")
             
-            # Filter immediately while building
-            source_type = ds.get('source_type', '').strip().lower()
-            if source_type == 'sql_server':
-                sql_server_sources.append(ds)
-            elif source_type == 'sap_hana':
-                hana_sources.append(ds)
-        
-        cur.close()
-        conn.close()
+            for r in rows:
+                ds = {
+                    'id': r[0],
+                    'source_name': r[1],
+                    'source_type': r[2],
+                    'server_address': r[3],
+                    'username': r[4],
+                    'target_type': r[5],
+                    'target_database': r[6],
+                    'connection_details': r[7]
+                }
+                data_sources.append(ds)
+                
+                # Filter immediately while building
+                source_type = ds.get('source_type', '').strip().lower()
+                if source_type == 'sql_server':
+                    sql_server_sources.append(ds)
+                elif source_type == 'sap_hana':
+                    hana_sources.append(ds)
+            
+            cur.close()
+        finally:
+            return_pg_connection(conn)
         
         # Debug logging
         app.logger.info(f"[SCHEDULE] Loaded {len(data_sources)} total data sources for scheduling")
@@ -4756,71 +4762,66 @@ def get_advanced_analytics_metrics():
     }
     
     try:
-        conn = psycopg2.connect(
-            host=os.getenv("POSTGRES_HOST", "localhost"),
-            port=int(os.getenv("POSTGRES_PORT", 5432)),
-            database=os.getenv("POSTGRES_DB", "test1"),
-            user=os.getenv("POSTGRES_USER", "migration_user"),
-            password=os.getenv("POSTGRES_PASSWORD", "StrongPassword123")
-        )
-        cursor = conn.cursor()
-        
-        # Get today's date
-        today = datetime.now().date()
-        
-        # Total syncs today - count only 'success' status (not 'started')
-        cursor.execute("""
-            SELECT COUNT(*) FROM metrics_sync_tables.sync_history 
-            WHERE DATE(sync_time) = %s AND status IN ('success', 'failed', 'error')
-        """, (today,))
-        metrics['total_syncs_today'] = cursor.fetchone()[0] or 0
-        
-        # Successful syncs today
-        cursor.execute("""
+        conn = get_pg_connection()
+        try:
+            cursor = conn.cursor()
+            
+            # Get today's date
+            today = datetime.now().date()
+            
+            # Total syncs today - count only 'success' status (not 'started')
+            cursor.execute("""
+                SELECT COUNT(*) FROM metrics_sync_tables.sync_history 
+                WHERE DATE(sync_time) = %s AND status IN ('success', 'failed', 'error')
+            """, (today,))
+            metrics['total_syncs_today'] = cursor.fetchone()[0] or 0
+            
+            # Successful syncs today
+            cursor.execute("""
             SELECT COUNT(*) FROM metrics_sync_tables.sync_history 
             WHERE DATE(sync_time) = %s AND status = 'success'
         """, (today,))
-        metrics['successful_syncs'] = cursor.fetchone()[0] or 0
-        
-        # Failed syncs today
-        cursor.execute("""
+            metrics['successful_syncs'] = cursor.fetchone()[0] or 0
+            
+            # Failed syncs today
+            cursor.execute("""
             SELECT COUNT(*) FROM metrics_sync_tables.sync_history 
             WHERE DATE(sync_time) = %s AND status IN ('failed', 'error')
         """, (today,))
-        metrics['failed_syncs'] = cursor.fetchone()[0] or 0
-        
-        # Success rate
-        if metrics['total_syncs_today'] > 0:
-            metrics['success_rate'] = round((metrics['successful_syncs'] / metrics['total_syncs_today']) * 100, 1)
-        else:
-            metrics['success_rate'] = 100
-        
-        # Active syncs - changed to 'started' since that's what your system uses
-        cursor.execute("""
+            metrics['failed_syncs'] = cursor.fetchone()[0] or 0
+            
+            # Success rate
+            if metrics['total_syncs_today'] > 0:
+                metrics['success_rate'] = round((metrics['successful_syncs'] / metrics['total_syncs_today']) * 100, 1)
+            else:
+                metrics['success_rate'] = 100
+            
+            # Active syncs - changed to 'started' since that's what your system uses
+            cursor.execute("""
             SELECT COUNT(DISTINCT server_name) FROM metrics_sync_tables.sync_history 
             WHERE status = 'started'
-        """)
-        metrics['active_syncs'] = cursor.fetchone()[0] or 0
-        
-        # Active servers
-        cursor.execute("""
-            SELECT COUNT(DISTINCT server_name) FROM metrics_sync_tables.sync_history 
-            WHERE status = 'started'
-        """)
-        metrics['active_servers'] = cursor.fetchone()[0] or 0
-        
-        # Total unique servers (all time)
-        cursor.execute("""
-            SELECT COUNT(DISTINCT server_name) FROM metrics_sync_tables.sync_history
-        """)
-        metrics['total_servers'] = cursor.fetchone()[0] or 0
-        
-        # Average sync time (simplified - sync_history doesn't have duration data)
-        # We'll just show count of syncs in last 24 hours
-        metrics['avg_sync_time'] = 'N/A'
-        
-        # Performance data (last 24 hours, hourly) - simplified to just show sync counts
-        cursor.execute("""
+            """)
+            metrics['active_syncs'] = cursor.fetchone()[0] or 0
+            
+            # Active servers
+            cursor.execute("""
+                SELECT COUNT(DISTINCT server_name) FROM metrics_sync_tables.sync_history 
+                WHERE status = 'started'
+            """)
+            metrics['active_servers'] = cursor.fetchone()[0] or 0
+            
+            # Total unique servers (all time)
+            cursor.execute("""
+                SELECT COUNT(DISTINCT server_name) FROM metrics_sync_tables.sync_history
+            """)
+            metrics['total_servers'] = cursor.fetchone()[0] or 0
+            
+            # Average sync time (simplified - sync_history doesn't have duration data)
+            # We'll just show count of syncs in last 24 hours
+            metrics['avg_sync_time'] = 'N/A'
+            
+            # Performance data (last 24 hours, hourly) - simplified to just show sync counts
+            cursor.execute("""
             SELECT 
                 TO_CHAR(DATE_TRUNC('hour', sync_time), 'HH24:MI') as hour,
                 COUNT(*) as sync_count
@@ -4829,33 +4830,33 @@ def get_advanced_analytics_metrics():
             AND status = 'success'
             GROUP BY DATE_TRUNC('hour', sync_time)
             ORDER BY DATE_TRUNC('hour', sync_time)
-        """)
-        perf_data = cursor.fetchall()
-        metrics['performance_labels'] = [row[0] for row in perf_data] if perf_data else ['00:00']
-        metrics['performance_data'] = [row[1] for row in perf_data] if perf_data else [0]
-        
-        # Top servers by sync count (last 7 days) - show top 50 for production scale
-        cursor.execute("""
+            """)
+            perf_data = cursor.fetchall()
+            metrics['performance_labels'] = [row[0] for row in perf_data] if perf_data else ['00:00']
+            metrics['performance_data'] = [row[1] for row in perf_data] if perf_data else [0]
+            
+            # Top servers by sync count (last 7 days) - show top 50 for production scale
+            cursor.execute("""
             SELECT server_name, COUNT(*) as sync_count
             FROM metrics_sync_tables.sync_history 
             WHERE sync_time >= NOW() - INTERVAL '7 days'
             AND status = 'success'
             GROUP BY server_name
             ORDER BY sync_count DESC
-            LIMIT 50
-        """)
-        top_servers = cursor.fetchall()
-        metrics['top_servers_labels'] = [row[0] for row in top_servers] if top_servers else ['No Data']
-        metrics['top_servers_data'] = [row[1] for row in top_servers] if top_servers else [0]
-        
-        # Duration distribution - skip for now since we don't have duration data
-        # Just return default empty distribution
-        metrics['duration_distribution'] = [0, 0, 0, 0, 0]
-        
-        # Server statuses - OPTIMIZED for production (100+ servers)
-        # Single query with all needed data - avoids N+1 query problem
-        cursor.execute("""
-            WITH latest_sync AS (
+                LIMIT 50
+            """)
+            top_servers = cursor.fetchall()
+            metrics['top_servers_labels'] = [row[0] for row in top_servers] if top_servers else ['No Data']
+            metrics['top_servers_data'] = [row[1] for row in top_servers] if top_servers else [0]
+            
+            # Duration distribution - skip for now since we don't have duration data
+            # Just return default empty distribution
+            metrics['duration_distribution'] = [0, 0, 0, 0, 0]
+            
+            # Server statuses - OPTIMIZED for production (100+ servers)
+            # Single query with all needed data - avoids N+1 query problem
+            cursor.execute("""
+                WITH latest_sync AS (
                 SELECT DISTINCT ON (server_name)
                     server_name,
                     status,
@@ -4891,75 +4892,76 @@ def get_advanced_analytics_metrics():
             LEFT JOIN success_rates sr ON ls.server_name = sr.server_name
             LEFT JOIN today_counts tc ON ls.server_name = tc.server_name
             ORDER BY ls.sync_time DESC
-        """, (today,))
-        server_rows = cursor.fetchall()
-        
-        for row in server_rows:
-            server_name, status, last_sync, success_rate_7d, tables_count = row
+            """, (today,))
+            server_rows = cursor.fetchall()
             
-            # Determine status color
-            status_class = 'online' if status == 'success' else ('syncing' if status == 'started' else 'offline')
+            for row in server_rows:
+                server_name, status, last_sync, success_rate_7d, tables_count = row
+                
+                # Determine status color
+                status_class = 'online' if status == 'success' else ('syncing' if status == 'started' else 'offline')
+                
+                metrics['server_statuses'].append({
+                    'name': server_name,
+                    'status': status_class,
+                    'last_sync': last_sync.strftime('%Y-%m-%d %H:%M:%S') if last_sync else 'Never',
+                    'duration': 'N/A',  # We don't have duration data
+                    'success_rate_7d': round(success_rate_7d, 1),
+                    'tables_synced': tables_count
+                })
             
-            metrics['server_statuses'].append({
-                'name': server_name,
-                'status': status_class,
-                'last_sync': last_sync.strftime('%Y-%m-%d %H:%M:%S') if last_sync else 'Never',
-                'duration': 'N/A',  # We don't have duration data
-                'success_rate_7d': round(success_rate_7d, 1),
-                'tables_synced': tables_count
-            })
-        
-        # Recent activities (last 100 for production scale)
-        cursor.execute("""
-            SELECT server_name, status, sync_time, details
-            FROM metrics_sync_tables.sync_history 
-            ORDER BY sync_time DESC
-            LIMIT 100
-        """)
-        activities = cursor.fetchall()
-        
-        for activity in activities:
-            server_name, status, sync_time, details = activity
+            # Recent activities (last 100 for production scale)
+            cursor.execute("""
+                SELECT server_name, status, sync_time, details
+                FROM metrics_sync_tables.sync_history 
+                ORDER BY sync_time DESC
+                LIMIT 100
+            """)
+            activities = cursor.fetchall()
             
-            # Skip 'started' status entries for activity feed
-            if status == 'started':
-                continue
+            for activity in activities:
+                server_name, status, sync_time, details = activity
+                
+                # Skip 'started' status entries for activity feed
+                if status == 'started':
+                    continue
+                
+                if status == 'success':
+                    icon = 'check_circle'
+                    icon_color = 'green'
+                    message = f"Successfully synced {server_name}"
+                elif status == 'failed' or status == 'error':
+                    icon = 'error'
+                    icon_color = 'red'
+                    message = f"Failed to sync {server_name}"
+                    if details:
+                        message += f": {details[:50]}..."
+                else:
+                    icon = 'info'
+                    icon_color = 'gray'
+                    message = f"{server_name} - {status}"
+                
+                # Calculate time ago
+                time_diff = datetime.now() - sync_time
+                if time_diff.seconds < 60:
+                    time_ago = f"{time_diff.seconds}s ago"
+                elif time_diff.seconds < 3600:
+                    time_ago = f"{time_diff.seconds // 60}m ago"
+                elif time_diff.days == 0:
+                    time_ago = f"{time_diff.seconds // 3600}h ago"
+                else:
+                    time_ago = f"{time_diff.days}d ago"
+                
+                metrics['recent_activities'].append({
+                    'icon': icon,
+                    'icon_color': icon_color,
+                    'message': message,
+                    'timestamp': time_ago
+                })
             
-            if status == 'success':
-                icon = 'check_circle'
-                icon_color = 'green'
-                message = f"Successfully synced {server_name}"
-            elif status == 'failed' or status == 'error':
-                icon = 'error'
-                icon_color = 'red'
-                message = f"Failed to sync {server_name}"
-                if details:
-                    message += f": {details[:50]}..."
-            else:
-                icon = 'info'
-                icon_color = 'gray'
-                message = f"{server_name} - {status}"
-            
-            # Calculate time ago
-            time_diff = datetime.now() - sync_time
-            if time_diff.seconds < 60:
-                time_ago = f"{time_diff.seconds}s ago"
-            elif time_diff.seconds < 3600:
-                time_ago = f"{time_diff.seconds // 60}m ago"
-            elif time_diff.days == 0:
-                time_ago = f"{time_diff.seconds // 3600}h ago"
-            else:
-                time_ago = f"{time_diff.days}d ago"
-            
-            metrics['recent_activities'].append({
-                'icon': icon,
-                'icon_color': icon_color,
-                'message': message,
-                'timestamp': time_ago
-            })
-        
-        cursor.close()
-        conn.close()
+            cursor.close()
+        finally:
+            return_pg_connection(conn)
         
     except Exception as e:
         logging.error(f"Error getting advanced analytics metrics: {e}")
@@ -4969,65 +4971,61 @@ def get_advanced_analytics_metrics():
 def get_recent_activity_feed():
     """Get recent activity feed for AJAX updates"""
     try:
-        conn = psycopg2.connect(
-            host=os.getenv("POSTGRES_HOST", "localhost"),
-            port=int(os.getenv("POSTGRES_PORT", 5432)),
-            database=os.getenv("POSTGRES_DB", "test1"),
-            user=os.getenv("POSTGRES_USER", "migration_user"),
-            password=os.getenv("POSTGRES_PASSWORD", "StrongPassword123")
-        )
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT server_name, status, sync_time, details
-            FROM metrics_sync_tables.sync_history 
-            ORDER BY sync_time DESC
-            LIMIT 100
-        """)
-        activities = cursor.fetchall()
-        
-        result = []
-        for activity in activities:
-            server_name, status, sync_time, details = activity
+        conn = get_pg_connection()
+        try:
+            cursor = conn.cursor()
             
-            # Skip 'started' status entries
-            if status == 'started':
-                continue
+            cursor.execute("""
+                SELECT server_name, status, sync_time, details
+                FROM metrics_sync_tables.sync_history 
+                ORDER BY sync_time DESC
+                LIMIT 100
+            """)
+            activities = cursor.fetchall()
             
-            if status == 'success':
-                icon = 'check_circle'
-                icon_color = 'green'
-                message = f"Successfully synced {server_name}"
-            elif status == 'failed' or status == 'error':
-                icon = 'error'
-                icon_color = 'red'
-                message = f"Failed to sync {server_name}"
-                if details:
-                    message += f": {details[:50]}..."
-            else:
-                icon = 'info'
-                icon_color = 'gray'
-                message = f"{server_name} - {status}"
+            result = []
+            for activity in activities:
+                server_name, status, sync_time, details = activity
+                
+                # Skip 'started' status entries
+                if status == 'started':
+                    continue
+                
+                if status == 'success':
+                    icon = 'check_circle'
+                    icon_color = 'green'
+                    message = f"Successfully synced {server_name}"
+                elif status == 'failed' or status == 'error':
+                    icon = 'error'
+                    icon_color = 'red'
+                    message = f"Failed to sync {server_name}"
+                    if details:
+                        message += f": {details[:50]}..."
+                else:
+                    icon = 'info'
+                    icon_color = 'gray'
+                    message = f"{server_name} - {status}"
+                
+                time_diff = datetime.now() - sync_time
+                if time_diff.seconds < 60:
+                    time_ago = f"{time_diff.seconds}s ago"
+                elif time_diff.seconds < 3600:
+                    time_ago = f"{time_diff.seconds // 60}m ago"
+                elif time_diff.days == 0:
+                    time_ago = f"{time_diff.seconds // 3600}h ago"
+                else:
+                    time_ago = f"{time_diff.days}d ago"
+                
+                result.append({
+                    'icon': icon,
+                    'icon_color': icon_color,
+                    'message': message,
+                    'timestamp': time_ago
+                })
             
-            time_diff = datetime.now() - sync_time
-            if time_diff.seconds < 60:
-                time_ago = f"{time_diff.seconds}s ago"
-            elif time_diff.seconds < 3600:
-                time_ago = f"{time_diff.seconds // 60}m ago"
-            elif time_diff.days == 0:
-                time_ago = f"{time_diff.seconds // 3600}h ago"
-            else:
-                time_ago = f"{time_diff.days}d ago"
-            
-            result.append({
-                'icon': icon,
-                'icon_color': icon_color,
-                'message': message,
-                'timestamp': time_ago
-            })
-        
-        cursor.close()
-        conn.close()
+            cursor.close()
+        finally:
+            return_pg_connection(conn)
         
         return result
     except Exception as e:
@@ -5248,7 +5246,7 @@ if __name__ == "__main__":
                 app.logger.warning("[POOL] PostgreSQL config not available, pools will be created on-demand")
         except Exception as e:
             app.logger.warning(f"[POOL] Connection pool initialization failed (will use direct connections): {e}")
-        
+                
         app.logger.info("[STARTUP] Application startup complete!")
         
         app.logger.info("[READY] Application ready! Access at: http://127.0.0.1:5000")
