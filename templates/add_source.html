@@ -31,6 +31,7 @@
       },
     };
   </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-enhancements.css') }}">
   <style>
     .material-icons { font-size: 24px; vertical-align: middle; }
     .source-card {
@@ -94,7 +95,7 @@
                   ClickHouse
                 </span>
               </div>
-              <button class="mt-4 w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 font-medium">
+              <button class="btn btn-primary btn-block mt-4">
                 <span class="material-icons">add_circle</span>
                 <span>Add SQL Server</span>
               </button>
@@ -120,7 +121,7 @@
                   ClickHouse
                 </span>
               </div>
-              <button class="mt-4 w-full px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors flex items-center justify-center gap-2 font-medium">
+              <button class="btn btn-success btn-block mt-4">
                 <span class="material-icons">add_circle</span>
                 <span>Add SAP HANA</span>
               </button>
@@ -146,7 +147,7 @@
                   ClickHouse
                 </span>
               </div>
-              <button class="mt-4 w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-medium">
+              <button class="btn btn-primary btn-block mt-4" style="background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);">
                 <span class="material-icons">add_circle</span>
                 <span>Add API Source</span>
               </button>

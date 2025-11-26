@@ -33,6 +33,7 @@
       },
     };
   </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-enhancements.css') }}">
   <style>.material-icons { font-size: 20px; }</style>
   <style>
     /* Simple inline spinner for sync buttons */
@@ -102,22 +103,22 @@
               </div>
             </div>
             <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 dark:bg-gray-800 border-t border-border-light dark:border-border-dark flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
-              <a href="{{ url_for('view_server_databases', server_name=name) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
+              <a href="{{ url_for('view_server_databases', server_name=name) }}" class="btn btn-secondary btn-sm flex-1 min-w-full sm:min-w-[120px]">
                 <span class="material-icons text-base sm:text-lg">dataset</span>
                 <span>Databases</span>
               </a>
-              <a href="{{ url_for('sync_background', server_name=name) }}" id="sync-button-{{ loop.index }}" class="sync-button flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors">
+              <a href="{{ url_for('sync_background', server_name=name) }}" id="sync-button-{{ loop.index }}" class="sync-button btn btn-primary btn-sm flex-1 min-w-full sm:min-w-[120px]">
                 <span class="material-icons text-base sm:text-lg">sync</span>
                 <span>Sync Server</span>
               </a>
               {% if role in ['admin','operator'] %}
               <div class="flex gap-2 w-full sm:w-auto">
-                <a href="{{ url_for('edit_server', server_name=name) }}" class="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-warning border border-warning rounded-lg hover:bg-warning hover:text-white transition-colors">
+                <a href="{{ url_for('edit_server', server_name=name) }}" class="btn btn-warning btn-sm flex-1 sm:flex-none">
                   <span class="material-icons text-base sm:text-lg">edit</span>
                   <span class="hidden sm:inline">Edit</span>
                 </a>
                 <form action="{{ url_for('delete_server_route', server_name=name) }}" method="POST" onsubmit="return confirm('Delete server {{ name }}?');" class="flex-1 sm:flex-none">
-                  <button type="submit" class="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-danger border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
+                  <button type="submit" class="btn btn-danger btn-sm w-full">
                     <span class="material-icons text-base sm:text-lg">delete</span>
                     <span class="hidden sm:inline">Delete</span>
                   </button>
@@ -161,29 +162,29 @@
               {# Show Databases button only for SQL Server and HANA, not for REST API #}
               {% if ds.source_type != 'rest_api' %}
                 {% if ds.source_type == 'sap_hana' %}
-                <a href="{{ url_for('view_hana_tables_page', source_id=ds.id) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
+                <a href="{{ url_for('view_hana_tables_page', source_id=ds.id) }}" class="btn btn-secondary btn-sm flex-1 min-w-full sm:min-w-[120px]">
                   <span class="material-icons text-base sm:text-lg">table_chart</span>
                   <span>View Tables</span>
                 </a>
                 {% else %}
-                <a href="{{ url_for('view_source_databases', source_id=ds.id) }}" class="flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
+                <a href="{{ url_for('view_source_databases', source_id=ds.id) }}" class="btn btn-secondary btn-sm flex-1 min-w-full sm:min-w-[120px]">
                   <span class="material-icons text-base sm:text-lg">dataset</span>
                   <span>Databases</span>
                 </a>
                 {% endif %}
               {% endif %}
-              <a href="{{ url_for('sync_source_background', source_id=ds.id) }}" id="sync-source-{{ ds.id }}" data-source-id="{{ ds.id }}" class="sync-button flex-1 min-w-full sm:min-w-[120px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors">
+              <a href="{{ url_for('sync_source_background', source_id=ds.id) }}" id="sync-source-{{ ds.id }}" data-source-id="{{ ds.id }}" class="sync-button btn btn-primary btn-sm flex-1 min-w-full sm:min-w-[120px]">
                 <span class="material-icons text-base sm:text-lg">sync</span>
                 <span>Sync Server</span>
               </a>
               {% if role in ['admin','operator'] %}
               <div class="flex gap-2 w-full sm:w-auto">
-                <a href="{{ url_for('edit_source', source_id=ds.id) }}" class="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-warning border border-warning rounded-lg hover:bg-warning hover:text-white transition-colors">
+                <a href="{{ url_for('edit_source', source_id=ds.id) }}" class="btn btn-warning btn-sm flex-1 sm:flex-none">
                   <span class="material-icons text-base sm:text-lg">edit</span>
                   <span class="hidden sm:inline">Edit</span>
                 </a>
                 <form action="{{ url_for('delete_source_route', source_id=ds.id) }}" method="POST" onsubmit="return confirm('Delete source {{ ds.source_name }}?');" class="flex-1 sm:flex-none">
-                  <button type="submit" class="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs sm:text-sm font-medium text-danger border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
+                  <button type="submit" class="btn btn-danger btn-sm w-full">
                     <span class="material-icons text-base sm:text-lg">delete</span>
                     <span class="hidden sm:inline">Delete</span>
                   </button>
@@ -238,8 +239,8 @@ async function checkRunningSync(button) {
         button.dataset.origHtml = button.innerHTML;
         button.dataset.origClasses = button.className;
 
-        button.classList.remove('bg-primary', 'hover:bg-primary-hover');
-        button.classList.add('bg-danger');
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-danger', 'btn-loading');
         button.style.pointerEvents = 'none';
 
         // Start polling for this running sync
@@ -270,13 +271,15 @@ async function startPolling(button, statusUrl) {
           
           // Update button with progress
           if (status === 'running' || status === 'starting') {
+            button.classList.add('btn-loading');
             if (currentDb) {
-              button.innerHTML = `<span class="material-icons animate-spin">sync</span> ${currentDb}`;
+              button.innerHTML = `<span>${currentDb}</span>`;
             } else {
-              button.innerHTML = `<span class="material-icons animate-spin">sync</span> ${message}`;
+              button.innerHTML = `<span>${message}</span>`;
             }
           } else if (status === 'stopping') {
-            button.innerHTML = '<span class="material-icons">stop</span> Stopping...';
+            button.classList.remove('btn-loading');
+            button.innerHTML = '<span class="material-icons">stop</span><span>Stopping...</span>';
           }
           
           // Continue polling for active syncs
@@ -304,16 +307,18 @@ async function startPolling(button, statusUrl) {
 
   // show final result based on status
   if (finalStatus === 'completed' || finalStatus === 'success') {
-    button.classList.remove('bg-danger');
-    button.classList.add('bg-accent');
-    button.innerHTML = '<span class="material-icons">check_circle</span> Done';
+    button.classList.remove('btn-loading', 'btn-danger');
+    button.classList.add('btn-success');
+    button.innerHTML = '<span class="material-icons">check_circle</span><span>Done</span>';
   } else if (finalStatus === 'failed') {
+    button.classList.remove('btn-loading');
     button.className = button.dataset.origClasses; // revert
-    button.innerHTML = '<span class="material-icons">error</span> Failed';
+    button.innerHTML = '<span class="material-icons">error</span><span>Failed</span>';
   } else {
     // unknown/none
+    button.classList.remove('btn-loading');
     button.className = button.dataset.origClasses;
-    button.innerHTML = '<span class="material-icons">help</span> Unknown';
+    button.innerHTML = '<span class="material-icons">help</span><span>Unknown</span>';
   }
 
   // restore after a short delay so user sees result
@@ -353,7 +358,8 @@ document.querySelectorAll('.sync-button').forEach(button => {
 
           button.classList.remove('bg-primary', 'hover:bg-primary-hover');
           button.classList.add('bg-danger');
-          button.innerHTML = '<span class="material-icons animate-spin">sync</span> Already Running...';
+          button.classList.add('btn-loading');
+          button.innerHTML = '<span>Already Running...</span>';
           button.style.pointerEvents = 'none';
 
           // derive polling URL depending on whether this is a source
@@ -373,10 +379,10 @@ document.querySelectorAll('.sync-button').forEach(button => {
       button.dataset.origHtml = button.innerHTML;
       button.dataset.origClasses = button.className;
 
-      // Change to red while syncing and show running text (spinner)
-      button.classList.remove('bg-primary', 'hover:bg-primary-hover');
-      button.classList.add('bg-danger');
-      button.innerHTML = '<span class="material-icons animate-spin">sync</span> Running...';
+      // Change to danger while syncing and show running text with loading state
+      button.classList.remove('btn-primary');
+      button.classList.add('btn-danger', 'btn-loading');
+      button.innerHTML = '<span>Running...</span>';
       button.style.pointerEvents = 'none';
 
   // derive polling URL depending on whether this is a source
@@ -389,9 +395,10 @@ document.querySelectorAll('.sync-button').forEach(button => {
     } catch (err) {
       // failed to start background sync
       console.error('start error', err);
-      button.innerHTML = '<span class="material-icons">error</span> Failed to start';
+      button.classList.remove('btn-loading');
+      button.innerHTML = '<span class="material-icons">error</span><span>Failed to start</span>';
       setTimeout(() => {
-        button.innerHTML = button.dataset.origHtml || 'Sync Server';
+        button.innerHTML = button.dataset.origHtml || '<span class="material-icons">sync</span><span>Sync Server</span>';
         button.className = button.dataset.origClasses;
         button.style.pointerEvents = '';
         button.dataset.running = 'false';

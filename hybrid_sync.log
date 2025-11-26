@@ -686,3 +686,10 @@ psycopg2.pool.PoolError: connection pool exhausted
 2025-11-26 14:42:25,185 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
 2025-11-26 14:42:29,504 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
 2025-11-26 14:42:29,506 - WARNING - [AUTH] Session contents: {}
+2025-11-26 15:53:36,353 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-26 15:53:37,415 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-11-26 15:53:37,567 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-26 15:53:37,569 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-26 15:53:37,570 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-26 15:53:43,318 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-26 15:53:43,319 - WARNING - [AUTH] Session contents: {}

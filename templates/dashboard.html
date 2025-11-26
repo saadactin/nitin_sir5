@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="{{ url_for('static', filename='js/skeleton-utils.js') }}"></script>
   <script>
     tailwind.config = {
       darkMode: "class",
@@ -59,7 +60,7 @@
             </h1>
             <p class="text-subtext-light dark:text-subtext-dark mt-1">Monitor and analyze your data synchronization activities</p>
           </div>
-          <button onclick="refreshDashboard(event)" class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors">
+          <button onclick="refreshDashboard(event)" class="btn btn-primary">
             <span class="material-icons text-sm">refresh</span>
             <span>Refresh</span>
           </button>
@@ -155,32 +156,32 @@
             </h3>
             <div id="sync-history" class="overflow-x-auto">
               {% if last_10 and last_10|length > 0 %}
-                <table class="min-w-full text-sm">
-                  <thead class="bg-gray-50 dark:bg-gray-800">
+                <table class="enhanced-table">
+                  <thead>
                     <tr>
-                      <th class="px-4 py-3 text-left font-semibold text-subtext-light dark:text-subtext-dark">Server</th>
-                      <th class="px-4 py-3 text-left font-semibold text-subtext-light dark:text-subtext-dark">Time</th>
-                      <th class="px-4 py-3 text-left font-semibold text-subtext-light dark:text-subtext-dark">Status</th>
+                      <th>Server</th>
+                      <th>Time</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-border-light dark:divide-border-dark">
+                  <tbody>
                     {% for entry in last_10 %}
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <td class="px-4 py-3 text-sm truncate max-w-xs" title="{{ entry.server }}">{{ entry.server }}</td>
-                      <td class="px-4 py-3 text-sm whitespace-nowrap">{{ entry.time }}</td>
-                      <td class="px-4 py-3">
+                    <tr>
+                      <td class="truncate max-w-xs" title="{{ entry.server }}">{{ entry.server }}</td>
+                      <td class="whitespace-nowrap">{{ entry.time }}</td>
+                      <td>
                         {% if entry.status == "success" %}
-                          <span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          <span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 inline-flex items-center gap-1.5">
                             <span class="material-icons text-sm">check_circle</span>
                             Success
                           </span>
                         {% elif entry.status in ["in-progress", "partial"] %}
-                          <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                          <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 inline-flex items-center gap-1.5">
                             <span class="material-icons text-sm">hourglass_empty</span>
                             In Progress
                           </span>
                         {% else %}
-                          <span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                          <span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 inline-flex items-center gap-1.5">
                             <span class="material-icons text-sm">error</span>
                             Failed
                           </span>
@@ -191,8 +192,8 @@
                   </tbody>
                 </table>
               {% else %}
-                <div class="text-center py-8 text-subtext-light dark:text-subtext-dark">
-                  <span class="material-icons text-4xl mb-2 block">inbox</span>
+                <div class="enhanced-table-empty">
+                  <span class="material-icons enhanced-table-empty-icon">inbox</span>
                   <p>No sync history found</p>
                 </div>
               {% endif %}
@@ -349,9 +350,13 @@ function initCharts(metrics) {
 async function refreshDashboard(event) {
     const refreshBtn = event?.target?.closest('button') || document.querySelector('button[onclick*="refreshDashboard"]');
     if (refreshBtn && event) {
-        const originalHTML = refreshBtn.innerHTML;
-        refreshBtn.innerHTML = '<span class="material-icons text-sm animate-spin">refresh</span><span>Refreshing...</span>';
-        refreshBtn.disabled = true;
+        setButtonLoading(refreshBtn, 'Refreshing...');
+    }
+
+    // Show skeleton loaders while loading
+    const historyDiv = document.getElementById('sync-history');
+    if (historyDiv) {
+        showTableSkeleton('sync-history', 5, 3);
     }
 
     try {
@@ -372,39 +377,55 @@ async function refreshDashboard(event) {
         // Update sync history table
         const historyDiv = document.getElementById('sync-history');
         if (data.last_10 && data.last_10.length > 0) {
-            let table = `<table class="min-w-full text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-800">
+            let table = `<table class="enhanced-table">
+                <thead>
                     <tr>
-                        <th class="px-4 py-3 text-left font-semibold text-subtext-light dark:text-subtext-dark">Server</th>
-                        <th class="px-4 py-3 text-left font-semibold text-subtext-light dark:text-subtext-dark">Time</th>
-                        <th class="px-4 py-3 text-left font-semibold text-subtext-light dark:text-subtext-dark">Status</th>
+                        <th>Server</th>
+                        <th>Time</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-border-light dark:divide-border-dark">`;
+                <tbody>`;
 
             data.last_10.forEach(entry => {
                 let statusBadge = '';
                 if (entry.status === 'success') {
-                    statusBadge = '<span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"><span class="material-icons text-sm">check_circle</span> Success</span>';
+                    statusBadge = '<span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 inline-flex items-center gap-1.5"><span class="material-icons text-sm">check_circle</span> Success</span>';
                 } else if (entry.status === 'in-progress' || entry.status === 'partial') {
-                    statusBadge = '<span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"><span class="material-icons text-sm">hourglass_empty</span> In Progress</span>';
+                    statusBadge = '<span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 inline-flex items-center gap-1.5"><span class="material-icons text-sm">hourglass_empty</span> In Progress</span>';
                 } else {
-                    statusBadge = '<span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"><span class="material-icons text-sm">error</span> Failed</span>';
+                    statusBadge = '<span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 inline-flex items-center gap-1.5"><span class="material-icons text-sm">error</span> Failed</span>';
                 }
 
                 table += `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <td class="px-4 py-3 text-sm truncate max-w-xs" title="${entry.server}">${entry.server}</td>
-                        <td class="px-4 py-3 text-sm whitespace-nowrap">${entry.time}</td>
-                        <td class="px-4 py-3">${statusBadge}</td>
+                    <tr>
+                        <td class="truncate max-w-xs" title="${entry.server}">${entry.server}</td>
+                        <td class="whitespace-nowrap">${entry.time}</td>
+                        <td>${statusBadge}</td>
                     </tr>`;
             });
 
             table += '</tbody></table>';
             historyDiv.innerHTML = table;
         } else {
-            historyDiv.innerHTML = '<div class="text-center py-8 text-subtext-light dark:text-subtext-dark"><span class="material-icons text-4xl mb-2 block">inbox</span><p>No sync history found</p></div>';
+            historyDiv.innerHTML = '<div class="enhanced-table-empty"><span class="material-icons enhanced-table-empty-icon">inbox</span><p>No sync history found</p></div>';
         }
+
+        // Remove loading state from button
+        if (refreshBtn) {
+            removeButtonLoading(refreshBtn);
+        }
+
+    } catch (error) {
+        console.error('Error refreshing dashboard:', error);
+        if (refreshBtn) {
+            removeButtonLoading(refreshBtn);
+        }
+        if (historyDiv) {
+            historyDiv.innerHTML = '<div class="enhanced-table-empty"><span class="material-icons enhanced-table-empty-icon">error</span><p>Failed to load data</p></div>';
+        }
+        return;
+    }
 
         // Update top sources
         const topSourcesDiv = document.getElementById('top-sources');

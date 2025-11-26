@@ -31,6 +31,7 @@
       },
     };
   </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-enhancements.css') }}">
   <style>
     .material-icons { font-size: 24px; vertical-align: middle; }
   </style>
@@ -180,21 +181,21 @@
               <button
                 type="button"
                 onclick="testConnection()"
-                class="w-full sm:w-auto px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium order-2 sm:order-1"
+                class="btn btn-secondary w-full sm:w-auto order-2 sm:order-1"
               >
                 <span class="material-icons">wifi_tethering</span>
                 <span>Test Connection</span>
               </button>
               <button
                 type="submit"
-                class="w-full sm:flex-1 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 font-medium order-1 sm:order-2"
+                class="btn btn-primary w-full sm:flex-1 order-1 sm:order-2"
               >
                 <span class="material-icons">add_circle</span>
                 <span>Add SQL Server Source</span>
               </button>
               <a
                 href="{{ url_for('add_source_page') }}"
-                class="w-full sm:w-auto px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium order-3"
+                class="btn btn-ghost w-full sm:w-auto order-3"
               >
                 <span class="material-icons">arrow_back</span>
                 <span>Back</span>
