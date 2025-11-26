@@ -27,7 +27,7 @@ import signal
 import atexit
 # ...existing imports above...
 from alerts import LogAnalyzer
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 from auth import create_user, authenticate_user, login_user, logout_user, require_role, init_admin_user
 from connection_sync import sync_yaml_to_db, sync_db_to_yaml, update_connection, remove_connection
@@ -4548,6 +4548,125 @@ def generate_log_report():
         flash(f"Error generating report: {e}", "danger")
     
     return redirect(url_for("view_logs"))
+
+@app.route("/logs/api/chart-data")
+@require_role(["admin", "operator", "viewer"])
+def logs_chart_data():
+    """API endpoint for log analysis chart data"""
+    try:
+        # Try sync_operations.log first, fallback to load_postgres.log
+        log_file = 'sync_operations.log'
+        if not os.path.exists(log_file):
+            log_file = 'load_postgres.log'
+        
+        if not os.path.exists(log_file):
+            return jsonify({
+                'error': 'Log file not found',
+                'time_series': [],
+                'level_distribution': {},
+                'hourly_distribution': {},
+                'source_breakdown': {},
+                'trend_analysis': {}
+            })
+        
+        analyzer = LogAnalyzer(log_file)
+        analyzer.parse_logs()
+        
+        # Combine all logs
+        all_logs = analyzer.alerts + analyzer.warnings + analyzer.infos
+        all_logs.sort(key=lambda x: x['timestamp'])
+        
+        # Time series data (by day)
+        time_series = {}
+        for entry in all_logs:
+            date_key = entry['timestamp'].strftime('%Y-%m-%d')
+            if date_key not in time_series:
+                time_series[date_key] = {'ERROR': 0, 'WARNING': 0, 'INFO': 0, 'total': 0}
+            level = entry['level']
+            if level not in time_series[date_key]:
+                time_series[date_key][level] = 0
+            time_series[date_key][level] += 1
+            time_series[date_key]['total'] += 1
+        
+        # Level distribution
+        level_distribution = {
+            'ERROR': len(analyzer.alerts),
+            'WARNING': len(analyzer.warnings),
+            'INFO': len(analyzer.infos)
+        }
+        
+        # Hourly distribution
+        hourly_distribution = {}
+        for entry in all_logs:
+            hour = entry['timestamp'].strftime('%H:00')
+            if hour not in hourly_distribution:
+                hourly_distribution[hour] = {'ERROR': 0, 'WARNING': 0, 'INFO': 0, 'total': 0}
+            level = entry['level']
+            hourly_distribution[hour][level] += 1
+            hourly_distribution[hour]['total'] += 1
+        
+        # Source breakdown (extract from messages)
+        source_breakdown = {}
+        for entry in all_logs:
+            message = entry['message']
+            # Try to extract source name from message
+            source = 'Unknown'
+            if 'Source Name:' in message:
+                try:
+                    source = message.split('Source Name:')[1].split('|')[0].strip()
+                except:
+                    pass
+            elif 'SYNC_START' in message:
+                try:
+                    parts = message.split('|')
+                    if len(parts) > 1:
+                        source = parts[1].split(':')[1].strip() if ':' in parts[1] else parts[1].strip()
+                except:
+                    pass
+            
+            if source not in source_breakdown:
+                source_breakdown[source] = {'ERROR': 0, 'WARNING': 0, 'INFO': 0, 'total': 0}
+            level = entry['level']
+            source_breakdown[source][level] += 1
+            source_breakdown[source]['total'] += 1
+        
+        # Trend analysis (last 7 days vs previous 7 days)
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        fourteen_days_ago = datetime.now() - timedelta(days=14)
+        
+        recent_logs = [e for e in all_logs if e['timestamp'] >= seven_days_ago]
+        previous_logs = [e for e in all_logs if fourteen_days_ago <= e['timestamp'] < seven_days_ago]
+        
+        recent_errors = len([e for e in recent_logs if e['level'] == 'ERROR'])
+        previous_errors = len([e for e in previous_logs if e['level'] == 'ERROR'])
+        error_trend = ((recent_errors - previous_errors) / previous_errors * 100) if previous_errors > 0 else 0
+        
+        recent_warnings = len([e for e in recent_logs if e['level'] == 'WARNING'])
+        previous_warnings = len([e for e in previous_logs if e['level'] == 'WARNING'])
+        warning_trend = ((recent_warnings - previous_warnings) / previous_warnings * 100) if previous_warnings > 0 else 0
+        
+        return jsonify({
+            'time_series': time_series,
+            'level_distribution': level_distribution,
+            'hourly_distribution': hourly_distribution,
+            'source_breakdown': source_breakdown,
+            'trend_analysis': {
+                'error_trend': round(error_trend, 2),
+                'warning_trend': round(warning_trend, 2),
+                'recent_errors': recent_errors,
+                'previous_errors': previous_errors,
+                'recent_warnings': recent_warnings,
+                'previous_warnings': previous_warnings
+            },
+            'total_entries': len(all_logs),
+            'date_range': {
+                'start': (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'),
+                'end': datetime.now().strftime('%Y-%m-%d')
+            }
+        })
+    except Exception as e:
+        app.logger.error(f"Error generating chart data: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route("/logs/download")
 @require_role(["admin", "operator", "viewer"])

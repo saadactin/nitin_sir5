@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Log Analysis Dashboard</title>
+  <title>Log Analysis Dashboard - SQL Sync</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: "class",
@@ -65,9 +66,36 @@
       line-height: 1.6;
       word-break: break-word;
     }
-    .section-header {
-      cursor: pointer;
-      user-select: none;
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin: 1rem 0;
+    }
+    .chart-container-large {
+      position: relative;
+      height: 400px;
+      margin: 1rem 0;
+    }
+    .metric-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .trend-up { color: #e74c3c; }
+    .trend-down { color: #16a34a; }
+    .spinner {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #1E40AF;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -101,8 +129,8 @@
                 <span class="material-icons">download</span>
                 <span class="hidden sm:inline">Download Logs</span>
               </a>
-              <button onclick="location.reload()" class="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition shadow-md">
-                <span class="material-icons">refresh</span>
+              <button onclick="refreshDashboard()" id="refreshBtn" class="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition shadow-md">
+                <span class="material-icons" id="refreshIcon">refresh</span>
                 <span class="hidden sm:inline">Refresh</span>
               </button>
             </div>
@@ -135,7 +163,7 @@
 
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+          <div class="metric-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-4">
               <span class="material-icons text-3xl opacity-80">inventory_2</span>
             </div>
@@ -143,23 +171,25 @@
             <p class="text-3xl font-bold">{{ alerts_total + warnings_total + infos_total }}</p>
           </div>
           
-          <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
+          <div class="metric-card bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-4">
               <span class="material-icons text-3xl opacity-80">error</span>
             </div>
             <p class="text-sm opacity-90 mb-1">Alerts / Errors</p>
             <p class="text-3xl font-bold">{{ alerts_total }}</p>
+            <p class="text-xs opacity-75 mt-2" id="errorTrend">Loading trend...</p>
           </div>
           
-          <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
+          <div class="metric-card bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-4">
               <span class="material-icons text-3xl opacity-80">warning</span>
             </div>
             <p class="text-sm opacity-90 mb-1">Warnings</p>
             <p class="text-3xl font-bold">{{ warnings_total }}</p>
+            <p class="text-xs opacity-75 mt-2" id="warningTrend">Loading trend...</p>
           </div>
           
-          <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl shadow-lg p-6 text-white">
+          <div class="metric-card bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-4">
               <span class="material-icons text-3xl opacity-80">info</span>
             </div>
@@ -168,10 +198,65 @@
           </div>
         </div>
 
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Time Series Chart -->
+          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold flex items-center gap-2">
+                <span class="material-icons text-primary">timeline</span>
+                Log Trends Over Time
+              </h2>
+            </div>
+            <div class="chart-container-large">
+              <canvas id="timeSeriesChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Level Distribution Chart -->
+          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold flex items-center gap-2">
+                <span class="material-icons text-primary">pie_chart</span>
+                Log Level Distribution
+              </h2>
+            </div>
+            <div class="chart-container">
+              <canvas id="levelDistributionChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Hourly Distribution Chart -->
+          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold flex items-center gap-2">
+                <span class="material-icons text-primary">schedule</span>
+                Hourly Activity Pattern
+              </h2>
+            </div>
+            <div class="chart-container-large">
+              <canvas id="hourlyChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Source Breakdown Chart -->
+          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold flex items-center gap-2">
+                <span class="material-icons text-primary">source</span>
+                Source Breakdown
+              </h2>
+            </div>
+            <div class="chart-container-large">
+              <canvas id="sourceChart"></canvas>
+            </div>
+          </div>
+        </div>
+
         <!-- Alerts Section -->
         {% if alerts_total > 0 %}
         <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border-2 border-error/20 mb-6">
-          <div class="section-header bg-error text-white p-4 sm:p-6 rounded-t-xl flex items-center justify-between">
+          <div class="bg-error text-white p-4 sm:p-6 rounded-t-xl flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span class="material-icons">error</span>
               <h2 class="text-lg sm:text-xl font-bold">Alerts & Errors</h2>
@@ -230,7 +315,7 @@
         <!-- Warnings Section -->
         {% if warnings_total > 0 %}
         <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border-2 border-warning/20 mb-6">
-          <div class="section-header bg-warning text-white p-4 sm:p-6 rounded-t-xl flex items-center justify-between">
+          <div class="bg-warning text-white p-4 sm:p-6 rounded-t-xl flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span class="material-icons">warning</span>
               <h2 class="text-lg sm:text-xl font-bold">Warnings</h2>
@@ -289,7 +374,7 @@
         <!-- Info Section -->
         {% if infos_total > 0 %}
         <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg border-2 border-info/20 mb-6">
-          <div class="section-header bg-info text-white p-4 sm:p-6 rounded-t-xl flex items-center justify-between">
+          <div class="bg-info text-white p-4 sm:p-6 rounded-t-xl flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span class="material-icons">info</span>
               <h2 class="text-lg sm:text-xl font-bold">Info Messages</h2>
@@ -355,24 +440,330 @@
   </div>
 
   <script>
-    // Theme toggle
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-      themeToggle.addEventListener('click', function() {
-        if (document.documentElement.classList.contains('dark')) {
-          document.documentElement.classList.remove('dark');
-          localStorage.setItem('theme', 'light');
-        } else {
-          document.documentElement.classList.add('dark');
-          localStorage.setItem('theme', 'dark');
+    let charts = {};
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const chartColors = {
+      error: '#e74c3c',
+      warning: '#f39c12',
+      info: '#3498db',
+      success: '#16a34a',
+      background: isDarkMode ? '#1E293B' : '#FFFFFF',
+      text: isDarkMode ? '#E2E8F0' : '#0F172A',
+      grid: isDarkMode ? '#334155' : '#E2E8F0'
+    };
+
+    function refreshDashboard() {
+      const btn = document.getElementById('refreshBtn');
+      const icon = document.getElementById('refreshIcon');
+      icon.style.animation = 'spin 1s linear infinite';
+      loadChartData();
+      setTimeout(() => {
+        icon.style.animation = '';
+        location.reload();
+      }, 1000);
+    }
+
+    function loadChartData() {
+      fetch('/logs/api/chart-data')
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            console.error('Error loading chart data:', data.error);
+            return;
+          }
+          updateTrends(data.trend_analysis);
+          createTimeSeriesChart(data.time_series);
+          createLevelDistributionChart(data.level_distribution);
+          createHourlyChart(data.hourly_distribution);
+          createSourceChart(data.source_breakdown);
+        })
+        .catch(error => {
+          console.error('Error fetching chart data:', error);
+        });
+    }
+
+    function updateTrends(trends) {
+      const errorTrendEl = document.getElementById('errorTrend');
+      const warningTrendEl = document.getElementById('warningTrend');
+      
+      if (trends.error_trend > 0) {
+        errorTrendEl.innerHTML = `<span class="trend-up">↑ ${Math.abs(trends.error_trend).toFixed(1)}% vs previous week</span>`;
+      } else if (trends.error_trend < 0) {
+        errorTrendEl.innerHTML = `<span class="trend-down">↓ ${Math.abs(trends.error_trend).toFixed(1)}% vs previous week</span>`;
+      } else {
+        errorTrendEl.innerHTML = 'No change vs previous week';
+      }
+      
+      if (trends.warning_trend > 0) {
+        warningTrendEl.innerHTML = `<span class="trend-up">↑ ${Math.abs(trends.warning_trend).toFixed(1)}% vs previous week</span>`;
+      } else if (trends.warning_trend < 0) {
+        warningTrendEl.innerHTML = `<span class="trend-down">↓ ${Math.abs(trends.warning_trend).toFixed(1)}% vs previous week</span>`;
+      } else {
+        warningTrendEl.innerHTML = 'No change vs previous week';
+      }
+    }
+
+    function createTimeSeriesChart(timeSeries) {
+      const ctx = document.getElementById('timeSeriesChart');
+      if (!ctx) return;
+      
+      if (charts.timeSeries) {
+        charts.timeSeries.destroy();
+      }
+
+      const dates = Object.keys(timeSeries).sort();
+      const errorData = dates.map(d => timeSeries[d].ERROR || 0);
+      const warningData = dates.map(d => timeSeries[d].WARNING || 0);
+      const infoData = dates.map(d => timeSeries[d].INFO || 0);
+
+      charts.timeSeries = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: 'Errors',
+              data: errorData,
+              borderColor: chartColors.error,
+              backgroundColor: chartColors.error + '20',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Warnings',
+              data: warningData,
+              borderColor: chartColors.warning,
+              backgroundColor: chartColors.warning + '20',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Info',
+              data: infoData,
+              borderColor: chartColors.info,
+              backgroundColor: chartColors.info + '20',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: chartColors.text }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: chartColors.text },
+              grid: { color: chartColors.grid }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: chartColors.text },
+              grid: { color: chartColors.grid }
+            }
+          }
         }
       });
     }
-    
-    // Auto-refresh every 30 seconds
-    setTimeout(function() {
-      location.reload();
-    }, 30000);
+
+    function createLevelDistributionChart(levelDist) {
+      const ctx = document.getElementById('levelDistributionChart');
+      if (!ctx) return;
+      
+      if (charts.levelDist) {
+        charts.levelDist.destroy();
+      }
+
+      charts.levelDist = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Errors', 'Warnings', 'Info'],
+          datasets: [{
+            data: [levelDist.ERROR || 0, levelDist.WARNING || 0, levelDist.INFO || 0],
+            backgroundColor: [chartColors.error, chartColors.warning, chartColors.info],
+            borderWidth: 2,
+            borderColor: chartColors.background
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: chartColors.text, padding: 15 }
+            }
+          }
+        }
+      });
+    }
+
+    function createHourlyChart(hourlyDist) {
+      const ctx = document.getElementById('hourlyChart');
+      if (!ctx) return;
+      
+      if (charts.hourly) {
+        charts.hourly.destroy();
+      }
+
+      const hours = Object.keys(hourlyDist).sort();
+      const errorData = hours.map(h => hourlyDist[h].ERROR || 0);
+      const warningData = hours.map(h => hourlyDist[h].WARNING || 0);
+      const infoData = hours.map(h => hourlyDist[h].INFO || 0);
+
+      charts.hourly = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: hours,
+          datasets: [
+            {
+              label: 'Errors',
+              data: errorData,
+              backgroundColor: chartColors.error + '80',
+              borderColor: chartColors.error,
+              borderWidth: 1
+            },
+            {
+              label: 'Warnings',
+              data: warningData,
+              backgroundColor: chartColors.warning + '80',
+              borderColor: chartColors.warning,
+              borderWidth: 1
+            },
+            {
+              label: 'Info',
+              data: infoData,
+              backgroundColor: chartColors.info + '80',
+              borderColor: chartColors.info,
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: chartColors.text }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              ticks: { color: chartColors.text },
+              grid: { color: chartColors.grid }
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              ticks: { color: chartColors.text },
+              grid: { color: chartColors.grid }
+            }
+          }
+        }
+      });
+    }
+
+    function createSourceChart(sourceBreakdown) {
+      const ctx = document.getElementById('sourceChart');
+      if (!ctx) return;
+      
+      if (charts.source) {
+        charts.source.destroy();
+      }
+
+      // Get top 10 sources by total
+      const sources = Object.entries(sourceBreakdown)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 10)
+        .map(([name]) => name.length > 30 ? name.substring(0, 30) + '...' : name);
+      
+      const errorData = Object.entries(sourceBreakdown)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 10)
+        .map(([, data]) => data.ERROR || 0);
+      
+      const warningData = Object.entries(sourceBreakdown)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 10)
+        .map(([, data]) => data.WARNING || 0);
+      
+      const infoData = Object.entries(sourceBreakdown)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 10)
+        .map(([, data]) => data.INFO || 0);
+
+      charts.source = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sources,
+          datasets: [
+            {
+              label: 'Errors',
+              data: errorData,
+              backgroundColor: chartColors.error + '80',
+              borderColor: chartColors.error,
+              borderWidth: 1
+            },
+            {
+              label: 'Warnings',
+              data: warningData,
+              backgroundColor: chartColors.warning + '80',
+              borderColor: chartColors.warning,
+              borderWidth: 1
+            },
+            {
+              label: 'Info',
+              data: infoData,
+              backgroundColor: chartColors.info + '80',
+              borderColor: chartColors.info,
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: chartColors.text }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              beginAtZero: true,
+              ticks: { color: chartColors.text },
+              grid: { color: chartColors.grid }
+            },
+            y: {
+              stacked: true,
+              ticks: { color: chartColors.text },
+              grid: { color: chartColors.grid }
+            }
+          }
+        }
+      });
+    }
+
+    // Load charts on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadChartData();
+      // Auto-refresh charts every 60 seconds
+      setInterval(loadChartData, 60000);
+    });
   </script>
 </body>
 </html>

@@ -28,8 +28,8 @@ _clickhouse_clients: Dict[str, Any] = {}
 _pool_lock = threading.Lock()
 
 # Pool configuration - Increased defaults to prevent exhaustion
-PG_POOL_MIN_CONN = int(os.environ.get('PG_POOL_MIN_CONN', '5'))
-PG_POOL_MAX_CONN = int(os.environ.get('PG_POOL_MAX_CONN', '20'))
+PG_POOL_MIN_CONN = int(os.environ.get('PG_POOL_MIN_CONN', '10'))
+PG_POOL_MAX_CONN = int(os.environ.get('PG_POOL_MAX_CONN', '50'))
 SQL_POOL_SIZE = int(os.environ.get('SQL_POOL_SIZE', '5'))
 SQL_MAX_OVERFLOW = int(os.environ.get('SQL_MAX_OVERFLOW', '10'))
 HANA_POOL_SIZE = int(os.environ.get('HANA_POOL_SIZE', '3'))
@@ -87,7 +87,7 @@ class ConnectionPoolManager:
     
     @staticmethod
     def get_postgresql_connection():
-        """Get a connection from PostgreSQL pool with timeout and fallback"""
+        """Get a connection from PostgreSQL pool with timeout and exponential backoff fallback"""
         global _pg_pool
         
         if _pg_pool is None:
@@ -98,19 +98,32 @@ class ConnectionPoolManager:
         
         try:
             import time
-            timeout = 5  # seconds
+            timeout = 10  # Increased timeout to 10 seconds
             start_time = time.time()
+            retry_count = 0
+            max_retries = 20  # Maximum retry attempts
+            base_delay = 0.05  # Start with 50ms delay
             
             while True:
                 try:
-                    return _pg_pool.getconn()
+                    conn = _pg_pool.getconn()
+                    # Log if we had to wait
+                    elapsed = time.time() - start_time
+                    if elapsed > 0.5:  # Only log if we waited more than 500ms
+                        logger.debug(f"Got connection from pool after {elapsed:.2f}s wait")
+                    return conn
                 except Exception as pool_error:
                     # Check if it's a pool exhaustion error
                     if "pool exhausted" in str(pool_error).lower() or "PoolError" in str(type(pool_error).__name__):
                         elapsed = time.time() - start_time
-                        if elapsed > timeout:
+                        retry_count += 1
+                        
+                        if elapsed > timeout or retry_count >= max_retries:
                             # Timeout reached, fallback to direct connection
-                            logger.warning(f"Connection pool exhausted after {elapsed:.1f}s, using direct connection")
+                            logger.warning(
+                                f"Connection pool exhausted after {elapsed:.1f}s ({retry_count} retries), "
+                                f"using direct connection. Consider increasing PG_POOL_MAX_CONN."
+                            )
                             from db_utils import load_pg_config
                             import psycopg2
                             config = load_pg_config()
@@ -120,8 +133,12 @@ class ConnectionPoolManager:
                                 password=config["password"],
                                 host=config["host"],
                                 port=config["port"],
+                                connect_timeout=5
                             )
-                        time.sleep(0.1)  # Wait 100ms before retry
+                        
+                        # Exponential backoff: 50ms, 100ms, 200ms, 400ms, max 500ms
+                        delay = min(base_delay * (2 ** min(retry_count - 1, 3)), 0.5)
+                        time.sleep(delay)
                     else:
                         # Other error, raise it
                         raise
@@ -139,6 +156,7 @@ class ConnectionPoolManager:
                     password=config["password"],
                     host=config["host"],
                     port=config["port"],
+                    connect_timeout=5
                 )
             except Exception as fallback_error:
                 logger.error(f"Fallback connection also failed: {fallback_error}")
@@ -153,22 +171,65 @@ class ConnectionPoolManager:
             return
         
         # Check if this is a pooled connection or direct connection
-        # Pooled connections have a _pool attribute
-        if _pg_pool and hasattr(conn, '_pool'):
+        # Pooled connections have a _pool attribute or are from ThreadedConnectionPool
+        if _pg_pool:
+            # Check if connection is from our pool by trying to return it
             try:
+                # ThreadedConnectionPool connections can be returned directly
                 _pg_pool.putconn(conn)
-            except Exception as e:
-                logger.error(f"Error returning connection to pool: {e}")
+                return
+            except (AttributeError, TypeError, Exception) as e:
+                # Not a pooled connection or error returning, check if it's a direct connection
+                if "not from this pool" in str(e).lower() or "invalid connection" in str(e).lower():
+                    # Direct connection, close it
+                    try:
+                        conn.close()
+                    except:
+                        pass
+                    return
+                # Other error, log and try to close
+                logger.debug(f"Error returning connection to pool: {e}, closing connection")
                 try:
                     conn.close()
                 except:
                     pass
         else:
-            # Direct connection (fallback), just close it
+            # No pool available, just close the connection
             try:
                 conn.close()
             except:
                 pass
+    
+    @staticmethod
+    def get_pool_stats():
+        """Get connection pool statistics for monitoring"""
+        global _pg_pool
+        
+        if not _pg_pool:
+            return {
+                'initialized': False,
+                'min_connections': 0,
+                'max_connections': 0,
+                'current_connections': 0,
+                'available_connections': 0
+            }
+        
+        try:
+            # ThreadedConnectionPool doesn't expose stats directly
+            # We can estimate based on pool size
+            return {
+                'initialized': True,
+                'min_connections': PG_POOL_MIN_CONN,
+                'max_connections': PG_POOL_MAX_CONN,
+                'current_connections': 'N/A',  # ThreadedConnectionPool doesn't expose this
+                'available_connections': 'N/A'
+            }
+        except Exception as e:
+            logger.warning(f"Error getting pool stats: {e}")
+            return {
+                'initialized': True,
+                'error': str(e)
+            }
     
     @staticmethod
     def get_postgresql_engine() -> Engine:

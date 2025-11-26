@@ -5,7 +5,7 @@ import time
 import logging
 import psycopg2
 from flask import Blueprint, render_template, jsonify, flash, redirect, url_for
-from db_utils import get_pg_connection
+from db_utils import get_pg_connection, return_pg_connection
 from table_filters import is_excluded_schema
 
 # Simple in-memory TTL cache to avoid repeated expensive DB scans
@@ -209,17 +209,21 @@ def get_table_comparison(server_name):
 
         # Connect to PostgreSQL
         pg_conn = get_pg_connection()
-        pg_cursor = pg_conn.cursor()
-        # PostgreSQL query started - minimal logging
-        pg_cursor.execute("""
-            SELECT current_database(), schemaname, relname, n_live_tup
-            FROM pg_stat_user_tables
-        """)
-        pg_counts = {}
-        for db_name, schema, table, count in pg_cursor:
-            if not is_excluded_schema(schema) and table not in ["IS2B_BatchRunningDatatest", "Products3"]:
-                key = f"{db_name}.{schema}.{table}"
-                pg_counts[key] = count
+        try:
+            pg_cursor = pg_conn.cursor()
+            # PostgreSQL query started - minimal logging
+            pg_cursor.execute("""
+                SELECT current_database(), schemaname, relname, n_live_tup
+                FROM pg_stat_user_tables
+            """)
+            pg_counts = {}
+            for db_name, schema, table, count in pg_cursor:
+                if not is_excluded_schema(schema) and table not in ["IS2B_BatchRunningDatatest", "Products3"]:
+                    key = f"{db_name}.{schema}.{table}"
+                    pg_counts[key] = count
+            pg_cursor.close()
+        finally:
+            return_pg_connection(pg_conn)
 
         # Create normalized comparison maps
         sql_normalized = {}
@@ -557,73 +561,82 @@ def get_postgres_total_rows():
         
         # Use the same connection but connect to the target database
         conn = get_pg_connection()
-        cur = conn.cursor()
-        
-        # Switch to the target database
-        cur.execute(f"SELECT current_database()")
-        current_db = cur.fetchone()[0]
-        
-        if current_db != target_db:
-            # Close current connection and create new one for target database
-            cur.close()
-            conn.close()
-            
-            # Get PostgreSQL config for connection details
-            pg_config = config.get('postgresql', {})
-            
-            # Create new connection to target database
-            conn = psycopg2.connect(
-                host=pg_config.get('host', 'localhost'),
-                port=pg_config.get('port', 5432),
-                database=target_db,
-                user=pg_config.get('username', 'postgres'),
-                password=pg_config.get('password', '')
-            )
+        try:
             cur = conn.cursor()
-        
-        # Get all tables from ALL schemas (excluding system schemas). We'll
-        # filter out 'public' and metric-sync schemas using is_excluded_schema.
-        cur.execute("""
-            SELECT table_schema, table_name 
-            FROM information_schema.tables 
-            WHERE table_type = 'BASE TABLE' 
-            AND table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
-        """)
-        all_tables = [r for r in cur.fetchall() if not is_excluded_schema(r[0])]
-        
-        total_rows = 0
-        schema_details = {}
-        table_details = []
-        
-        for schema_name, table_name in all_tables:
-            try:
-                cur.execute(f'SELECT COUNT(*) FROM "{schema_name}"."{table_name}"')
-                count = cur.fetchone()[0]
-                total_rows += count
+            
+            # Switch to the target database
+            cur.execute(f"SELECT current_database()")
+            current_db = cur.fetchone()[0]
+            
+            if current_db != target_db:
+                # Return current connection and create new one for target database
+                cur.close()
+                return_pg_connection(conn)
                 
-                # Track tables by schema
-                if schema_name not in schema_details:
-                    schema_details[schema_name] = {'tables': 0, 'rows': 0}
-                schema_details[schema_name]['tables'] += 1
-                schema_details[schema_name]['rows'] += count
+                # Get PostgreSQL config for connection details
+                pg_config = config.get('postgresql', {})
                 
-                table_details.append({
-                    'schema_name': schema_name,
-                    'table_name': table_name,
-                    'row_count': count
-                })
-            except Exception as e:
-                LOG.exception(f"Error counting rows in PostgreSQL table {schema_name}.{table_name}: {e}")
-                table_details.append({
-                    'schema_name': schema_name,
-                    'table_name': table_name,
-                    'row_count': 0,
-                    'error': str(e)
-                })
-                continue
-        
-        cur.close()
-        conn.close()
+                # Create new connection to target database (direct connection for different DB)
+                conn = psycopg2.connect(
+                    host=pg_config.get('host', 'localhost'),
+                    port=pg_config.get('port', 5432),
+                    database=target_db,
+                    user=pg_config.get('username', 'postgres'),
+                    password=pg_config.get('password', '')
+                )
+                cur = conn.cursor()
+            
+            # Get all tables from ALL schemas (excluding system schemas). We'll
+            # filter out 'public' and metric-sync schemas using is_excluded_schema.
+            cur.execute("""
+                SELECT table_schema, table_name 
+                FROM information_schema.tables 
+                WHERE table_type = 'BASE TABLE' 
+                AND table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+            """)
+            all_tables = [r for r in cur.fetchall() if not is_excluded_schema(r[0])]
+            
+            total_rows = 0
+            schema_details = {}
+            table_details = []
+            
+            for schema_name, table_name in all_tables:
+                try:
+                    cur.execute(f'SELECT COUNT(*) FROM "{schema_name}"."{table_name}"')
+                    count = cur.fetchone()[0]
+                    total_rows += count
+                    
+                    # Track tables by schema
+                    if schema_name not in schema_details:
+                        schema_details[schema_name] = {'tables': 0, 'rows': 0}
+                    schema_details[schema_name]['tables'] += 1
+                    schema_details[schema_name]['rows'] += count
+                    
+                    table_details.append({
+                        'schema_name': schema_name,
+                        'table_name': table_name,
+                        'row_count': count
+                    })
+                except Exception as e:
+                    LOG.exception(f"Error counting rows in PostgreSQL table {schema_name}.{table_name}: {e}")
+                    table_details.append({
+                        'schema_name': schema_name,
+                        'table_name': table_name,
+                        'row_count': 0,
+                        'error': str(e)
+                    })
+                    continue
+            
+            cur.close()
+        finally:
+            # If conn was from pool, return it; if direct connection, close it
+            if hasattr(conn, '_pool'):
+                return_pg_connection(conn)
+            else:
+                try:
+                    conn.close()
+                except:
+                    pass
         
         return {
             'total_rows': total_rows,
