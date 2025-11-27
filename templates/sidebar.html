@@ -36,6 +36,13 @@
   <span>Add Source</span>
 </a>
 
+<a href="{{ url_for('zoho_crm_integration') }}"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          {% if request.endpoint == 'zoho_crm_integration' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">
+  <span class="material-icons">cloud_sync</span>
+  <span>Zoho CRM Integration</span>
+</a>
+
 <a href="{{ url_for('schedule_page') }}"
    class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
           {% if request.endpoint == 'schedule_page' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">

@@ -4325,6 +4325,266 @@ def api_clickhouse_dbs():
         app.logger.exception(f"Error fetching ClickHouse DBs: {e}")
         return jsonify({'databases': [], 'error': str(e)}), 500
 
+
+@app.route("/zoho-crm-integration")
+@require_role(["admin", "operator"])
+def zoho_crm_integration():
+    """Zoho CRM Integration page"""
+    return render_template("zoho_crm_integration.html")
+
+
+@app.route("/api/zoho/check-environment", methods=["GET"])
+@require_role(["admin", "operator"])
+def api_zoho_check_environment():
+    """Check Python environment and clickhouse-connect availability"""
+    import sys
+    result = {
+        "python_executable": sys.executable,
+        "python_version": sys.version.split()[0],
+        "clickhouse_connect_installed": False,
+        "clickhouse_connect_location": None,
+        "error": None
+    }
+    
+    try:
+        import clickhouse_connect
+        result["clickhouse_connect_installed"] = True
+        result["clickhouse_connect_location"] = str(clickhouse_connect.__file__)
+        
+        # Try to import get_client
+        try:
+            from clickhouse_connect import get_client
+            result["get_client_available"] = True
+        except Exception as e:
+            result["get_client_available"] = False
+            result["error"] = f"Cannot import get_client: {str(e)}"
+    except ImportError as e:
+        result["error"] = str(e)
+        result["solution"] = f"Run: {sys.executable} -m pip install clickhouse-connect==0.8.0"
+    
+    return jsonify(result)
+
+
+@app.route("/api/zoho/list-modules", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_zoho_list_modules():
+    """Fetch available Zoho CRM modules"""
+    try:
+        data = request.get_json()
+        if not data:
+            app.logger.error("No JSON data received in list-modules request")
+            return jsonify({
+                "success": False,
+                "error": "No data received"
+            }), 400
+        
+        api_domain = data.get("api_domain", "https://www.zohoapis.in")
+        client_id = data.get("client_id", "").strip()
+        client_secret = data.get("client_secret", "").strip()
+        refresh_token = data.get("refresh_token", "").strip()
+        
+        app.logger.info(f"List modules request - API Domain: {api_domain}, Client ID: {client_id[:20]}...")
+        
+        if not all([client_id, client_secret, refresh_token]):
+            app.logger.warning("Missing required credentials in list-modules request")
+            return jsonify({
+                "success": False,
+                "error": "Missing required credentials (Client ID, Client Secret, or Refresh Token)"
+            }), 400
+        
+        from zoho_crm_sync import get_access_token, get_available_modules
+        
+        # Get access token
+        app.logger.info("Attempting to get access token...")
+        token_result = get_access_token(refresh_token, client_id, client_secret, api_domain)
+        if not token_result:
+            app.logger.error("Failed to obtain access token")
+            return jsonify({
+                "success": False,
+                "error": "Failed to obtain access token. Please check your credentials."
+            }), 401
+        
+        token = token_result["access_token"]
+        api_domain = token_result.get("api_domain", api_domain)
+        app.logger.info(f"Access token obtained, API Domain: {api_domain}")
+        
+        # Get available modules
+        app.logger.info("Fetching available modules...")
+        modules = get_available_modules(token, api_domain)
+        app.logger.info(f"Found {len(modules)} modules")
+        
+        return jsonify({
+            "success": True,
+            "modules": modules,
+            "count": len(modules)
+        })
+    except Exception as e:
+        app.logger.exception(f"Error listing Zoho modules: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/api/zoho/test-connection", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_zoho_test_connection():
+    """Test Zoho CRM and ClickHouse connections"""
+    try:
+        data = request.get_json()
+        api_domain = data.get("api_domain", "https://www.zohoapis.in")
+        client_id = data.get("client_id", "").strip()
+        client_secret = data.get("client_secret", "").strip()
+        refresh_token = data.get("refresh_token", "").strip()
+        clickhouse_host = data.get("clickhouse_host", "").strip()
+        clickhouse_user = data.get("clickhouse_user", "").strip()
+        clickhouse_password = data.get("clickhouse_password", "").strip()
+        clickhouse_database = data.get("clickhouse_database", "").strip()
+        
+        if not all([client_id, client_secret, refresh_token, clickhouse_host, clickhouse_user, clickhouse_password, clickhouse_database]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields"
+            }), 400
+        
+        from zoho_crm_sync import get_access_token, get_available_modules
+        
+        # Test Zoho connection first
+        app.logger.info("Testing Zoho connection...")
+        token_result = get_access_token(refresh_token, client_id, client_secret, api_domain)
+        if not token_result:
+            return jsonify({
+                "success": False,
+                "error": "Failed to connect to Zoho CRM. Please check your credentials."
+            }), 401
+        
+        token = token_result["access_token"]
+        api_domain = token_result.get("api_domain", api_domain)
+        modules = get_available_modules(token, api_domain)
+        app.logger.info(f"Zoho connection successful. Found {len(modules)} modules.")
+        
+        # Test ClickHouse connection
+        app.logger.info("Testing ClickHouse connection...")
+        try:
+            from clickhouse_connect import get_client
+            app.logger.info("clickhouse-connect imported successfully")
+        except ImportError as import_err:
+            import sys
+            import os
+            python_path = sys.executable
+            python_version = sys.version
+            error_details = {
+                "error": "clickhouse-connect package not installed",
+                "python_path": python_path,
+                "python_version": python_version.split()[0],
+                "import_error": str(import_err),
+                "solution": "Run: pip install clickhouse-connect==0.8.0"
+            }
+            app.logger.error(f"ClickHouse import failed: {import_err}")
+            app.logger.error(f"Python path: {python_path}")
+            return jsonify({
+                "success": False,
+                "error": f"clickhouse-connect package not installed in this Python environment.\nPython: {python_path}\nError: {str(import_err)}\n\nSolution: Run 'pip install clickhouse-connect==0.8.0' in the same environment where Flask is running.",
+                "zoho_connected": True,
+                "modules_count": len(modules) if modules else 0,
+                "debug_info": error_details
+            }), 500
+        
+        try:
+            client = get_client(
+                host=clickhouse_host,
+                username=clickhouse_user,
+                password=clickhouse_password,
+                database=clickhouse_database,
+            )
+            # Test query
+            client.query("SELECT 1")
+            app.logger.info("ClickHouse connection successful.")
+        except Exception as ch_error:
+            app.logger.error(f"ClickHouse connection failed: {ch_error}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to connect to ClickHouse: {str(ch_error)}",
+                "zoho_connected": True,
+                "modules_count": len(modules) if modules else 0
+            }), 500
+        
+        return jsonify({
+            "success": True,
+            "modules_count": len(modules) if modules else 0,
+            "zoho_connected": True,
+            "clickhouse_connected": True
+        })
+    except Exception as e:
+        app.logger.exception(f"Error testing Zoho connection: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/api/zoho/sync", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_zoho_sync():
+    """Sync selected Zoho CRM modules to ClickHouse"""
+    try:
+        data = request.get_json()
+        api_domain = data.get("api_domain", "https://www.zohoapis.in")
+        client_id = data.get("client_id", "").strip()
+        client_secret = data.get("client_secret", "").strip()
+        refresh_token = data.get("refresh_token", "").strip()
+        clickhouse_host = data.get("clickhouse_host", "").strip()
+        clickhouse_user = data.get("clickhouse_user", "").strip()
+        clickhouse_password = data.get("clickhouse_password", "").strip()
+        clickhouse_database = data.get("clickhouse_database", "").strip()
+        selected_modules = data.get("selected_modules", [])
+        
+        if not all([client_id, client_secret, refresh_token, clickhouse_host, clickhouse_user, clickhouse_password, clickhouse_database]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields"
+            }), 400
+        
+        if not selected_modules:
+            return jsonify({
+                "success": False,
+                "error": "No modules selected"
+            }), 400
+        
+        try:
+            from zoho_crm_sync import sync_zoho_modules
+        except ImportError as e:
+            app.logger.exception(f"Import error: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Module import error: {str(e)}. Please ensure all dependencies are installed."
+            }), 500
+        
+        # Run sync (this may take time, but we'll return results)
+        result = sync_zoho_modules(
+            refresh_token=refresh_token,
+            client_id=client_id,
+            client_secret=client_secret,
+            api_domain=api_domain,
+            clickhouse_host=clickhouse_host,
+            clickhouse_user=clickhouse_user,
+            clickhouse_password=clickhouse_password,
+            clickhouse_database=clickhouse_database,
+            selected_modules=selected_modules
+        )
+        
+        app.logger.info(f"Zoho sync completed: {result}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        app.logger.exception(f"Error starting Zoho sync: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
 @app.route("/view-schedules")
 @require_role(["admin", "operator", "viewer"])
 def view_schedules():

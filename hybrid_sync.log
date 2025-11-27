@@ -693,3 +693,131 @@ psycopg2.pool.PoolError: connection pool exhausted
 2025-11-26 15:53:37,570 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
 2025-11-26 15:53:43,318 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
 2025-11-26 15:53:43,319 - WARNING - [AUTH] Session contents: {}
+2025-11-26 16:12:11,787 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-26 16:12:12,809 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-11-26 16:12:12,940 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-26 16:12:12,943 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-26 16:12:12,944 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-26 16:12:16,269 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-26 16:12:16,277 - WARNING - [AUTH] Session contents: {}
+2025-11-26 16:17:55,812 - ERROR - Error listing Zoho modules: No module named 'clickhouse_connect'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4353, in api_zoho_list_modules
+    from zoho_crm_sync import get_access_token, get_available_modules
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\zoho_crm_sync.py", line 9, in <module>
+    from clickhouse_connect import get_client
+ModuleNotFoundError: No module named 'clickhouse_connect'
+2025-11-26 16:18:00,512 - ERROR - Error testing Zoho connection: No module named 'clickhouse_connect'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4402, in api_zoho_test_connection
+    from zoho_crm_sync import get_access_token, get_available_modules
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\zoho_crm_sync.py", line 9, in <module>
+    from clickhouse_connect import get_client
+ModuleNotFoundError: No module named 'clickhouse_connect'
+2025-11-26 16:25:08,909 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=['saad.sayyed@actin.co.in', 'saadpractice4@gmail.com']
+2025-11-26 16:25:09,743 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-11-26 16:25:09,839 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-26 16:25:09,842 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-26 16:25:09,842 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-26 16:25:12,619 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-26 16:25:12,622 - WARNING - [AUTH] Session contents: {}
+2025-11-26 16:26:13,176 - ERROR - Error testing Zoho connection: No module named 'clickhouse_connect'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4402, in api_zoho_test_connection
+    from zoho_crm_sync import get_access_token, get_available_modules
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\zoho_crm_sync.py", line 9, in <module>
+    from clickhouse_connect import get_client
+ModuleNotFoundError: No module named 'clickhouse_connect'
+2025-11-26 16:26:15,403 - ERROR - Error testing Zoho connection: No module named 'clickhouse_connect'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4402, in api_zoho_test_connection
+    from zoho_crm_sync import get_access_token, get_available_modules
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\zoho_crm_sync.py", line 9, in <module>
+    from clickhouse_connect import get_client
+ModuleNotFoundError: No module named 'clickhouse_connect'
+2025-11-26 16:26:17,804 - ERROR - Error listing Zoho modules: No module named 'clickhouse_connect'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4353, in api_zoho_list_modules
+    from zoho_crm_sync import get_access_token, get_available_modules
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\zoho_crm_sync.py", line 9, in <module>
+    from clickhouse_connect import get_client
+ModuleNotFoundError: No module named 'clickhouse_connect'
+2025-11-26 16:26:22,245 - ERROR - Error testing Zoho connection: No module named 'clickhouse_connect'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4402, in api_zoho_test_connection
+    from zoho_crm_sync import get_access_token, get_available_modules
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\zoho_crm_sync.py", line 9, in <module>
+    from clickhouse_connect import get_client
+ModuleNotFoundError: No module named 'clickhouse_connect'
+2025-11-26 16:26:23,002 - ERROR - Error testing Zoho connection: No module named 'clickhouse_connect'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4402, in api_zoho_test_connection
+    from zoho_crm_sync import get_access_token, get_available_modules
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\zoho_crm_sync.py", line 9, in <module>
+    from clickhouse_connect import get_client
+ModuleNotFoundError: No module named 'clickhouse_connect'
+2025-11-27 09:51:44,123 - ERROR - Error generating daily summary: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\daily_summary_scheduler.py", line 39, in send_daily_summary
+    from dashboard import get_all_sync_history
+ImportError: cannot import name 'get_all_sync_history' from 'dashboard' (C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py)
+2025-11-27 10:11:56,846 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-11-27 10:11:58,961 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-11-27 10:11:59,203 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-27 10:11:59,220 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-27 10:11:59,225 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-27 10:11:59,232 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-11-27 10:19:37,642 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-27 10:19:37,695 - WARNING - [AUTH] Session contents: {}
+2025-11-27 10:20:26,790 - ERROR - Error listing Zoho modules: No module named 'clickhouse_connect'
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 4363, in api_zoho_list_modules
+    from zoho_crm_sync import get_access_token, get_available_modules
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\zoho_crm_sync.py", line 9, in <module>
+    from clickhouse_connect import get_client
+ModuleNotFoundError: No module named 'clickhouse_connect'
+2025-11-27 10:23:31,828 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-11-27 10:23:33,154 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-11-27 10:23:33,345 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-27 10:23:33,350 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-27 10:23:33,350 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-27 10:23:33,351 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-11-27 10:23:37,404 - WARNING - [AUTH] BLOCKED unauthenticated access to /zoho-crm-integration from 127.0.0.1
+2025-11-27 10:23:37,409 - WARNING - [AUTH] Session contents: {}
+2025-11-27 10:47:45,278 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-11-27 10:47:48,426 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-11-27 10:47:48,825 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-27 10:47:48,848 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-27 10:47:48,849 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-27 10:47:48,851 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-11-27 10:48:20,441 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-11-27 10:48:20,445 - WARNING - [AUTH] Session contents: {}
+2025-11-27 10:58:47,743 - ERROR - Failed to retrieve access token from response
+2025-11-27 10:58:47,750 - ERROR - Failed to obtain access token
+2025-11-27 11:03:34,355 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-11-27 11:03:35,546 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-11-27 11:03:35,715 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-27 11:03:35,735 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-27 11:03:35,739 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-27 11:03:35,743 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-11-27 11:03:36,356 - WARNING - [AUTH] BLOCKED unauthenticated access to /zoho-crm-integration from 127.0.0.1
+2025-11-27 11:03:36,357 - WARNING - [AUTH] Session contents: {}
+2025-11-27 11:04:40,637 - ERROR - ClickHouse import failed: No module named 'clickhouse_connect'
+2025-11-27 11:04:40,639 - ERROR - Python path: C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\myenv1\Scripts\python.exe
+2025-11-27 11:07:17,816 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-11-27 11:07:18,601 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-11-27 11:07:18,715 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-11-27 11:07:18,718 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-11-27 11:07:18,718 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-11-27 11:07:18,719 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-11-27 11:07:22,059 - WARNING - [AUTH] BLOCKED unauthenticated access to /zoho-crm-integration from 127.0.0.1
+2025-11-27 11:07:22,060 - WARNING - [AUTH] Session contents: {}
+2025-11-27 11:08:10,978 - ERROR - Error fetching field names for Accounts_Insights__s: Failed to fetch field metadata for Accounts_Insights__s: 400 - {"code":"INVALID_MODULE","details":{},"message":"the module name given seems to be invalid","status":"error"}
+
+2025-11-27 11:08:10,979 - WARNING - Failed to fetch field metadata for Accounts_Insights__s: 400 - {"code":"INVALID_MODULE","details":{},"message":"the module name given seems to be invalid","status":"error"}
+ — continuing without field metadata.
+2025-11-27 11:08:11,918 - ERROR - Accounts_Insights__s fetch failed: 400 - {"code":"INVALID_MODULE","details":{},"message":"the module name given seems to be invalid","status":"error"}
+
+2025-11-27 11:08:11,923 - WARNING - No records found for Accounts_Insights__s
+2025-11-27 11:08:56,395 - ERROR - Error fetching field names for Products: No fields returned for module Products
+2025-11-27 11:08:56,396 - WARNING - No fields returned for module Products — continuing without field metadata.
