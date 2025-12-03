@@ -13,24 +13,49 @@ import json
 import re
 import base64
 import sys
+import os
 from urllib.parse import quote
 from datetime import datetime, date, time, timedelta
 from collections.abc import MutableMapping
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from clickhouse_connect import get_client
+from dotenv import load_dotenv
 
-# ==================== CONFIGURATION - UPDATE THESE ====================
-ACCESS_TOKEN = "***REMOVED***"
-ORGANIZATION = "TORAI"
-API_BASE_URL = f"https://dev.azure.com/{ORGANIZATION}"
+# Load environment variables from .env file
+load_dotenv()
 
-CLICKHOUSE_HOST = "74.225.251.123"
-CLICKHOUSE_USER = "default"
-CLICKHOUSE_PASS = "root"
-CLICKHOUSE_DB = "JARVIS_DB"
+# ==================== CONFIGURATION - LOAD FROM .env FILE ====================
+ACCESS_TOKEN = os.getenv("AZURE_DEVOPS_ACCESS_TOKEN")
+ORGANIZATION = os.getenv("AZURE_DEVOPS_ORGANIZATION")
+API_BASE_URL = f"https://dev.azure.com/{ORGANIZATION}" if ORGANIZATION else None
 
-API_VERSION = "7.1"
-PROJECT_NAME = "Embedded"
+CLICKHOUSE_HOST = os.getenv("CLICKHOUSE_HOST")
+CLICKHOUSE_USER = os.getenv("CLICKHOUSE_USER")
+CLICKHOUSE_PASS = os.getenv("CLICKHOUSE_PASS")
+CLICKHOUSE_DB = os.getenv("CLICKHOUSE_DB")
+
+API_VERSION = os.getenv("AZURE_DEVOPS_API_VERSION", "7.1")
+PROJECT_NAME = os.getenv("AZURE_DEVOPS_PROJECT_NAME")
+
+# Validate required environment variables
+required_vars = {
+    "AZURE_DEVOPS_ACCESS_TOKEN": ACCESS_TOKEN,
+    "AZURE_DEVOPS_ORGANIZATION": ORGANIZATION,
+    "AZURE_DEVOPS_PROJECT_NAME": PROJECT_NAME,
+    "CLICKHOUSE_HOST": CLICKHOUSE_HOST,
+    "CLICKHOUSE_USER": CLICKHOUSE_USER,
+    "CLICKHOUSE_PASS": CLICKHOUSE_PASS,
+    "CLICKHOUSE_DB": CLICKHOUSE_DB,
+}
+
+missing_vars = [var for var, value in required_vars.items() if not value]
+if missing_vars:
+    print("❌ ERROR: Missing required environment variables in .env file:")
+    for var in missing_vars:
+        print(f"   - {var}")
+    print("\nPlease create a .env file with all required variables.")
+    print("See the documentation for the required .env file format.")
+    sys.exit(1)
 
 # Table names
 TABLE_MAIN = "DEVOPS_WORKITEMS_MAIN"
