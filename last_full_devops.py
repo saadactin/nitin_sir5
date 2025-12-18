@@ -67,7 +67,38 @@ TABLE_RELATIONS = "DEVOPS_WORKITEMS_RELATIONS"
 def log(message, flush=True):
     """Log with timestamp."""
     timestamp = datetime.now().strftime("%H:%M:%S")
-    print(f"[{timestamp}] {message}", flush=flush)
+    try:
+        print(f"[{timestamp}] {message}", flush=flush)
+    except UnicodeEncodeError:
+        # Handle Windows console encoding issues
+        import sys
+        import re
+        # Replace emojis with ASCII equivalents or remove them
+        emoji_replacements = {
+            '🚀': '[START]',
+            '📌': '[INFO]',
+            '✅': '[OK]',
+            '❌': '[ERROR]',
+            '⚠️': '[WARN]',
+            '📋': '[FETCH]',
+            '📦': '[BATCH]',
+            '💾': '[SAVE]',
+            '📝': '[PROCESS]',
+            '🔍': '[CHECK]',
+            '🎉': '[SUCCESS]',
+            '💡': '[TIP]',
+            '🏁': '[DONE]',
+            '🗑️': '[DELETE]',
+            '📈': '[UP]',
+            '📉': '[DOWN]',
+            '➡️': '[NO CHANGE]'
+        }
+        safe_message = message
+        for emoji, replacement in emoji_replacements.items():
+            safe_message = safe_message.replace(emoji, replacement)
+        # Remove any remaining non-ASCII characters that can't be encoded
+        safe_message = re.sub(r'[^\x00-\x7F]+', '', safe_message)
+        print(f"[{timestamp}] {safe_message}", flush=flush)
 
 def get_auth_headers():
     """Get authentication headers for Azure DevOps API."""

@@ -4,11 +4,33 @@ from db_utils import get_pg_connection, return_pg_connection
 def log_sync(server_name: str, status: str, details: str = None):
     """
     Log sync attempt into Postgres (metrics_sync_tables.sync_history).
+    If there's an existing 'in-progress' entry for this server within the last hour,
+    update it instead of creating a new entry.
     Uses connection pooling for better performance.
     """
     conn = get_pg_connection()
     try:
         cur = conn.cursor()
+        
+        # Check if there's a recent in-progress entry for this server
+        if status in ["success", "failed", "error"]:
+            cur.execute("""
+                UPDATE metrics_sync_tables.sync_history
+                SET status = %s, details = %s, sync_time = NOW()
+                WHERE server_name = %s 
+                AND status = 'in-progress'
+                AND sync_time >= NOW() - INTERVAL '2 hours'
+                ORDER BY sync_time DESC
+                LIMIT 1
+            """, (status, details or "-", server_name))
+            
+            if cur.rowcount > 0:
+                # Updated existing entry
+                conn.commit()
+                cur.close()
+                return
+        
+        # Otherwise, insert new entry
         cur.execute("""
             INSERT INTO metrics_sync_tables.sync_history (server_name, sync_time, status, details)
             VALUES (%s, NOW(), %s, %s)

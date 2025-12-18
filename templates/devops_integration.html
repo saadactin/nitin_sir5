@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DevOps Integration - SQL Sync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-enhancements.css') }}">
+  <style>
+    .material-icons { font-size: 24px; vertical-align: middle; }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-y-auto">
+      <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-6 sm:mb-8">
+          <div class="flex items-center gap-3 sm:gap-4 mb-2">
+            <span class="material-icons text-3xl sm:text-4xl text-blue-600">code</span>
+            <h1 class="text-2xl sm:text-3xl font-bold">Azure DevOps Integration</h1>
+          </div>
+          <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark ml-0 sm:ml-12">
+            Connect to Azure DevOps and sync work items to ClickHouse
+          </p>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% elif category == 'danger' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Form -->
+        <form id="devopsForm" class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg p-6 sm:p-8 border border-border-light dark:border-border-dark">
+          
+          <!-- Azure DevOps Credentials Section -->
+          <div class="mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons text-blue-600">vpn_key</span>
+              Azure DevOps Credentials
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Access Token -->
+              <div class="md:col-span-2">
+                <label for="access_token" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">lock</span>
+                  Access Token *
+                </label>
+                <input type="password" id="access_token" name="access_token" required
+                       placeholder="***REMOVED***"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Your Azure DevOps Personal Access Token</p>
+              </div>
+
+              <!-- Organization -->
+              <div>
+                <label for="organization" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">business</span>
+                  Organization *
+                </label>
+                <input type="text" id="organization" name="organization" required
+                       placeholder="TORAI"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+
+              <!-- Project Name -->
+              <div>
+                <label for="project_name" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">folder</span>
+                  Project Name *
+                </label>
+                <input type="text" id="project_name" name="project_name" required
+                       placeholder="Embedded"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+
+              <!-- API Version -->
+              <div>
+                <label for="api_version" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">settings</span>
+                  API Version *
+                </label>
+                <input type="text" id="api_version" name="api_version" required
+                       placeholder="7.1"
+                       value="7.1"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-8 border-border-light dark:border-border-dark"/>
+
+          <!-- ClickHouse Configuration Section -->
+          <div class="mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons text-green-600">storage</span>
+              ClickHouse Configuration
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- ClickHouse Host -->
+              <div>
+                <label for="clickhouse_host" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">dns</span>
+                  Host *
+                </label>
+                <input type="text" id="clickhouse_host" name="clickhouse_host" required
+                       placeholder="74.225.251.123"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
+              </div>
+
+              <!-- ClickHouse User -->
+              <div>
+                <label for="clickhouse_user" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">person</span>
+                  Username *
+                </label>
+                <input type="text" id="clickhouse_user" name="clickhouse_user" required
+                       placeholder="default"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
+              </div>
+
+              <!-- ClickHouse Password -->
+              <div>
+                <label for="clickhouse_password" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">lock</span>
+                  Password *
+                </label>
+                <input type="password" id="clickhouse_password" name="clickhouse_password" required
+                       placeholder="Enter password"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
+              </div>
+
+              <!-- ClickHouse Database Dropdown -->
+              <div>
+                <label for="clickhouse_database" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">database</span>
+                  Database *
+                </label>
+                <div class="flex gap-2">
+                  <select id="clickhouse_database" name="clickhouse_database" required
+                          class="flex-1 px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <option value="">Select Database...</option>
+                  </select>
+                  <button type="button" onclick="loadDatabases()" id="loadDbBtn"
+                          class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    <span class="material-icons text-sm">refresh</span>
+                    <span class="hidden sm:inline">Load</span>
+                  </button>
+                </div>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Select the ClickHouse database to store DevOps data</p>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-8 border-border-light dark:border-border-dark"/>
+
+          <!-- Sync Configuration Section -->
+          <div class="mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons text-purple-600">schedule</span>
+              Sync Configuration
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Incremental Sync Interval -->
+              <div>
+                <label for="sync_interval" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">timer</span>
+                  Incremental Sync Interval (minutes) *
+                </label>
+                <input type="number" id="sync_interval" name="sync_interval" required
+                       min="1"
+                       placeholder="60"
+                       value="60"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-purple-500 focus:border-transparent"/>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">How often to run incremental sync (in minutes)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8">
+            <button type="button" onclick="testConnection()" id="testBtn"
+                    class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">sync</span>
+              <span>Test Connection</span>
+            </button>
+            <button type="button" onclick="startFullSync()" id="fullSyncBtn"
+                    class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">cloud_upload</span>
+              <span>Start Full Sync</span>
+            </button>
+            <button type="button" onclick="startIncrementalSync()" id="incrementalSyncBtn"
+                    class="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">update</span>
+              <span>Start Incremental Sync</span>
+            </button>
+            <a href="{{ url_for('index') }}"
+               class="flex-1 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">cancel</span>
+              <span>Cancel</span>
+            </a>
+          </div>
+        </form>
+
+        <!-- Sync Progress Modal -->
+        <div id="syncProgressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div class="bg-white dark:bg-surface-dark rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons text-blue-600">sync</span>
+              Sync Progress
+            </h3>
+            <div id="syncProgressContent"></div>
+            <button onclick="closeSyncModal()" class="mt-4 px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+              Close
+            </button>
+          </div>
+        </div>
+
+        <!-- Test Results -->
+        <div id="testResults" class="mt-6 hidden">
+          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg p-6 border border-border-light dark:border-border-dark">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons">assessment</span>
+              Connection Test Results
+            </h3>
+            <div id="testResultsContent"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    async function loadDatabases() {
+      const btn = document.getElementById('loadDbBtn');
+      const select = document.getElementById('clickhouse_database');
+      const host = document.getElementById('clickhouse_host').value;
+      const user = document.getElementById('clickhouse_user').value;
+      const password = document.getElementById('clickhouse_password').value;
+      
+      if (!host || !user || !password) {
+        alert('Please fill in ClickHouse Host, Username, and Password first');
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-icons text-sm animate-spin">sync</span><span class="hidden sm:inline">Loading...</span>';
+      
+      try {
+        const response = await fetch('/api/devops/get-databases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ host, user, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.databases) {
+          select.innerHTML = '<option value="">Select Database...</option>';
+          data.databases.forEach(db => {
+            const option = document.createElement('option');
+            option.value = db;
+            option.textContent = db;
+            select.appendChild(option);
+          });
+          alert(`Loaded ${data.databases.length} database(s)`);
+        } else {
+          alert('Error loading databases: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Error loading databases: ' + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons text-sm">refresh</span><span class="hidden sm:inline">Load</span>';
+      }
+    }
+
+    async function testConnection() {
+      const testBtn = document.getElementById('testBtn');
+      const resultsDiv = document.getElementById('testResults');
+      const resultsContent = document.getElementById('testResultsContent');
+      
+      const formData = new FormData(document.getElementById('devopsForm'));
+      const data = Object.fromEntries(formData);
+      
+      testBtn.disabled = true;
+      testBtn.innerHTML = '<span class="material-icons animate-spin">sync</span><span>Testing...</span>';
+      
+      try {
+        const response = await fetch('/api/devops/test-connection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        resultsDiv.classList.remove('hidden');
+        
+        if (result.success) {
+          resultsContent.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold">
+                <span class="material-icons">check_circle</span>
+                <span>Connection Successful!</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">Azure DevOps</div>
+                  <div class="font-semibold">✓ Connected</div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">ClickHouse</div>
+                  <div class="font-semibold">✓ Connected</div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          resultsContent.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
+                <span class="material-icons">error</span>
+                <span>Connection Failed</span>
+              </div>
+              <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <div class="text-sm font-semibold mb-2">Error:</div>
+                <div class="text-sm">${result.error}</div>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultsDiv.classList.remove('hidden');
+        resultsContent.innerHTML = `
+          <div class="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <span class="material-icons">error</span>
+            <span>Error: ${error.message}</span>
+          </div>
+        `;
+      } finally {
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<span class="material-icons">sync</span><span>Test Connection</span>';
+      }
+    }
+
+    function closeSyncModal() {
+      document.getElementById('syncProgressModal').classList.add('hidden');
+    }
+
+    async function startFullSync() {
+      const btn = document.getElementById('fullSyncBtn');
+      const formData = new FormData(document.getElementById('devopsForm'));
+      const data = Object.fromEntries(formData);
+      
+      if (!data.access_token || !data.organization || !data.project_name || !data.clickhouse_host || 
+          !data.clickhouse_user || !data.clickhouse_password || !data.clickhouse_database) {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-icons animate-spin">sync</span><span>Starting...</span>';
+      
+      const modal = document.getElementById('syncProgressModal');
+      const content = document.getElementById('syncProgressContent');
+      modal.classList.remove('hidden');
+      content.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p class="mt-2">Starting full sync...</p></div>';
+      
+      try {
+        const response = await fetch('/api/devops/full-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          let html = '<div class="space-y-4">';
+          html += '<div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold"><span class="material-icons">sync</span><span>Full Sync Started!</span></div>';
+          html += `<div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg"><strong>Status:</strong> ${result.message || 'Sync started in background'}</div>`;
+          html += '<div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700">';
+          html += '<p class="text-sm"><strong>Note:</strong> The sync is running in the background. This may take some time depending on the number of work items.</p>';
+          html += '<p class="text-sm mt-2">Check the <a href="/dashboard" class="text-blue-600 dark:text-blue-400 underline">Sync History</a> page to see the progress and status.</p>';
+          html += '</div>';
+          html += '</div>';
+          content.innerHTML = html;
+          
+          // Auto-close modal after 5 seconds
+          setTimeout(() => {
+            closeSyncModal();
+            window.location.href = "/dashboard";
+          }, 5000);
+        } else {
+          content.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
+                <span class="material-icons">error</span>
+                <span>Full Sync Failed</span>
+              </div>
+              <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <div class="text-sm">${result.error || 'Unknown error occurred'}</div>
+              </div>
+            </div>
+          `;
+          btn.disabled = false;
+          btn.innerHTML = '<span class="material-icons">cloud_upload</span><span>Start Full Sync</span>';
+        }
+      } catch (error) {
+        content.innerHTML = `
+          <div class="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <span class="material-icons">error</span>
+            <span>Error: ${error.message}</span>
+          </div>
+        `;
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons">cloud_upload</span><span>Start Full Sync</span>';
+      }
+    }
+
+    async function startIncrementalSync() {
+      const btn = document.getElementById('incrementalSyncBtn');
+      const formData = new FormData(document.getElementById('devopsForm'));
+      const data = Object.fromEntries(formData);
+      
+      if (!data.access_token || !data.organization || !data.project_name || !data.clickhouse_host || 
+          !data.clickhouse_user || !data.clickhouse_password || !data.clickhouse_database || !data.sync_interval) {
+        alert('Please fill in all required fields including sync interval');
+        return;
+      }
+      
+      const interval = parseInt(data.sync_interval);
+      if (isNaN(interval) || interval < 1) {
+        alert('Sync interval must be a positive number (minutes)');
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-icons animate-spin">sync</span><span>Starting...</span>';
+      
+      const modal = document.getElementById('syncProgressModal');
+      const content = document.getElementById('syncProgressContent');
+      modal.classList.remove('hidden');
+      content.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p class="mt-2">Starting incremental sync...</p></div>';
+      
+      try {
+        const response = await fetch('/api/devops/incremental-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          let html = '<div class="space-y-4">';
+          html += '<div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold"><span class="material-icons">sync</span><span>Incremental Sync Started!</span></div>';
+          html += `<div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg"><strong>Status:</strong> ${result.message || 'Sync scheduled'}</div>`;
+          html += `<div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg"><strong>Sync Interval:</strong> Every ${interval} minute(s)</div>`;
+          html += '<div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700">';
+          html += '<p class="text-sm"><strong>Note:</strong> The first sync has started in the background. Subsequent syncs will run automatically every ' + interval + ' minute(s).</p>';
+          html += '<p class="text-sm mt-2">Check the <a href="/dashboard" class="text-blue-600 dark:text-blue-400 underline">Sync History</a> page to see the status of each sync.</p>';
+          html += '</div>';
+          html += '</div>';
+          content.innerHTML = html;
+          
+          // Auto-close modal after 5 seconds
+          setTimeout(() => {
+            closeSyncModal();
+            window.location.href = "/dashboard";
+          }, 5000);
+        } else {
+          content.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
+                <span class="material-icons">error</span>
+                <span>Incremental Sync Failed</span>
+              </div>
+              <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <div class="text-sm">${result.error || 'Unknown error occurred'}</div>
+              </div>
+            </div>
+          `;
+          btn.disabled = false;
+          btn.innerHTML = '<span class="material-icons">update</span><span>Start Incremental Sync</span>';
+        }
+      } catch (error) {
+        content.innerHTML = `
+          <div class="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <span class="material-icons">error</span>
+            <span>Error: ${error.message}</span>
+          </div>
+        `;
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons">update</span><span>Start Incremental Sync</span>';
+      }
+    }
+  </script>
+</body>
+</html>
+

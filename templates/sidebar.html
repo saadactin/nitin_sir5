@@ -43,6 +43,20 @@
   <span>Zoho CRM Integration</span>
 </a>
 
+<a href="{{ url_for('devops_integration') }}"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          {% if request.endpoint == 'devops_integration' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">
+  <span class="material-icons">code</span>
+  <span>DevOps</span>
+</a>
+
+<a href="{{ url_for('postgres_integration') }}"
+   class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
+          {% if request.endpoint == 'postgres_integration' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">
+  <span class="material-icons">storage</span>
+  <span>Postgres</span>
+</a>
+
 <a href="{{ url_for('schedule_page') }}"
    class="flex items-center gap-3 px-4 py-2 rounded-lg transition 
           {% if request.endpoint == 'schedule_page' %}bg-blue-600 text-white shadow-sm{% else %}hover:bg-blue-50 dark:hover:bg-gray-800{% endif %}">

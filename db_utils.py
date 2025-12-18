@@ -259,42 +259,107 @@ def init_pg_schema():
     # Create schema
     cur.execute("CREATE SCHEMA IF NOT EXISTS metrics_sync_tables;")
 
-    # Create schedules table
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS metrics_sync_tables.schedules (
-            id SERIAL PRIMARY KEY,
-            server_name TEXT NOT NULL,
-            job_type TEXT NOT NULL,
-            -- scheduling fields
-            minutes INTEGER,
-            hour INTEGER,
-            minute INTEGER,
-            -- runtime/status fields
-            last_run TIMESTAMP,
-            status TEXT,
-            error TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            -- Add source_id for database sources (HANA, SQL Server from DB)
-            source_id INTEGER REFERENCES data_sources(id) ON DELETE CASCADE
-        );
-    """)
-    
-    # Add source_id column if it doesn't exist (for existing installations)
+    # Create data_sources table first (needed for foreign key reference)
+    # Commit after creating data_sources to ensure it exists before schedules references it
     try:
         cur.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_schema = 'metrics_sync_tables' 
-            AND table_name = 'schedules' 
-            AND column_name = 'source_id'
+            CREATE TABLE IF NOT EXISTS data_sources (
+                id SERIAL PRIMARY KEY,
+                source_name VARCHAR(255) UNIQUE NOT NULL,
+                source_type VARCHAR(50) NOT NULL,
+                server_address TEXT NOT NULL,
+                username TEXT,
+                password TEXT,
+                target_type VARCHAR(50) NOT NULL,
+                target_database VARCHAR(255) NOT NULL,
+                connection_details JSONB,
+                oauth_refresh_token TEXT,
+                oauth_client_id TEXT,
+                oauth_client_secret TEXT,
+                oauth_access_token TEXT,
+                oauth_token_expiry TIMESTAMP,
+                oauth_api_domain TEXT,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         """)
-        if not cur.fetchone():
-            cur.execute("""
-                ALTER TABLE metrics_sync_tables.schedules 
-                ADD COLUMN source_id INTEGER REFERENCES data_sources(id) ON DELETE CASCADE
-            """)
-            logger.info("Added source_id column to schedules table")
+        conn.commit()  # Commit to ensure table exists before foreign key reference
+        logger.info("Created/verified data_sources table")
     except Exception as e:
-        logger.warning(f"Could not add source_id column (may already exist or data_sources table missing): {e}")
+        logger.warning(f"Error creating data_sources table: {e}")
+        conn.rollback()
+        # Try to continue anyway - table might already exist
+
+    # Create schedules table (with foreign key to data_sources)
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS metrics_sync_tables.schedules (
+                id SERIAL PRIMARY KEY,
+                server_name TEXT NOT NULL,
+                job_type TEXT NOT NULL,
+                -- scheduling fields
+                minutes INTEGER,
+                hour INTEGER,
+                minute INTEGER,
+                -- runtime/status fields
+                last_run TIMESTAMP,
+                status TEXT,
+                error TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+        """)
+        conn.commit()
+        logger.info("Created/verified schedules table")
+    except Exception as e:
+        logger.warning(f"Error creating schedules table: {e}")
+        conn.rollback()
+        # Try to continue - table might already exist
+    
+    # Add source_id column if it doesn't exist (for existing installations)
+    # First check if data_sources table exists
+    try:
+        cur.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'data_sources'
+            );
+        """)
+        result = cur.fetchone()
+        data_sources_exists = result[0] if result else False
+        
+        if data_sources_exists:
+            # Check if source_id column exists
+            cur.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_schema = 'metrics_sync_tables' 
+                AND table_name = 'schedules' 
+                AND column_name = 'source_id'
+            """)
+            if not cur.fetchone():
+                try:
+                    cur.execute("""
+                        ALTER TABLE metrics_sync_tables.schedules 
+                        ADD COLUMN source_id INTEGER REFERENCES data_sources(id) ON DELETE CASCADE
+                    """)
+                    conn.commit()
+                    logger.info("Added source_id column to schedules table")
+                except Exception as e:
+                    logger.warning(f"Could not add source_id column with foreign key: {e}")
+                    # Try without foreign key constraint
+                    try:
+                        cur.execute("""
+                            ALTER TABLE metrics_sync_tables.schedules 
+                            ADD COLUMN source_id INTEGER
+                        """)
+                        conn.commit()
+                        logger.info("Added source_id column to schedules table (without foreign key)")
+                    except Exception as e2:
+                        logger.warning(f"Could not add source_id column: {e2}")
+        else:
+            logger.warning("data_sources table does not exist, skipping source_id column addition")
+    except Exception as e:
+        logger.warning(f"Error checking/adding source_id column: {e}")
 
     # Ensure older installations get the new columns if the table existed prior
     try:
@@ -347,7 +412,17 @@ def init_pg_schema():
         );
     """)
 
-    conn.commit()
+    # Final commit for any remaining changes
+    try:
+        conn.commit()
+        logger.info("Database schema initialization completed successfully")
+    except Exception as e:
+        logger.warning(f"Error in final commit: {e}")
+        try:
+            conn.rollback()
+        except:
+            pass
+    
     cur.close()
     conn.close()
     return True

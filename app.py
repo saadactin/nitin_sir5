@@ -3850,12 +3850,94 @@ def dashboard():
 @require_role(["admin", "operator", "viewer"])
 def dashboard_data():
     """Return sync history as JSON for auto-refresh"""
-    from dashboard import get_dashboard_metrics
+    from dashboard import get_dashboard_metrics, get_last_10_syncs
+    from sync_manager import sync_manager
+    
+    # Get latest sync history first
+    last_10 = get_last_10_syncs()
+    
+    # Get progress for all active syncs
+    progress_data = {}
+    
+    # Get SQL Server sync progress from sync_manager
+    active_syncs = sync_manager.get_all_active_syncs()
+    for server_name, status in active_syncs.items():
+        if status.get("status") in ["running", "starting"]:
+            progress_data[server_name] = {
+                "progress": status.get("progress", 0),
+                "message": status.get("message", "Processing..."),
+                "status": status.get("status", "running")
+            }
+    
+    # Get DevOps/HANA/Zoho sync progress from global tracker
+    # Only include if there's an in-progress entry in sync history
+    in_progress_servers = {entry["server"] for entry in last_10 if entry["status"] in ["in-progress", "partial"]}
+    
+    with _progress_lock:
+        for server_name, progress_info in _sync_progress.items():
+            # Only include if there's a matching in-progress entry in history
+            if server_name in in_progress_servers:
+                # Check if progress hasn't been updated in a while (might be stuck)
+                last_update = progress_info.get("last_update")
+                if last_update:
+                    time_since_update = (datetime.now() - last_update).total_seconds()
+                    # If no update in 5 minutes, show as potentially stuck
+                    if time_since_update > 300:
+                        progress_data[server_name] = {
+                            "progress": progress_info.get("progress", 0),
+                            "message": "Sync may be stuck - check logs",
+                            "status": "in-progress"
+                        }
+                    else:
+                        progress_data[server_name] = {
+                            "progress": progress_info.get("progress", 0),
+                            "message": progress_info.get("message", "Processing..."),
+                            "status": "in-progress"
+                        }
+                else:
+                    progress_data[server_name] = {
+                        "progress": progress_info.get("progress", 0),
+                        "message": progress_info.get("message", "Processing..."),
+                        "status": "in-progress"
+                    }
+    
     return jsonify({
         "last_detail": get_last_sync_details(),
-        "last_10": get_last_10_syncs(),
-        "metrics": get_dashboard_metrics()
+        "last_10": last_10,
+        "metrics": get_dashboard_metrics(),
+        "progress": progress_data
     })
+
+
+@app.route("/api/sync-progress/<path:server_name>")
+@require_role(["admin", "operator", "viewer"])
+def get_sync_progress_api(server_name):
+    """Get progress for a specific sync"""
+    from sync_manager import sync_manager
+    
+    # Try sync_manager first (for SQL Server syncs)
+    sync_status = sync_manager.get_sync_status(server_name)
+    if sync_status:
+        return jsonify({
+            "progress": sync_status.get("progress", 0),
+            "message": sync_status.get("message", "Processing..."),
+            "status": sync_status.get("status", "running")
+        })
+    
+    # Try global progress tracker (for DevOps/HANA/Zoho)
+    progress_info = get_sync_progress(server_name)
+    if progress_info:
+        return jsonify({
+            "progress": progress_info.get("progress", 0),
+            "message": progress_info.get("message", "Processing..."),
+            "status": "in-progress"
+        })
+    
+    return jsonify({
+        "progress": 0,
+        "message": "No active sync found",
+        "status": "not-found"
+    }), 404
 # ------------------ Schedule Routes ------------------
 
 @app.route("/schedule", methods=["GET", "POST"])
@@ -4579,6 +4661,1039 @@ def api_zoho_sync():
         
     except Exception as e:
         app.logger.exception(f"Error starting Zoho sync: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# ------------------ DEVOPS INTEGRATION ROUTES ------------------
+
+@app.route("/devops-integration")
+@require_role(["admin", "operator"])
+def devops_integration():
+    """DevOps Integration page"""
+    return render_template("devops_integration.html")
+
+
+@app.route("/api/devops/get-databases", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_devops_get_databases():
+    """Get list of ClickHouse databases"""
+    try:
+        data = request.get_json()
+        host = data.get("host", "").strip()
+        user = data.get("user", "").strip()
+        password = data.get("password", "").strip()
+        
+        if not all([host, user, password]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields: host, user, password"
+            }), 400
+        
+        try:
+            from clickhouse_connect import get_client
+            client = get_client(host=host, username=user, password=password)
+            result = client.query("SHOW DATABASES")
+            databases = [row[0] for row in result.result_rows if row[0] not in ['system', 'information_schema', 'INFORMATION_SCHEMA', 'default']]
+            return jsonify({
+                "success": True,
+                "databases": databases
+            })
+        except Exception as e:
+            app.logger.exception(f"Error getting ClickHouse databases: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to connect to ClickHouse: {str(e)}"
+            }), 500
+    except Exception as e:
+        app.logger.exception(f"Error in get-databases: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/api/devops/test-connection", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_devops_test_connection():
+    """Test Azure DevOps and ClickHouse connections"""
+    try:
+        data = request.get_json()
+        access_token = data.get("access_token", "").strip()
+        organization = data.get("organization", "").strip()
+        project_name = data.get("project_name", "").strip()
+        clickhouse_host = data.get("clickhouse_host", "").strip()
+        clickhouse_user = data.get("clickhouse_user", "").strip()
+        clickhouse_password = data.get("clickhouse_password", "").strip()
+        clickhouse_database = data.get("clickhouse_database", "").strip()
+        
+        if not all([access_token, organization, project_name, clickhouse_host, clickhouse_user, clickhouse_password, clickhouse_database]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields"
+            }), 400
+        
+        # Test Azure DevOps connection
+        try:
+            import requests
+            import base64
+            credentials = base64.b64encode(f":{access_token}".encode()).decode()
+            headers = {
+                "Authorization": f"Basic {credentials}",
+                "Content-Type": "application/json"
+            }
+            url = f"https://dev.azure.com/{organization}/_apis/projects?api-version=7.1"
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code != 200:
+                return jsonify({
+                    "success": False,
+                    "error": f"Azure DevOps connection failed: {response.status_code} - {response.text[:200]}"
+                }), 401
+        except Exception as e:
+            return jsonify({
+                "success": False,
+                "error": f"Azure DevOps connection failed: {str(e)}"
+            }), 401
+        
+        # Test ClickHouse connection
+        try:
+            from clickhouse_connect import get_client
+            client = get_client(
+                host=clickhouse_host,
+                username=clickhouse_user,
+                password=clickhouse_password,
+                database=clickhouse_database,
+            )
+            client.query("SELECT 1")
+        except Exception as e:
+            return jsonify({
+                "success": False,
+                "error": f"ClickHouse connection failed: {str(e)}"
+            }), 500
+        
+        return jsonify({
+            "success": True,
+            "message": "Both connections successful"
+        })
+    except Exception as e:
+        app.logger.exception(f"Error testing DevOps connection: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# Global progress tracking for DevOps, HANA, Zoho syncs
+_sync_progress = {}
+_progress_lock = threading.Lock()
+
+def update_sync_progress(server_name: str, progress: int, message: str = None):
+    """Update progress for a sync operation"""
+    with _progress_lock:
+        if server_name not in _sync_progress:
+            _sync_progress[server_name] = {
+                "progress": 0,
+                "message": "Starting...",
+                "start_time": datetime.now()
+            }
+        _sync_progress[server_name]["progress"] = progress
+        if message:
+            _sync_progress[server_name]["message"] = message
+        _sync_progress[server_name]["last_update"] = datetime.now()
+
+def get_sync_progress(server_name: str):
+    """Get current progress for a sync operation"""
+    with _progress_lock:
+        return _sync_progress.get(server_name)
+
+def clear_sync_progress(server_name: str):
+    """Clear progress for a completed sync"""
+    with _progress_lock:
+        if server_name in _sync_progress:
+            del _sync_progress[server_name]
+
+def run_devops_full_sync(config, server_name: str = None):
+    """Run full DevOps sync with provided configuration"""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+    
+    if server_name:
+        update_sync_progress(server_name, 5, "Initializing sync...")
+    
+    # Set environment variables
+    env = os.environ.copy()
+    env['AZURE_DEVOPS_ACCESS_TOKEN'] = config['access_token']
+    env['AZURE_DEVOPS_ORGANIZATION'] = config['organization']
+    env['AZURE_DEVOPS_PROJECT_NAME'] = config['project_name']
+    env['AZURE_DEVOPS_API_VERSION'] = config.get('api_version', '7.1')
+    env['CLICKHOUSE_HOST'] = config['clickhouse_host']
+    env['CLICKHOUSE_USER'] = config['clickhouse_user']
+    env['CLICKHOUSE_PASS'] = config['clickhouse_password']
+    env['CLICKHOUSE_DB'] = config['clickhouse_database']
+    
+    # Get script path
+    script_path = Path(__file__).parent / "last_full_devops.py"
+    
+    if server_name:
+        update_sync_progress(server_name, 10, "Connecting to ClickHouse...")
+    
+    # Run script and capture output for progress tracking
+    try:
+        import time
+        start_time = time.time()
+        
+        if server_name:
+            update_sync_progress(server_name, 5, "Initializing sync...")
+        
+        # Use subprocess.run with timeout, but we'll monitor progress separately
+        # For better progress tracking, we'll use a thread to read output
+        process = subprocess.Popen(
+            [sys.executable, str(script_path)],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1
+        )
+        
+        stdout_lines = []
+        stderr_lines = []
+        total_batches = None
+        current_batch = 0
+        
+        # Thread to read stdout
+        def read_stdout():
+            nonlocal stdout_lines, total_batches, current_batch
+            for line in iter(process.stdout.readline, ''):
+                if not line:
+                    break
+                line = line.rstrip()
+                stdout_lines.append(line)
+                
+                if server_name:
+                    import re
+                    # Look for progress indicators
+                    batch_match = re.search(r'Processing batch (\d+)/(\d+)', line, re.IGNORECASE)
+                    batch_match2 = re.search(r'batch (\d+)/(\d+)', line, re.IGNORECASE)
+                    processed_match = re.search(r'Processed (\d+)[,\d]*/(\d+)[,\d]*', line, re.IGNORECASE)
+                    items_match = re.search(r'Found (\d+)[,\d]* work items', line, re.IGNORECASE)
+                    
+                    if batch_match:
+                        batch_num = int(batch_match.group(1))
+                        total_batches = int(batch_match.group(2))
+                        current_batch = batch_num
+                        progress = 10 + int((batch_num / total_batches) * 85) if total_batches > 0 else 10
+                        update_sync_progress(server_name, progress, f"Processing batch {batch_num}/{total_batches}")
+                    elif batch_match2:
+                        batch_num = int(batch_match2.group(1))
+                        total_batches = int(batch_match2.group(2))
+                        current_batch = batch_num
+                        progress = 10 + int((batch_num / total_batches) * 85) if total_batches > 0 else 10
+                        update_sync_progress(server_name, progress, f"Processing batch {batch_num}/{total_batches}")
+                    elif processed_match:
+                        processed = int(processed_match.group(1).replace(',', ''))
+                        total = int(processed_match.group(2).replace(',', ''))
+                        progress = 10 + int((processed / total) * 85) if total > 0 else 10
+                        update_sync_progress(server_name, progress, f"Processed {processed:,}/{total:,} work items")
+                    elif items_match:
+                        total_items = int(items_match.group(1).replace(',', ''))
+                        update_sync_progress(server_name, 15, f"Found {total_items:,} work items to process")
+                    elif "Connected to ClickHouse" in line:
+                        update_sync_progress(server_name, 20, "Connected to ClickHouse")
+                    elif "Authentication ready" in line:
+                        update_sync_progress(server_name, 25, "Authentication ready")
+                    elif "Fetching" in line and "work items" in line:
+                        update_sync_progress(server_name, 30, "Fetching work items from Azure DevOps")
+        
+        # Thread to read stderr
+        def read_stderr():
+            nonlocal stderr_lines
+            for line in iter(process.stderr.readline, ''):
+                if not line:
+                    break
+                stderr_lines.append(line.rstrip())
+        
+        # Start reading threads
+        import threading
+        stdout_thread = threading.Thread(target=read_stdout, daemon=True)
+        stderr_thread = threading.Thread(target=read_stderr, daemon=True)
+        stdout_thread.start()
+        stderr_thread.start()
+        
+        # Wait for process to complete with timeout
+        try:
+            returncode = process.wait(timeout=3600)  # 1 hour timeout
+        except subprocess.TimeoutExpired:
+            process.kill()
+            returncode = -1
+            if server_name:
+                update_sync_progress(server_name, 0, "Sync timed out after 1 hour")
+            return {
+                "success": False,
+                "error": "Sync timed out after 1 hour"
+            }
+        
+        # Wait for threads to finish reading
+        stdout_thread.join(timeout=5)
+        stderr_thread.join(timeout=5)
+        
+        if server_name:
+            if returncode == 0:
+                update_sync_progress(server_name, 100, "Sync completed successfully")
+            else:
+                error_msg = "\n".join(stderr_lines[-5:]) if stderr_lines else "Unknown error"
+                update_sync_progress(server_name, 0, f"Sync failed: {error_msg[:100]}")
+        
+        return {
+            "success": returncode == 0,
+            "stdout": "\n".join(stdout_lines),
+            "stderr": "\n".join(stderr_lines),
+            "returncode": returncode
+        }
+    except subprocess.TimeoutExpired:
+        if server_name:
+            update_sync_progress(server_name, 0, "Sync timed out after 1 hour")
+        return {
+            "success": False,
+            "error": "Sync timed out after 1 hour"
+        }
+    except Exception as e:
+        if server_name:
+            update_sync_progress(server_name, 0, f"Error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def run_devops_incremental_sync(config):
+    """Run incremental DevOps sync with provided configuration"""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+    
+    # Set environment variables
+    env = os.environ.copy()
+    env['AZURE_DEVOPS_ACCESS_TOKEN'] = config['access_token']
+    env['AZURE_DEVOPS_ORGANIZATION'] = config['organization']
+    env['AZURE_DEVOPS_PROJECT_NAME'] = config['project_name']
+    env['AZURE_DEVOPS_API_VERSION'] = config.get('api_version', '7.1')
+    env['CLICKHOUSE_HOST'] = config['clickhouse_host']
+    env['CLICKHOUSE_USER'] = config['clickhouse_user']
+    env['CLICKHOUSE_PASS'] = config['clickhouse_password']
+    env['CLICKHOUSE_DB'] = config['clickhouse_database']
+    
+    # Get script path
+    script_path = Path(__file__).parent / "last_incre_devops.py"
+    
+    # Run script
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script_path)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=1800  # 30 minutes timeout
+        )
+        return {
+            "success": result.returncode == 0,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "returncode": result.returncode
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "success": False,
+            "error": "Sync timed out after 30 minutes"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def check_devops_tables(config):
+    """Check if DevOps tables exist in ClickHouse"""
+    try:
+        from clickhouse_connect import get_client
+        client = get_client(
+            host=config['clickhouse_host'],
+            username=config['clickhouse_user'],
+            password=config['clickhouse_password'],
+            database=config['clickhouse_database'],
+        )
+        
+        tables_to_check = [
+            "DEVOPS_WORKITEMS_MAIN",
+            "DEVOPS_WORKITEMS_UPDATES",
+            "DEVOPS_WORKITEMS_COMMENTS",
+            "DEVOPS_WORKITEMS_RELATIONS"
+        ]
+        
+        existing_tables = []
+        created_tables = []
+        
+        for table in tables_to_check:
+            try:
+                result = client.query(f"EXISTS TABLE {table}")
+                if result.result_rows and result.result_rows[0][0] == 1:
+                    existing_tables.append(table)
+                else:
+                    created_tables.append(table)
+            except:
+                created_tables.append(table)
+        
+        return {
+            "existing": existing_tables,
+            "created": created_tables
+        }
+    except Exception as e:
+        app.logger.exception(f"Error checking tables: {e}")
+        return {
+            "existing": [],
+            "created": [],
+            "error": str(e)
+        }
+
+
+@app.route("/api/devops/full-sync", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_devops_full_sync():
+    """Run full DevOps sync in background"""
+    try:
+        data = request.get_json()
+        config = {
+            "access_token": data.get("access_token", "").strip(),
+            "organization": data.get("organization", "").strip(),
+            "project_name": data.get("project_name", "").strip(),
+            "api_version": data.get("api_version", "7.1").strip(),
+            "clickhouse_host": data.get("clickhouse_host", "").strip(),
+            "clickhouse_user": data.get("clickhouse_user", "").strip(),
+            "clickhouse_password": data.get("clickhouse_password", "").strip(),
+            "clickhouse_database": data.get("clickhouse_database", "").strip(),
+        }
+        
+        if not all([config["access_token"], config["organization"], config["project_name"], 
+                   config["clickhouse_host"], config["clickhouse_user"], config["clickhouse_password"], 
+                   config["clickhouse_database"]]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields"
+            }), 400
+        
+        # Create server name for sync history
+        server_name = f"DevOps: {config['organization']}/{config['project_name']}"
+        
+        # Log sync start
+        from dashboard import log_sync
+        log_sync(server_name, "in-progress", "Full sync started")
+        
+        # Run full sync in background thread
+        import threading
+        
+        def run_full_sync_background():
+            try:
+                app.logger.info(f"Starting DevOps full sync for {server_name}...")
+                update_sync_progress(server_name, 0, "Initializing...")
+                
+                # Check tables before sync
+                update_sync_progress(server_name, 5, "Checking existing tables...")
+                tables_before = check_devops_tables(config)
+                
+                # Run full sync with progress tracking
+                update_sync_progress(server_name, 10, "Starting sync process...")
+                result = run_devops_full_sync(config, server_name)
+                
+                if result.get("success"):
+                    # Check tables after sync
+                    update_sync_progress(server_name, 95, "Verifying tables...")
+                    tables_after = check_devops_tables(config)
+                    
+                    # Determine which tables were created vs already existed
+                    tables_created = [t for t in tables_after.get("existing", []) if t not in tables_before.get("existing", [])]
+                    tables_existing = tables_after.get("existing", [])
+                    
+                    # Extract useful info from stdout
+                    stdout = result.get("stdout", "")
+                    # Try to extract row count or summary
+                    details = f"Full sync completed. Tables: {', '.join(tables_existing)}"
+                    if tables_created:
+                        details += f" (Created: {', '.join(tables_created)})"
+                    
+                    # Extract work item count if available
+                    import re
+                    work_items_match = re.search(r'Processed (\d+[,\d]*)\s*work items', stdout, re.IGNORECASE)
+                    if work_items_match:
+                        count = work_items_match.group(1).replace(',', '')
+                        details += f" | {count} work items processed"
+                    
+                    # Log success - this updates the database status
+                    log_sync(server_name, "success", details)
+                    app.logger.info(f"DevOps full sync completed successfully for {server_name}")
+                    
+                    # Update progress to 100% before clearing
+                    update_sync_progress(server_name, 100, "Sync completed successfully")
+                    
+                    # Wait a bit before clearing to ensure UI gets the update
+                    import time
+                    time.sleep(2)
+                    
+                    # Clear progress after completion
+                    clear_sync_progress(server_name)
+                else:
+                    error_msg = result.get("error") or result.get("stderr", "Unknown error")
+                    # Truncate long error messages
+                    if len(error_msg) > 500:
+                        error_msg = error_msg[:500] + "..."
+                    
+                    # Log failure - this updates the database status
+                    log_sync(server_name, "failed", f"Full sync failed: {error_msg}")
+                    app.logger.error(f"DevOps full sync failed for {server_name}: {error_msg}")
+                    
+                    # Update progress before clearing
+                    update_sync_progress(server_name, 0, f"Sync failed: {error_msg[:50]}")
+                    
+                    # Wait a bit before clearing
+                    import time
+                    time.sleep(2)
+                    
+                    # Clear progress after failure
+                    clear_sync_progress(server_name)
+                    
+            except Exception as e:
+                error_msg = str(e)
+                if len(error_msg) > 500:
+                    error_msg = error_msg[:500] + "..."
+                
+                # Log error - this updates the database status
+                log_sync(server_name, "failed", f"Full sync error: {error_msg}")
+                app.logger.exception(f"Error in DevOps full sync background thread: {e}")
+                
+                # Update progress before clearing
+                update_sync_progress(server_name, 0, f"Error: {error_msg[:50]}")
+                
+                # Wait a bit before clearing
+                import time
+                time.sleep(2)
+                
+                # Clear progress after error
+                clear_sync_progress(server_name)
+        
+        # Start background thread
+        thread = threading.Thread(target=run_full_sync_background, daemon=True)
+        thread.start()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Full sync started in background. Check Sync History page for status."
+        })
+        
+    except Exception as e:
+        app.logger.exception(f"Error starting full sync: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/api/devops/incremental-sync", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_devops_incremental_sync():
+    """Start incremental DevOps sync with interval"""
+    try:
+        data = request.get_json()
+        config = {
+            "access_token": data.get("access_token", "").strip(),
+            "organization": data.get("organization", "").strip(),
+            "project_name": data.get("project_name", "").strip(),
+            "api_version": data.get("api_version", "7.1").strip(),
+            "clickhouse_host": data.get("clickhouse_host", "").strip(),
+            "clickhouse_user": data.get("clickhouse_user", "").strip(),
+            "clickhouse_password": data.get("clickhouse_password", "").strip(),
+            "clickhouse_database": data.get("clickhouse_database", "").strip(),
+            "sync_interval": int(data.get("sync_interval", 60))
+        }
+        
+        if not all([config["access_token"], config["organization"], config["project_name"], 
+                   config["clickhouse_host"], config["clickhouse_user"], config["clickhouse_password"], 
+                   config["clickhouse_database"]]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields"
+            }), 400
+        
+        if config["sync_interval"] < 1:
+            return jsonify({
+                "success": False,
+                "error": "Sync interval must be at least 1 minute"
+            }), 400
+        
+        # Schedule incremental sync using schedule library
+        import schedule
+        import threading
+        import json
+        from dashboard import log_sync
+        
+        # Create server name for sync history
+        server_name = f"DevOps: {config['organization']}/{config['project_name']} (Incremental)"
+        
+        # Define the job function
+        def devops_incremental_job():
+            try:
+                app.logger.info(f"Running scheduled DevOps incremental sync for {server_name}")
+                log_sync(server_name, "in-progress", f"Incremental sync started (interval: {config['sync_interval']} min)")
+                
+                result = run_devops_incremental_sync(config)
+                
+                if result.get("success"):
+                    stdout = result.get("stdout", "")
+                    # Try to extract summary from stdout
+                    details = f"Incremental sync completed successfully"
+                    if "Processed:" in stdout:
+                        # Extract processed count if available
+                        import re
+                        match = re.search(r'Processed:\s*(\d+[,\d]*)\s*changed work items', stdout)
+                        if match:
+                            details = f"Incremental sync completed. Processed {match.group(1)} work items"
+                    
+                    log_sync(server_name, "success", details)
+                    app.logger.info(f"DevOps incremental sync completed for {server_name}")
+                else:
+                    error_msg = result.get("error") or result.get("stderr", "Unknown error")
+                    if len(error_msg) > 500:
+                        error_msg = error_msg[:500] + "..."
+                    log_sync(server_name, "failed", f"Incremental sync failed: {error_msg}")
+                    app.logger.error(f"DevOps incremental sync failed for {server_name}: {error_msg}")
+                    
+            except Exception as e:
+                error_msg = str(e)
+                if len(error_msg) > 500:
+                    error_msg = error_msg[:500] + "..."
+                log_sync(server_name, "failed", f"Incremental sync error: {error_msg}")
+                app.logger.exception(f"Error in DevOps incremental sync job: {e}")
+        
+        # Schedule the job
+        try:
+            schedule.every(config["sync_interval"]).minutes.do(devops_incremental_job)
+            
+            # Store config for persistence (you might want to save to database)
+            # For now, we'll just start the scheduler thread if not already running
+            if not hasattr(app, '_devops_scheduler_running'):
+                def run_scheduler():
+                    while True:
+                        schedule.run_pending()
+                        import time
+                        time.sleep(60)  # Check every minute
+                
+                scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+                scheduler_thread.start()
+                app._devops_scheduler_running = True
+            
+            # Run first sync immediately in background
+            threading.Thread(target=devops_incremental_job, daemon=True).start()
+            
+            return jsonify({
+                "success": True,
+                "message": f"Incremental sync scheduled to run every {config['sync_interval']} minute(s). First sync started in background. Check Sync History for status."
+            })
+        except Exception as e:
+            app.logger.exception(f"Error scheduling incremental sync: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to schedule sync: {str(e)}"
+            }), 500
+    except Exception as e:
+        app.logger.exception(f"Error starting incremental sync: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/postgres-integration")
+@require_role(["admin", "operator"])
+def postgres_integration():
+    """PostgreSQL Integration page"""
+    # Databases will be loaded via API call, but provide empty list for template
+    return render_template("postgres_integration.html", clickhouse_dbs=[])
+
+
+@app.route("/api/postgres/get-databases", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_postgres_get_databases():
+    """Get list of ClickHouse databases"""
+    try:
+        data = request.get_json()
+        host = data.get("host", "").strip()
+        user = data.get("user", "").strip()
+        password = data.get("password", "").strip()
+        
+        if not all([host, user, password]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields: host, user, password"
+            }), 400
+        
+        try:
+            from clickhouse_connect import get_client
+            client = get_client(host=host, username=user, password=password)
+            result = client.query("SHOW DATABASES")
+            databases = [row[0] for row in result.result_rows if row[0] not in ['system', 'information_schema', 'INFORMATION_SCHEMA', 'default']]
+            return jsonify({
+                "success": True,
+                "databases": databases
+            })
+        except Exception as e:
+            app.logger.exception(f"Error getting ClickHouse databases: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to connect to ClickHouse: {str(e)}"
+            }), 500
+    except Exception as e:
+        app.logger.exception(f"Error in get-databases: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/api/postgres/test-connection", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_postgres_test_connection():
+    """Test PostgreSQL and ClickHouse connections"""
+    try:
+        data = request.get_json()
+        pg_config = {
+            "host": data.get("pg_host", "").strip(),
+            "port": int(data.get("pg_port", "5432")),
+            "database": data.get("pg_database", "").strip(),
+            "username": data.get("pg_username", "").strip(),
+            "password": data.get("pg_password", "").strip(),
+        }
+        
+        ch_config = {
+            "host": data.get("clickhouse_host", "").strip(),
+            "user": data.get("clickhouse_user", "").strip(),
+            "password": data.get("clickhouse_password", "").strip(),
+        }
+        
+        if not all([pg_config["host"], pg_config["database"], pg_config["username"], pg_config["password"]]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required PostgreSQL fields"
+            }), 400
+        
+        if not all([ch_config["host"], ch_config["user"], ch_config["password"]]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required ClickHouse fields"
+            }), 400
+        
+        errors = []
+        
+        # Test PostgreSQL connection
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=pg_config["host"],
+                port=pg_config["port"],
+                database=pg_config["database"],
+                user=pg_config["username"],
+                password=pg_config["password"],
+                connect_timeout=5
+            )
+            conn.close()
+        except Exception as e:
+            errors.append(f"PostgreSQL: {str(e)}")
+        
+        # Test ClickHouse connection
+        try:
+            from clickhouse_connect import get_client
+            client = get_client(host=ch_config["host"], username=ch_config["user"], password=ch_config["password"])
+            client.command("SELECT 1")
+        except Exception as e:
+            errors.append(f"ClickHouse: {str(e)}")
+        
+        if errors:
+            return jsonify({
+                "success": False,
+                "error": "; ".join(errors)
+            }), 400
+        
+        return jsonify({
+            "success": True,
+            "message": "Both connections successful"
+        })
+    except Exception as e:
+        app.logger.exception(f"Error testing connections: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+def run_postgres_migration(config, server_name: str = None):
+    """Run PostgreSQL to ClickHouse migration with provided configuration"""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+    
+    if server_name:
+        update_sync_progress(server_name, 5, "Initializing migration...")
+    
+    # Set environment variables
+    env = os.environ.copy()
+    env['PG_HOST'] = config['pg_host']
+    env['PG_PORT'] = str(config['pg_port'])
+    env['PG_DATABASE'] = config['pg_database']
+    env['PG_USERNAME'] = config['pg_username']
+    env['PG_PASSWORD'] = config['pg_password']
+    env['CLICKHOUSE_HOST'] = config['clickhouse_host']
+    env['CLICKHOUSE_USER'] = config['clickhouse_user']
+    env['CLICKHOUSE_PASSWORD'] = config['clickhouse_password']
+    env['CLICKHOUSE_DATABASE'] = config['clickhouse_database']
+    
+    # Get script path
+    script_path = Path(__file__).parent / "postgres_to_clickhouse.py"
+    
+    if server_name:
+        update_sync_progress(server_name, 10, "Connecting to databases...")
+    
+    # Run script and capture output for progress tracking
+    try:
+        import time
+        start_time = time.time()
+        
+        if server_name:
+            update_sync_progress(server_name, 5, "Initializing migration...")
+        
+        process = subprocess.Popen(
+            [sys.executable, str(script_path)],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1
+        )
+        
+        stdout_lines = []
+        stderr_lines = []
+        
+        # Thread to read stdout
+        def read_stdout():
+            nonlocal stdout_lines
+            for line in iter(process.stdout.readline, ''):
+                if not line:
+                    break
+                line = line.rstrip()
+                stdout_lines.append(line)
+                
+                if server_name:
+                    # Parse progress from output
+                    import re
+                    # Look for table migration progress (e.g., "Migrating table 1/5")
+                    table_match = re.search(r'Migrating table (\d+)/(\d+)', line)
+                    # Look for row insertion progress (e.g., "Inserted 1000/5000 rows")
+                    row_match = re.search(r'Inserted (\d+)/(\d+) rows.*\((\d+)%\)', line)
+                    # Look for table completion
+                    complete_match = re.search(r'Successfully migrated table.*\((\d+)% complete\)', line)
+                    
+                    if table_match:
+                        table_num = int(table_match.group(1))
+                        total_tables = int(table_match.group(2))
+                        progress = 10 + int((table_num / total_tables) * 85) if total_tables > 0 else 10
+                        update_sync_progress(server_name, progress, f"Migrating table {table_num}/{total_tables}")
+                    elif row_match:
+                        inserted = int(row_match.group(1))
+                        total = int(row_match.group(2))
+                        progress_pct = int(row_match.group(3))
+                        # Adjust progress based on current table progress
+                        update_sync_progress(server_name, min(95, 10 + progress_pct), f"Inserted {inserted:,}/{total:,} rows")
+                    elif complete_match:
+                        progress_pct = int(complete_match.group(1))
+                        update_sync_progress(server_name, progress_pct, f"Migration {progress_pct}% complete")
+                    elif "Found" in line and "tables to migrate" in line:
+                        tables_match = re.search(r'Found (\d+) tables', line)
+                        if tables_match:
+                            total = int(tables_match.group(1))
+                            update_sync_progress(server_name, 15, f"Found {total} tables to migrate")
+                    elif "Connected to PostgreSQL" in line:
+                        update_sync_progress(server_name, 20, "Connected to PostgreSQL")
+                    elif "Connected to ClickHouse" in line:
+                        update_sync_progress(server_name, 25, "Connected to ClickHouse")
+        
+        # Thread to read stderr
+        def read_stderr():
+            nonlocal stderr_lines
+            for line in iter(process.stderr.readline, ''):
+                if not line:
+                    break
+                stderr_lines.append(line.rstrip())
+        
+        # Start reading threads
+        import threading
+        stdout_thread = threading.Thread(target=read_stdout, daemon=True)
+        stderr_thread = threading.Thread(target=read_stderr, daemon=True)
+        stdout_thread.start()
+        stderr_thread.start()
+        
+        # Wait for process to complete (with timeout)
+        timeout = 3600  # 1 hour timeout
+        returncode = process.wait(timeout=timeout)
+        
+        if time.time() - start_time > timeout:
+            if server_name:
+                update_sync_progress(server_name, 0, "Migration timed out after 1 hour")
+            return {
+                "success": False,
+                "error": "Migration timed out after 1 hour"
+            }
+        
+        # Wait for threads to finish reading
+        stdout_thread.join(timeout=5)
+        stderr_thread.join(timeout=5)
+        
+        if server_name:
+            if returncode == 0:
+                update_sync_progress(server_name, 100, "Migration completed successfully")
+            else:
+                error_msg = "\n".join(stderr_lines[-5:]) if stderr_lines else "Unknown error"
+                update_sync_progress(server_name, 0, f"Migration failed: {error_msg[:100]}")
+        
+        return {
+            "success": returncode == 0,
+            "stdout": "\n".join(stdout_lines),
+            "stderr": "\n".join(stderr_lines),
+            "returncode": returncode
+        }
+    except subprocess.TimeoutExpired:
+        if server_name:
+            update_sync_progress(server_name, 0, "Migration timed out after 1 hour")
+        return {
+            "success": False,
+            "error": "Migration timed out after 1 hour"
+        }
+    except Exception as e:
+        if server_name:
+            update_sync_progress(server_name, 0, f"Error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.route("/api/postgres/start-migration", methods=["POST"])
+@require_role(["admin", "operator"])
+def api_postgres_start_migration():
+    """Start PostgreSQL to ClickHouse migration in background"""
+    try:
+        data = request.get_json()
+        config = {
+            "pg_host": data.get("pg_host", "").strip(),
+            "pg_port": int(data.get("pg_port", "5432")),
+            "pg_database": data.get("pg_database", "").strip(),
+            "pg_username": data.get("pg_username", "").strip(),
+            "pg_password": data.get("pg_password", "").strip(),
+            "clickhouse_host": data.get("clickhouse_host", "").strip(),
+            "clickhouse_user": data.get("clickhouse_user", "").strip(),
+            "clickhouse_password": data.get("clickhouse_password", "").strip(),
+            "clickhouse_database": data.get("clickhouse_database", "").strip(),
+        }
+        
+        if not all([config["pg_host"], config["pg_database"], config["pg_username"], config["pg_password"],
+                   config["clickhouse_host"], config["clickhouse_user"], config["clickhouse_password"], 
+                   config["clickhouse_database"]]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields"
+            }), 400
+        
+        # Create server name for sync history
+        server_name = f"Postgres: {config['pg_database']}"
+        
+        # Log sync start
+        from dashboard import log_sync
+        log_sync(server_name, "in-progress", "Migration started")
+        
+        # Run migration in background thread
+        import threading
+        
+        def run_migration_background():
+            try:
+                app.logger.info(f"Starting PostgreSQL migration for {server_name}...")
+                update_sync_progress(server_name, 0, "Initializing...")
+                
+                # Run migration with progress tracking
+                update_sync_progress(server_name, 10, "Starting migration process...")
+                result = run_postgres_migration(config, server_name)
+                
+                if result.get("success"):
+                    # Extract useful info from stdout
+                    stdout = result.get("stdout", "")
+                    # Try to extract table count or summary
+                    import re
+                    tables_match = re.search(r'Found (\d+) tables to migrate', stdout)
+                    details = "Migration completed successfully"
+                    if tables_match:
+                        table_count = tables_match.group(1)
+                        details += f" | {table_count} tables migrated"
+                    
+                    # Log success - this updates the database status
+                    log_sync(server_name, "success", details)
+                    app.logger.info(f"PostgreSQL migration completed successfully for {server_name}")
+                    
+                    # Update progress to 100% before clearing
+                    update_sync_progress(server_name, 100, "Migration completed successfully")
+                    
+                    # Wait a bit before clearing to ensure UI gets the update
+                    import time
+                    time.sleep(2)
+                    
+                    # Clear progress after completion
+                    clear_sync_progress(server_name)
+                else:
+                    error_msg = result.get("error") or result.get("stderr", "Unknown error")
+                    # Truncate long error messages
+                    if len(error_msg) > 500:
+                        error_msg = error_msg[:500] + "..."
+                    
+                    # Log failure - this updates the database status
+                    log_sync(server_name, "failed", f"Migration failed: {error_msg}")
+                    app.logger.error(f"PostgreSQL migration failed for {server_name}: {error_msg}")
+                    
+                    # Update progress before clearing
+                    update_sync_progress(server_name, 0, f"Migration failed: {error_msg[:50]}")
+                    
+                    # Wait a bit before clearing
+                    import time
+                    time.sleep(2)
+                    clear_sync_progress(server_name)
+            except Exception as e:
+                error_msg = str(e)
+                app.logger.exception(f"Error in PostgreSQL migration background thread: {e}")
+                log_sync(server_name, "failed", f"Migration error: {error_msg}")
+                update_sync_progress(server_name, 0, f"Error: {error_msg[:50]}")
+                import time
+                time.sleep(2)
+                clear_sync_progress(server_name)
+        
+        # Start background thread
+        thread = threading.Thread(target=run_migration_background, daemon=True)
+        thread.start()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Migration started in background. Check Sync History for progress."
+        })
+    except Exception as e:
+        app.logger.exception(f"Error starting migration: {e}")
         return jsonify({
             "success": False,
             "error": str(e)

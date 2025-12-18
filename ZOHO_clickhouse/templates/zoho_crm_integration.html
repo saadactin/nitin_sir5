@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zoho CRM Integration - SQL Sync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: "#1E40AF", hover: "#1D4ED8" },
+            accent: { DEFAULT: "#16A34A", hover: "#15803D" },
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F172A",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E293B",
+            "text-light": "#0F172A",
+            "text-dark": "#E2E8F0",
+            "subtext-light": "#64748B",
+            "subtext-dark": "#94A3B8",
+            "border-light": "#E2E8F0",
+            "border-dark": "#334155",
+          },
+          fontFamily: { display: ["Inter", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-enhancements.css') }}">
+  <style>
+    .material-icons { font-size: 24px; vertical-align: middle; }
+    .module-checkbox {
+      transition: all 0.2s;
+    }
+    .module-checkbox:checked + label {
+      background-color: #3B82F6;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-y-auto">
+      <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-6 sm:mb-8">
+          <div class="flex items-center gap-3 sm:gap-4 mb-2">
+            <span class="material-icons text-3xl sm:text-4xl text-blue-600">cloud_sync</span>
+            <h1 class="text-2xl sm:text-3xl font-bold">Zoho CRM Integration</h1>
+          </div>
+          <p class="text-sm sm:text-base text-subtext-light dark:text-subtext-dark ml-0 sm:ml-12">
+            Connect to Zoho CRM and sync all your module data to ClickHouse
+          </p>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% elif category == 'danger' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Form -->
+        <form id="zohoForm" class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg p-6 sm:p-8 border border-border-light dark:border-border-dark">
+          
+          <!-- Zoho Credentials Section -->
+          <div class="mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons text-blue-600">vpn_key</span>
+              Zoho CRM Credentials
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- API Domain -->
+              <div class="md:col-span-2">
+                <label for="api_domain" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">language</span>
+                  API Domain *
+                </label>
+                <select id="api_domain" name="api_domain" required
+                        class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="https://www.zohoapis.in">https://www.zohoapis.in (India)</option>
+                  <option value="https://www.zohoapis.com">https://www.zohoapis.com (US)</option>
+                  <option value="https://www.zohoapis.eu">https://www.zohoapis.eu (Europe)</option>
+                  <option value="https://www.zohoapis.com.au">https://www.zohoapis.com.au (Australia)</option>
+                  <option value="https://www.zohoapis.jp">https://www.zohoapis.jp (Japan)</option>
+                </select>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Select your Zoho CRM region</p>
+              </div>
+
+              <!-- Client ID -->
+              <div>
+                <label for="client_id" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">badge</span>
+                  Client ID *
+                </label>
+                <input type="text" id="client_id" name="client_id" required
+                       placeholder="1000.0L3LLVLEKE9ELW7CE0I0KJ3K4FKBBT"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+
+              <!-- Client Secret -->
+              <div>
+                <label for="client_secret" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">lock</span>
+                  Client Secret *
+                </label>
+                <input type="password" id="client_secret" name="client_secret" required
+                       placeholder="Enter your client secret"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+
+              <!-- Refresh Token -->
+              <div class="md:col-span-2">
+                <label for="refresh_token" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">refresh</span>
+                  Refresh Token *
+                </label>
+                <input type="text" id="refresh_token" name="refresh_token" required
+                       placeholder="1000.2cbaa36345c6d04b699b0cb6740c21ef.149922195c479d83c84826653ff84ff4"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Your Zoho refresh token (never expires)</p>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-8 border-border-light dark:border-border-dark"/>
+
+          <!-- ClickHouse Configuration Section -->
+          <div class="mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons text-green-600">storage</span>
+              ClickHouse Configuration
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- ClickHouse Host -->
+              <div>
+                <label for="clickhouse_host" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">dns</span>
+                  Host *
+                </label>
+                <input type="text" id="clickhouse_host" name="clickhouse_host" required
+                       placeholder="74.225.251.123"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
+              </div>
+
+              <!-- ClickHouse User -->
+              <div>
+                <label for="clickhouse_user" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">person</span>
+                  Username *
+                </label>
+                <input type="text" id="clickhouse_user" name="clickhouse_user" required
+                       placeholder="default"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
+              </div>
+
+              <!-- ClickHouse Password -->
+              <div>
+                <label for="clickhouse_password" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">lock</span>
+                  Password *
+                </label>
+                <input type="password" id="clickhouse_password" name="clickhouse_password" required
+                       placeholder="Enter password"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
+              </div>
+
+              <!-- ClickHouse Database -->
+              <div>
+                <label for="clickhouse_database" class="block text-sm font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-icons text-base">database</span>
+                  Database *
+                </label>
+                <input type="text" id="clickhouse_database" name="clickhouse_database" required
+                       placeholder="JARVIS_DB"
+                       class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-background-dark focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-1">Database where Zoho data will be stored</p>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-8 border-border-light dark:border-border-dark"/>
+
+          <!-- Module Selection Section -->
+          <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold flex items-center gap-2">
+                <span class="material-icons text-purple-600">apps</span>
+                Select Modules to Sync
+              </h2>
+              <div class="flex gap-2">
+                <button type="button" onclick="selectAllModules()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                  Select All
+                </button>
+                <button type="button" onclick="deselectAllModules()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm">
+                  Deselect All
+                </button>
+                <button type="button" onclick="loadModules()" id="loadModulesBtn"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2">
+                  <span class="material-icons text-sm">refresh</span>
+                  Load Modules
+                </button>
+                <button type="button" onclick="checkEnvironment()" id="checkEnvBtn"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm flex items-center gap-2">
+                  <span class="material-icons text-sm">bug_report</span>
+                  Check Environment
+                </button>
+              </div>
+            </div>
+
+            <div id="modulesLoading" class="hidden text-center py-8">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p class="mt-2 text-subtext-light dark:text-subtext-dark">Loading available modules...</p>
+            </div>
+
+            <div id="modulesError" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
+              <div class="flex items-start gap-2">
+                <span class="material-icons text-red-600 dark:text-red-400">error</span>
+                <div class="flex-1">
+                  <p class="text-red-800 dark:text-red-200 font-semibold mb-1">Error Loading Modules</p>
+                  <p class="text-red-700 dark:text-red-300 text-sm" id="modulesErrorText"></p>
+                </div>
+              </div>
+            </div>
+
+            <div id="modulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div class="col-span-full text-center py-8">
+                <span class="material-icons text-4xl text-gray-400 mb-2">inbox</span>
+                <p class="text-subtext-light dark:text-subtext-dark">Click "Load Modules" to fetch available Zoho CRM modules</p>
+                <p class="text-xs text-subtext-light dark:text-subtext-dark mt-2">Make sure all Zoho credentials are filled in first</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8">
+            <button type="button" onclick="testConnection()" id="testBtn"
+                    class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">sync</span>
+              <span>Test Connection</span>
+            </button>
+            <button type="submit" id="submitBtn"
+                    class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">cloud_upload</span>
+              <span>Start Sync</span>
+            </button>
+            <a href="{{ url_for('index') }}"
+               class="flex-1 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium">
+              <span class="material-icons">cancel</span>
+              <span>Cancel</span>
+            </a>
+          </div>
+        </form>
+
+        <!-- Sync Progress Modal -->
+        <div id="syncProgressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div class="bg-white dark:bg-surface-dark rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons text-blue-600">sync</span>
+              Sync Progress
+            </h3>
+            <div id="syncProgressContent"></div>
+            <button onclick="closeSyncModal()" class="mt-4 px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+              Close
+            </button>
+          </div>
+        </div>
+
+        <!-- Test Results -->
+        <div id="testResults" class="mt-6 hidden">
+          <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-lg p-6 border border-border-light dark:border-border-dark">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+              <span class="material-icons">assessment</span>
+              Connection Test Results
+            </h3>
+            <div id="testResultsContent"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let availableModules = [];
+    
+    // Debug helper - can be called from browser console
+    window.debugZohoModules = function() {
+      console.log('Available modules:', availableModules);
+      console.log('Container element:', document.getElementById('modulesContainer'));
+      console.log('Error element:', document.getElementById('modulesError'));
+      return availableModules;
+    };
+
+    async function loadModules() {
+      const btn = document.getElementById('loadModulesBtn');
+      const loading = document.getElementById('modulesLoading');
+      const error = document.getElementById('modulesError');
+      const container = document.getElementById('modulesContainer');
+      
+      // Get credentials
+      const api_domain = document.getElementById('api_domain').value;
+      const client_id = document.getElementById('client_id').value;
+      const client_secret = document.getElementById('client_secret').value;
+      const refresh_token = document.getElementById('refresh_token').value;
+      
+      if (!client_id || !client_secret || !refresh_token) {
+        error.classList.remove('hidden');
+        const errorText = document.getElementById('modulesErrorText');
+        if (errorText) {
+          errorText.textContent = 'Please fill in all Zoho credentials first (Client ID, Client Secret, and Refresh Token)';
+        } else {
+          error.querySelector('p').textContent = 'Please fill in all Zoho credentials first';
+        }
+        return;
+      }
+      
+      // Show loading
+      btn.disabled = true;
+      loading.classList.remove('hidden');
+      error.classList.add('hidden');
+      container.innerHTML = '';
+      
+      try {
+        const response = await fetch('/api/zoho/list-modules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_domain,
+            client_id,
+            client_secret,
+            refresh_token
+          })
+        });
+        
+        // Check if response is OK
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorMsg = `Server error (${response.status}): `;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMsg = errorData.error || errorMsg + errorText;
+          } catch {
+            errorMsg += errorText.substring(0, 200);
+          }
+          throw new Error(errorMsg);
+        }
+        
+        const data = await response.json();
+        console.log('Modules response:', data);
+        
+        if (data.success && data.modules) {
+          availableModules = data.modules;
+          console.log(`Loaded ${availableModules.length} modules`);
+          renderModules();
+          
+          // Show success message
+          if (availableModules.length > 0) {
+            const successMsg = document.createElement('div');
+            successMsg.className = 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-4';
+            successMsg.innerHTML = `<p class="text-green-800 dark:text-green-200">✅ Successfully loaded ${availableModules.length} modules!</p>`;
+            container.parentElement.insertBefore(successMsg, container);
+            setTimeout(() => successMsg.remove(), 3000);
+          }
+        } else {
+          const errorMsg = data.error || 'Failed to load modules';
+          console.error('Module loading error:', errorMsg);
+          error.classList.remove('hidden');
+          const errorText = document.getElementById('modulesErrorText');
+          if (errorText) {
+            errorText.textContent = errorMsg;
+          } else {
+            error.querySelector('p').textContent = errorMsg;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading modules:', err);
+        error.classList.remove('hidden');
+        const errorText = document.getElementById('modulesErrorText');
+        const errorMsg = 'Error loading modules: ' + (err.message || 'Unknown error');
+        if (errorText) {
+          errorText.textContent = errorMsg;
+        } else {
+          error.querySelector('p').textContent = errorMsg;
+        }
+      } finally {
+        loading.classList.add('hidden');
+        btn.disabled = false;
+      }
+    }
+
+    function renderModules() {
+      const container = document.getElementById('modulesContainer');
+      if (availableModules.length === 0) {
+        container.innerHTML = '<p class="col-span-full text-center text-subtext-light dark:text-subtext-dark py-8">No modules found</p>';
+        return;
+      }
+      
+      console.log('Rendering modules:', availableModules.length);
+      
+      // Add header showing count
+      const header = document.createElement('div');
+      header.className = 'col-span-full mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg';
+      header.innerHTML = `<p class="text-sm font-semibold text-blue-800 dark:text-blue-200">📦 Found ${availableModules.length} modules. Select the ones you want to sync:</p>`;
+      container.innerHTML = '';
+      container.appendChild(header);
+      
+      // Render modules
+      availableModules.forEach(module => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-3 p-3 border border-border-light dark:border-border-dark rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors';
+        label.innerHTML = `
+          <input type="checkbox" name="selected_modules" value="${module.api_name}" 
+                 class="module-checkbox w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+          <div class="flex-1">
+            <div class="font-semibold">${module.display_name || module.api_name}</div>
+            <div class="text-xs text-subtext-light dark:text-subtext-dark">${module.api_name}</div>
+          </div>
+        `;
+        container.appendChild(label);
+      });
+      
+      console.log('Modules rendered successfully');
+    }
+
+    function selectAllModules() {
+      document.querySelectorAll('input[name="selected_modules"]').forEach(cb => cb.checked = true);
+    }
+
+    function deselectAllModules() {
+      document.querySelectorAll('input[name="selected_modules"]').forEach(cb => cb.checked = false);
+    }
+
+    async function checkEnvironment() {
+      const btn = document.getElementById('checkEnvBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-icons text-sm animate-spin">sync</span> Checking...';
+      
+      try {
+        const response = await fetch('/api/zoho/check-environment');
+        const data = await response.json();
+        
+        let message = 'Environment Check Results:\n\n';
+        message += `Python: ${data.python_executable}\n`;
+        message += `Version: ${data.python_version}\n\n`;
+        
+        if (data.clickhouse_connect_installed) {
+          message += `✅ clickhouse-connect: INSTALLED\n`;
+          message += `   Location: ${data.clickhouse_connect_location}\n`;
+          if (data.get_client_available) {
+            message += `   ✅ get_client: Available\n`;
+          } else {
+            message += `   ❌ get_client: ${data.error}\n`;
+          }
+        } else {
+          message += `❌ clickhouse-connect: NOT INSTALLED\n`;
+          message += `   Error: ${data.error}\n`;
+          if (data.solution) {
+            message += `\n   Solution: ${data.solution}\n`;
+          }
+        }
+        
+        alert(message);
+      } catch (error) {
+        alert('Error checking environment: ' + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    async function testConnection() {
+      const testBtn = document.getElementById('testBtn');
+      const resultsDiv = document.getElementById('testResults');
+      const resultsContent = document.getElementById('testResultsContent');
+      
+      // Get form data
+      const formData = new FormData(document.getElementById('zohoForm'));
+      const data = Object.fromEntries(formData);
+      
+      // Get selected modules
+      const selected = Array.from(document.querySelectorAll('input[name="selected_modules"]:checked')).map(cb => cb.value);
+      data.selected_modules = selected;
+      
+      testBtn.disabled = true;
+      testBtn.innerHTML = '<span class="material-icons animate-spin">sync</span><span>Testing...</span>';
+      
+      try {
+        const response = await fetch('/api/zoho/test-connection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        resultsDiv.classList.remove('hidden');
+        
+        if (result.success) {
+          resultsContent.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold">
+                <span class="material-icons">check_circle</span>
+                <span>Connection Successful!</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">Zoho Connection</div>
+                  <div class="font-semibold">✓ Connected</div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">ClickHouse Connection</div>
+                  <div class="font-semibold">✓ Connected</div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">Modules Available</div>
+                  <div class="font-semibold">${result.modules_count || 0}</div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <div class="text-xs text-subtext-light dark:text-subtext-dark mb-1">Selected Modules</div>
+                  <div class="font-semibold">${selected.length}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          resultsContent.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
+                <span class="material-icons">error</span>
+                <span>Connection Failed</span>
+              </div>
+              <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <div class="text-sm font-semibold mb-2">Error:</div>
+                <div class="text-sm">${result.error}</div>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultsDiv.classList.remove('hidden');
+        resultsContent.innerHTML = `
+          <div class="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <span class="material-icons">error</span>
+            <span>Error: ${error.message}</span>
+          </div>
+        `;
+      } finally {
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<span class="material-icons">sync</span><span>Test Connection</span>';
+      }
+    }
+
+    function closeSyncModal() {
+      document.getElementById('syncProgressModal').classList.add('hidden');
+    }
+
+    document.getElementById('zohoForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData);
+      
+      // Get selected modules
+      const selected = Array.from(document.querySelectorAll('input[name="selected_modules"]:checked')).map(cb => cb.value);
+      
+      if (selected.length === 0) {
+        alert('Please select at least one module to sync');
+        return;
+      }
+      
+      data.selected_modules = selected;
+      
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="material-icons animate-spin">sync</span><span>Starting Sync...</span>';
+      
+      // Show progress modal
+      const modal = document.getElementById('syncProgressModal');
+      const content = document.getElementById('syncProgressContent');
+      modal.classList.remove('hidden');
+      content.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p class="mt-2">Starting sync process...</p></div>';
+      
+      try {
+        const response = await fetch('/api/zoho/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          let html = '<div class="space-y-4">';
+          html += '<div class="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold"><span class="material-icons">check_circle</span><span>Sync Completed!</span></div>';
+          html += `<div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg"><strong>Total Records Synced:</strong> ${result.total_records || 0}</div>`;
+          
+          if (result.synced_modules && result.synced_modules.length > 0) {
+            html += '<div class="mt-4"><strong class="block mb-2">Successfully Synced Modules:</strong><ul class="list-disc list-inside space-y-1">';
+            result.synced_modules.forEach(m => {
+              html += `<li><strong>${m.module}</strong>: ${m.record_count} records</li>`;
+            });
+            html += '</ul></div>';
+          }
+          
+          if (result.failed_modules && result.failed_modules.length > 0) {
+            html += '<div class="mt-4"><strong class="block mb-2 text-red-600 dark:text-red-400">Failed Modules:</strong><ul class="list-disc list-inside space-y-1 text-red-600 dark:text-red-400">';
+            result.failed_modules.forEach(m => {
+              html += `<li><strong>${m.module}</strong>: ${m.error}</li>`;
+            });
+            html += '</ul></div>';
+          }
+          
+          if (result.errors && result.errors.length > 0) {
+            html += '<div class="mt-4"><strong class="block mb-2 text-orange-600 dark:text-orange-400">Errors:</strong><ul class="list-disc list-inside space-y-1 text-orange-600 dark:text-orange-400">';
+            result.errors.forEach(err => {
+              html += `<li>${err}</li>`;
+            });
+            html += '</ul></div>';
+          }
+          
+          html += '</div>';
+          content.innerHTML = html;
+          
+          // Redirect after 5 seconds
+          setTimeout(() => {
+            window.location.href = "{{ url_for('index') }}";
+          }, 5000);
+        } else {
+          content.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
+                <span class="material-icons">error</span>
+                <span>Sync Failed</span>
+              </div>
+              <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <div class="text-sm">${result.error || 'Unknown error occurred'}</div>
+              </div>
+            </div>
+          `;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span class="material-icons">cloud_upload</span><span>Start Sync</span>';
+        }
+      } catch (error) {
+        content.innerHTML = `
+          <div class="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <span class="material-icons">error</span>
+            <span>Error: ${error.message}</span>
+          </div>
+        `;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span class="material-icons">cloud_upload</span><span>Start Sync</span>';
+      }
+    });
+  </script>
+</body>
+</html>
+

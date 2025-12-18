@@ -176,10 +176,20 @@
                             Success
                           </span>
                         {% elif entry.status in ["in-progress", "partial"] %}
-                          <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 inline-flex items-center gap-1.5">
-                            <span class="material-icons text-sm">hourglass_empty</span>
-                            In Progress
-                          </span>
+                      <td>
+                        <div class="w-full">
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 inline-flex items-center gap-1.5 text-xs">
+                              <span class="material-icons text-sm animate-spin">hourglass_empty</span> In Progress
+                            </span>
+                            <span class="text-xs text-gray-600 dark:text-gray-400 progress-percent-{{ loop.index0 }}">0%</span>
+                          </div>
+                          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-yellow-500 h-2 rounded-full transition-all duration-300 progress-bar-{{ loop.index0 }}" style="width: 0%"></div>
+                          </div>
+                          <div class="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate progress-message-{{ loop.index0 }}" title="Processing...">Processing...</div>
+                        </div>
+                      </td>
                         {% else %}
                           <span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 inline-flex items-center gap-1.5">
                             <span class="material-icons text-sm">error</span>
@@ -389,10 +399,28 @@ async function refreshDashboard(event) {
 
             data.last_10.forEach(entry => {
                 let statusBadge = '';
+                const progressInfo = data.progress && data.progress[entry.server] ? data.progress[entry.server] : null;
+                
                 if (entry.status === 'success') {
                     statusBadge = '<span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 inline-flex items-center gap-1.5"><span class="material-icons text-sm">check_circle</span> Success</span>';
                 } else if (entry.status === 'in-progress' || entry.status === 'partial') {
-                    statusBadge = '<span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 inline-flex items-center gap-1.5"><span class="material-icons text-sm">hourglass_empty</span> In Progress</span>';
+                    // Show progress bar for in-progress syncs
+                    const progress = progressInfo ? progressInfo.progress : 0;
+                    const message = progressInfo ? progressInfo.message : 'Processing...';
+                    statusBadge = `
+                        <div class="w-full">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 inline-flex items-center gap-1.5 text-xs">
+                                    <span class="material-icons text-sm animate-spin">hourglass_empty</span> In Progress
+                                </span>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">${progress}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate" title="${message}">${message}</div>
+                        </div>
+                    `;
                 } else {
                     statusBadge = '<span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 inline-flex items-center gap-1.5"><span class="material-icons text-sm">error</span> Failed</span>';
                 }
@@ -407,6 +435,9 @@ async function refreshDashboard(event) {
 
             table += '</tbody></table>';
             historyDiv.innerHTML = table;
+            
+            // Start polling for progress updates on in-progress syncs
+            startProgressPolling(data.last_10, data.progress || {});
         } else {
             historyDiv.innerHTML = '<div class="enhanced-table-empty"><span class="material-icons enhanced-table-empty-icon">inbox</span><p>No sync history found</p></div>';
         }
@@ -459,6 +490,70 @@ async function refreshDashboard(event) {
             refreshBtn.disabled = false;
         }
     }
+    
+    // Start polling for progress updates on in-progress syncs
+    if (data && data.last_10) {
+        startProgressPolling(data.last_10, data.progress || {});
+    }
+}
+
+// Poll for progress updates on in-progress syncs
+let progressPollInterval = null;
+
+function startProgressPolling(syncs, currentProgress) {
+    // Clear existing interval
+    if (progressPollInterval) {
+        clearInterval(progressPollInterval);
+    }
+    
+    // Check if there are any in-progress syncs
+    const inProgressSyncs = syncs.filter(s => s.status === 'in-progress' || s.status === 'partial');
+    if (inProgressSyncs.length === 0) {
+        return; // No in-progress syncs, don't poll
+    }
+    
+    // Poll every 3 seconds for progress updates
+    progressPollInterval = setInterval(async () => {
+        try {
+            const res = await fetch("/dashboard/data");
+            const data = await res.json();
+            
+            // Update progress bars for in-progress syncs
+            if (data.progress && data.last_10) {
+                data.last_10.forEach((entry, index) => {
+                    if (entry.status === 'in-progress' || entry.status === 'partial') {
+                        const progressInfo = data.progress[entry.server];
+                        if (progressInfo) {
+                            // Update progress bar
+                            const progressBar = document.querySelector(`.progress-bar-${index}`);
+                            const progressPercent = document.querySelector(`.progress-percent-${index}`);
+                            const progressMessage = document.querySelector(`.progress-message-${index}`);
+                            
+                            if (progressBar) {
+                                progressBar.style.width = `${progressInfo.progress}%`;
+                            }
+                            if (progressPercent) {
+                                progressPercent.textContent = `${progressInfo.progress}%`;
+                            }
+                            if (progressMessage) {
+                                progressMessage.textContent = progressInfo.message || 'Processing...';
+                                progressMessage.title = progressInfo.message || 'Processing...';
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Stop polling if no in-progress syncs remain
+            const stillInProgress = data.last_10.filter(s => s.status === 'in-progress' || s.status === 'partial');
+            if (stillInProgress.length === 0 && progressPollInterval) {
+                clearInterval(progressPollInterval);
+                progressPollInterval = null;
+            }
+        } catch (error) {
+            console.error('Error polling progress:', error);
+        }
+    }, 3000); // Poll every 3 seconds
 }
 
 // Initialize charts on page load
@@ -472,6 +567,12 @@ document.addEventListener('DOMContentLoaded', function() {
             refreshDashboard();
         }
     }, 15000);
+    
+    // Start progress polling if there are in-progress syncs
+    const last10 = {{ last_10|tojson if last_10 else '[]' }};
+    if (last10 && last10.some(s => s.status === 'in-progress' || s.status === 'partial')) {
+        startProgressPolling(last10, {});
+    }
 });
 
 // Pause refresh when tab is hidden

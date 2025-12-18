@@ -821,3 +821,268 @@ ModuleNotFoundError: No module named 'clickhouse_connect'
 2025-11-27 11:08:11,923 - WARNING - No records found for Accounts_Insights__s
 2025-11-27 11:08:56,395 - ERROR - Error fetching field names for Products: No fields returned for module Products
 2025-11-27 11:08:56,396 - WARNING - No fields returned for module Products — continuing without field metadata.
+2025-12-03 10:18:30,610 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-03 10:18:33,357 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-03 10:18:34,071 - INFO - Rate limiting enabled
+2025-12-03 10:18:34,077 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-03 10:18:34,078 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-03 10:18:34,078 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-03 10:18:59,048 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-03 10:18:59,049 - WARNING - [AUTH] Session contents: {}
+2025-12-03 10:19:09,125 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-03 10:19:09,126 - WARNING - [AUTH] Session contents: {}
+2025-12-03 10:19:10,854 - WARNING - [AUTH] BLOCKED unauthenticated access to /favicon.ico from 127.0.0.1
+2025-12-03 10:19:10,855 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-12-03 10:19:16,183 - WARNING - [404] Page not found: /favicon.ico - 127.0.0.1
+2025-12-03 10:28:12,751 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-03 10:28:13,804 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-03 10:28:13,977 - INFO - Rate limiting enabled
+2025-12-03 10:28:13,979 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-03 10:28:13,980 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-03 10:28:13,980 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-03 10:28:17,703 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-03 10:28:17,704 - WARNING - [AUTH] Session contents: {}
+2025-12-03 10:28:23,488 - WARNING - [AUTH] BLOCKED unauthenticated access to /devops-integration from 127.0.0.1
+2025-12-03 10:28:23,489 - WARNING - [AUTH] Session contents: {}
+2025-12-03 11:23:52,197 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-03 11:23:53,229 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-03 11:23:53,454 - INFO - Rate limiting enabled
+2025-12-03 11:23:53,457 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-03 11:23:53,457 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-03 11:23:53,457 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-03 11:23:56,117 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-03 11:23:56,119 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-12-03 11:24:14,032 - WARNING - [AUTH] BLOCKED unauthenticated access to /dashboard from 127.0.0.1
+2025-12-03 11:24:14,033 - WARNING - [AUTH] Session contents: {}
+2025-12-03 12:33:08,579 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-03 12:33:09,529 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-03 12:33:09,720 - INFO - Rate limiting enabled
+2025-12-03 12:33:09,723 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-03 12:33:09,723 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-03 12:33:09,723 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-03 12:33:17,690 - WARNING - [AUTH] BLOCKED unauthenticated access to /dashboard from 127.0.0.1
+2025-12-03 12:33:17,691 - WARNING - [AUTH] Session contents: {}
+2025-12-03 14:07:53,503 - WARNING - [AUTH] BLOCKED unauthenticated access to /dashboard from 127.0.0.1
+2025-12-03 14:07:53,511 - WARNING - [AUTH] Session contents: {}
+2025-12-10 11:42:40,014 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-10 11:42:40,251 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:40,364 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:40,412 - ERROR - Failed to initialize PostgreSQL pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:40,413 - WARNING - Connection pool not available, using direct connection: Failed to initialize PostgreSQL connection pool
+2025-12-10 11:42:40,602 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:40,805 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:40,806 - ERROR - 
+======================================================================
+2025-12-10 11:42:40,806 - ERROR - DATABASE ERROR: PostgreSQL database 'test1' does not exist!
+2025-12-10 11:42:40,806 - ERROR - ======================================================================
+2025-12-10 11:42:40,807 - ERROR - SOLUTION: Run this command to create the database:
+2025-12-10 11:42:40,807 - ERROR -   python create_database.py
+2025-12-10 11:42:40,807 - ERROR - ======================================================================
+
+2025-12-10 11:42:40,876 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:40,957 - ERROR - Failed to initialize PostgreSQL pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:40,958 - WARNING - Connection pool not available, using direct connection: Failed to initialize PostgreSQL connection pool
+2025-12-10 11:42:41,045 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,156 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,157 - ERROR - 
+======================================================================
+2025-12-10 11:42:41,158 - ERROR - DATABASE ERROR: PostgreSQL database 'test1' does not exist!
+2025-12-10 11:42:41,158 - ERROR - ======================================================================
+2025-12-10 11:42:41,158 - ERROR - SOLUTION: Run this command to create the database:
+2025-12-10 11:42:41,159 - ERROR -   python create_database.py
+2025-12-10 11:42:41,159 - ERROR - ======================================================================
+
+2025-12-10 11:42:41,159 - ERROR - Failed to create database schema: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:41,203 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,248 - ERROR - Failed to initialize PostgreSQL pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:41,249 - WARNING - Connection pool not available, using direct connection: Failed to initialize PostgreSQL connection pool
+2025-12-10 11:42:41,300 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,431 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,432 - ERROR - 
+======================================================================
+2025-12-10 11:42:41,433 - ERROR - DATABASE ERROR: PostgreSQL database 'test1' does not exist!
+2025-12-10 11:42:41,433 - ERROR - ======================================================================
+2025-12-10 11:42:41,433 - ERROR - SOLUTION: Run this command to create the database:
+2025-12-10 11:42:41,433 - ERROR -   python create_database.py
+2025-12-10 11:42:41,434 - ERROR - ======================================================================
+
+2025-12-10 11:42:41,476 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,523 - ERROR - Failed to initialize PostgreSQL pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:41,524 - WARNING - Connection pool not available, using direct connection: Failed to initialize PostgreSQL connection pool
+2025-12-10 11:42:41,592 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,726 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,728 - ERROR - 
+======================================================================
+2025-12-10 11:42:41,731 - ERROR - DATABASE ERROR: PostgreSQL database 'test1' does not exist!
+2025-12-10 11:42:41,734 - ERROR - ======================================================================
+2025-12-10 11:42:41,736 - ERROR - SOLUTION: Run this command to create the database:
+2025-12-10 11:42:41,737 - ERROR -   python create_database.py
+2025-12-10 11:42:41,738 - ERROR - ======================================================================
+
+2025-12-10 11:42:41,853 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,893 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:41,941 - ERROR - Failed to initialize PostgreSQL pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:41,942 - WARNING - Connection pool not available, using direct connection: Failed to initialize PostgreSQL connection pool
+2025-12-10 11:42:41,991 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:42,077 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:42,080 - ERROR - 
+======================================================================
+2025-12-10 11:42:42,081 - ERROR - DATABASE ERROR: PostgreSQL database 'test1' does not exist!
+2025-12-10 11:42:42,081 - ERROR - ======================================================================
+2025-12-10 11:42:42,081 - ERROR - SOLUTION: Run this command to create the database:
+2025-12-10 11:42:42,082 - ERROR -   python create_database.py
+2025-12-10 11:42:42,082 - ERROR - ======================================================================
+
+2025-12-10 11:42:42,134 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:42,191 - ERROR - Failed to initialize PostgreSQL pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:42,192 - WARNING - Connection pool not available, using direct connection: Failed to initialize PostgreSQL connection pool
+2025-12-10 11:42:42,255 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:42,347 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:42,349 - ERROR - 
+======================================================================
+2025-12-10 11:42:42,349 - ERROR - DATABASE ERROR: PostgreSQL database 'test1' does not exist!
+2025-12-10 11:42:42,350 - ERROR - ======================================================================
+2025-12-10 11:42:42,350 - ERROR - SOLUTION: Run this command to create the database:
+2025-12-10 11:42:42,350 - ERROR -   python create_database.py
+2025-12-10 11:42:42,351 - ERROR - ======================================================================
+
+2025-12-10 11:42:42,351 - ERROR - Failed to create database schema: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:42,402 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:42,451 - ERROR - Failed to initialize PostgreSQL pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+
+2025-12-10 11:42:42,452 - WARNING - Connection pool not available, using direct connection: Failed to initialize PostgreSQL connection pool
+2025-12-10 11:42:42,501 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:42,608 - ERROR - Failed to connect to PostgreSQL without config: connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "test1" does not exist
+ (host=localhost, port=5432, user=mi************)
+2025-12-10 11:42:42,609 - ERROR - 
+======================================================================
+2025-12-10 11:42:42,610 - ERROR - DATABASE ERROR: PostgreSQL database 'test1' does not exist!
+2025-12-10 11:42:42,610 - ERROR - ======================================================================
+2025-12-10 11:42:42,611 - ERROR - SOLUTION: Run this command to create the database:
+2025-12-10 11:42:42,611 - ERROR -   python create_database.py
+2025-12-10 11:42:42,612 - ERROR - ======================================================================
+
+2025-12-10 11:47:29,183 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-10 11:47:29,862 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-10 11:47:30,447 - INFO - Rate limiting enabled
+2025-12-10 11:47:30,451 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-10 11:47:30,451 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-10 11:47:30,452 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-10 11:48:17,398 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-10 11:48:17,399 - WARNING - [AUTH] Session contents: {}
+2025-12-10 11:50:25,794 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-10 11:50:25,845 - INFO - Created/verified data_sources table
+2025-12-10 11:50:25,846 - INFO - Created/verified schedules table
+2025-12-10 11:50:25,871 - INFO - Database schema initialization completed successfully
+2025-12-10 11:50:27,277 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-10 11:50:27,366 - INFO - Created/verified data_sources table
+2025-12-10 11:50:27,367 - INFO - Created/verified schedules table
+2025-12-10 11:50:27,400 - INFO - Database schema initialization completed successfully
+2025-12-10 11:50:27,604 - INFO - Rate limiting enabled
+2025-12-10 11:50:27,615 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-10 11:50:27,616 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-10 11:50:27,617 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-10 15:15:51,720 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-10 15:15:51,810 - INFO - Created/verified data_sources table
+2025-12-10 15:15:51,811 - INFO - Created/verified schedules table
+2025-12-10 15:15:51,876 - INFO - Database schema initialization completed successfully
+2025-12-10 15:15:53,417 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-10 15:15:53,564 - INFO - Created/verified data_sources table
+2025-12-10 15:15:53,565 - INFO - Created/verified schedules table
+2025-12-10 15:15:53,615 - INFO - Database schema initialization completed successfully
+2025-12-10 15:15:53,929 - INFO - Rate limiting enabled
+2025-12-10 15:15:53,935 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-10 15:15:53,936 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-10 15:15:53,937 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-10 15:16:01,888 - WARNING - [AUTH] BLOCKED unauthenticated access to /add-source/sql from 127.0.0.1
+2025-12-10 15:16:01,889 - WARNING - [AUTH] Session contents: {}
+2025-12-10 15:52:41,558 - ERROR - Error in PostgreSQL migration background thread: syntax error at or near "ORDER"
+LINE 7:                 ORDER BY sync_time DESC
+                        ^
+Traceback (most recent call last):
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\app.py", line 5649, in run_migration_background
+    log_sync(server_name, "success", details)
+  File "C:\Users\SaadSayyed\Desktop\test2\nitin_sir5\dashboard.py", line 17, in log_sync
+    cur.execute("""
+psycopg2.errors.SyntaxError: syntax error at or near "ORDER"
+LINE 7:                 ORDER BY sync_time DESC
+                        ^
+
+2025-12-10 15:55:08,098 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-10 15:55:08,190 - INFO - Created/verified data_sources table
+2025-12-10 15:55:08,191 - INFO - Created/verified schedules table
+2025-12-10 15:55:08,253 - INFO - Database schema initialization completed successfully
+2025-12-10 15:55:09,465 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-10 15:55:09,701 - INFO - Created/verified data_sources table
+2025-12-10 15:55:09,703 - INFO - Created/verified schedules table
+2025-12-10 15:55:09,749 - INFO - Database schema initialization completed successfully
+2025-12-10 15:55:09,869 - INFO - Rate limiting enabled
+2025-12-10 15:55:09,877 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-10 15:55:09,878 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-10 15:55:09,878 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-10 15:55:22,623 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-10 15:55:22,720 - INFO - Created/verified data_sources table
+2025-12-10 15:55:22,722 - INFO - Created/verified schedules table
+2025-12-10 15:55:22,792 - INFO - Database schema initialization completed successfully
+2025-12-10 15:55:24,293 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-10 15:55:24,553 - INFO - Created/verified data_sources table
+2025-12-10 15:55:24,556 - INFO - Created/verified schedules table
+2025-12-10 15:55:24,653 - INFO - Database schema initialization completed successfully
+2025-12-10 15:55:24,808 - INFO - Rate limiting enabled
+2025-12-10 15:55:24,814 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-10 15:55:24,814 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-10 15:55:24,814 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-10 15:55:40,436 - WARNING - [AUTH] BLOCKED unauthenticated access to /postgres-integration from 127.0.0.1
+2025-12-10 15:55:40,438 - WARNING - [AUTH] Session contents: {}
+2025-12-10 23:22:06,898 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-10 23:22:06,911 - WARNING - [AUTH] Session contents: {}
+2025-12-18 17:35:46,077 - INFO - Email service config loaded: user=saadpractice4@gmail.com, admin_emails=[]
+2025-12-18 17:35:46,128 - INFO - Created/verified data_sources table
+2025-12-18 17:35:46,129 - INFO - Created/verified schedules table
+2025-12-18 17:35:46,154 - INFO - Database schema initialization completed successfully
+2025-12-18 17:35:46,869 - INFO - PostgreSQL connection pool initialized (min=10, max=50)
+2025-12-18 17:35:46,953 - INFO - Created/verified data_sources table
+2025-12-18 17:35:46,953 - INFO - Created/verified schedules table
+2025-12-18 17:35:46,972 - INFO - Database schema initialization completed successfully
+2025-12-18 17:35:46,986 - WARNING - Flask-Limiter not installed. Rate limiting disabled. Install with: pip install Flask-Limiter
+2025-12-18 17:35:46,990 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_SERVER - SMTP server for email notifications
+2025-12-18 17:35:46,991 - WARNING - [RECOMMENDED] Environment variable not set: SMTP_PASSWORD - SMTP password for email notifications
+2025-12-18 17:35:46,991 - WARNING - [RECOMMENDED] Environment variable not set: ADMIN_EMAILS - Comma-separated list of admin email addresses
+2025-12-18 17:35:53,674 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-18 17:35:53,674 - WARNING - [AUTH] Session contents: {}
+2025-12-18 17:35:54,387 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-18 17:35:54,388 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-12-18 17:35:54,854 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-18 17:35:54,855 - WARNING - [AUTH] Session contents: {'_flashes': [('warning', 'Please log in to access this page')]}
+2025-12-18 17:36:13,597 - WARNING - [AUTH] BLOCKED unauthenticated access to / from 127.0.0.1
+2025-12-18 17:36:13,599 - WARNING - [AUTH] Session contents: {}

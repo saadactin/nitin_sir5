@@ -1,5 +1,5 @@
 postgresql:
-  database: test1
+  database: Tor2
   host: localhost
   password: StrongPassword123
   port: 5432

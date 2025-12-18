@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}PostgreSQL Migration{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>PostgreSQL to ClickHouse Migration</h1>
+    <p>Configure and start PostgreSQL data migration</p>
+</div>
+
+<div class="migration-form-container">
+    <div class="form-section">
+        <h2>PostgreSQL Connection</h2>
+        <form id="pg-connection-form" class="connection-form">
+            <div class="form-group">
+                <label for="pg_host">Host</label>
+                <input type="text" id="pg_host" name="pg_host" required placeholder="localhost">
+            </div>
+            <div class="form-group">
+                <label for="pg_port">Port</label>
+                <input type="number" id="pg_port" name="pg_port" value="5432" required>
+            </div>
+            <div class="form-group">
+                <label for="pg_database">Database</label>
+                <input type="text" id="pg_database" name="pg_database" required placeholder="database_name">
+            </div>
+            <div class="form-group">
+                <label for="pg_username">Username</label>
+                <input type="text" id="pg_username" name="pg_username" required placeholder="username">
+            </div>
+            <div class="form-group">
+                <label for="pg_password">Password</label>
+                <input type="password" id="pg_password" name="pg_password" required placeholder="password">
+            </div>
+            <div class="form-actions">
+                <button type="button" id="test-pg-btn" class="btn btn-secondary">Test Connection</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="form-section">
+        <div id="connection-status" class="status-message" style="display: none;"></div>
+        <div class="form-actions">
+            <button type="button" id="connect-btn" class="btn btn-primary" style="display: none;">Connect</button>
+            <button type="button" id="start-migration-btn" class="btn btn-success" style="display: none;">Start Migration</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let pgConnected = false;
+
+    // Test PostgreSQL connection
+    document.getElementById('test-pg-btn').addEventListener('click', function() {
+        const formData = {
+            type: 'postgres',
+            pg_host: document.getElementById('pg_host').value,
+            pg_port: parseInt(document.getElementById('pg_port').value),
+            pg_database: document.getElementById('pg_database').value,
+            pg_username: document.getElementById('pg_username').value,
+            pg_password: document.getElementById('pg_password').value
+        };
+
+        fetch('/api/test-connection', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const statusDiv = document.getElementById('connection-status');
+            statusDiv.style.display = 'block';
+            if (data.success) {
+                statusDiv.className = 'status-message success';
+                statusDiv.textContent = 'PostgreSQL: ' + data.message;
+                pgConnected = true;
+                document.getElementById('connect-btn').style.display = 'inline-block';
+            } else {
+                statusDiv.className = 'status-message error';
+                statusDiv.textContent = 'PostgreSQL: ' + data.message;
+                pgConnected = false;
+                document.getElementById('connect-btn').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            const statusDiv = document.getElementById('connection-status');
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status-message error';
+            statusDiv.textContent = 'Error: ' + error;
+            pgConnected = false;
+            document.getElementById('connect-btn').style.display = 'none';
+        });
+    });
+
+    // Save connection
+    document.getElementById('connect-btn').addEventListener('click', function() {
+        if (!pgConnected) {
+            alert('Please test the PostgreSQL connection first');
+            return;
+        }
+
+        const pgData = {
+            type: 'postgres',
+            pg_host: document.getElementById('pg_host').value,
+            pg_port: parseInt(document.getElementById('pg_port').value),
+            pg_database: document.getElementById('pg_database').value,
+            pg_username: document.getElementById('pg_username').value,
+            pg_password: document.getElementById('pg_password').value
+        };
+
+        fetch('/api/save-connection', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(pgData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const statusDiv = document.getElementById('connection-status');
+            statusDiv.style.display = 'block';
+            if (data.success) {
+                statusDiv.className = 'status-message success';
+                statusDiv.textContent = 'PostgreSQL connection saved successfully!';
+                setTimeout(() => {
+                    document.getElementById('start-migration-btn').style.display = 'inline-block';
+                }, 100);
+            } else {
+                statusDiv.className = 'status-message error';
+                statusDiv.textContent = 'Error: ' + data.message;
+            }
+        })
+        .catch(error => {
+            const statusDiv = document.getElementById('connection-status');
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status-message error';
+            statusDiv.textContent = 'Error: ' + error;
+        });
+    });
+
+    // Start migration
+    document.getElementById('start-migration-btn').addEventListener('click', function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = 'Starting...';
+        
+        // First verify connections are saved
+        fetch('/api/check-connections')
+            .then(response => response.json())
+            .then(connStatus => {
+                if (!connStatus.postgres) {
+                    alert('PostgreSQL connection not found. Please click "Connect" to save the connection.');
+                    btn.disabled = false;
+                    btn.textContent = 'Start Migration';
+                    return;
+                }
+                if (!connStatus.clickhouse) {
+                    alert('ClickHouse connection not found. Please configure ClickHouse connection first.');
+                    btn.disabled = false;
+                    btn.textContent = 'Start Migration';
+                    return;
+                }
+                
+                // Start migration
+                return fetch('/api/start-migration', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({type: 'postgres'})
+                });
+            })
+            .then(response => {
+                if (response) {
+                    return response.json();
+                }
+            })
+            .then(data => {
+                if (data && data.success) {
+                    alert('Migration started! Check Home page for progress.');
+                    window.location.href = '/';
+                } else if (data) {
+                    alert('Error: ' + data.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Start Migration';
+                }
+            })
+            .catch(error => {
+                alert('Error starting migration: ' + error);
+                btn.disabled = false;
+                btn.textContent = 'Start Migration';
+            });
+    });
+</script>
+{% endblock %}
